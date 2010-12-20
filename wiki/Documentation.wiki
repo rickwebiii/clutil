@@ -188,23 +188,24 @@ AMD Stream SDK 2.3
 
 Double precision is enabled via #pragma cl_amd_fp64 : enable instead of cl_khr_fp64 : enable.
 Samplers can be inline declared in OpenCL programs using const sampler_t mySampler = CLK_NORMALIZED_COORDS_TRUE or __constant sampler_t mySampler = CLK_NORMALIZED_COORDS_TRUE. The former is non-standard and the only way to do it in v2.2. The latter is the standard way and is only supported in v2.3 and later.
-Reference
 
-Initialization
+=Reference=
 
-clUtil::initialize()
+==Initialization==
 
-cl_int clUtil::initialize(char** fileNames, 
+===clUtil::initialize()===
+
+`cl_int clUtil::initialize(char** fileNames, 
                           size_t numFiles, 
                           const char* cacheName = NULL, 
-                          const char* options = NULL)
+                          const char* options = NULL)`
 
 This function initializes the clUtil runtime and must be the first clUtil function called. It initializes all devices on all platforms, creates a single context and command queue on each device, compiles all files given in fileNames into a single program on each device (or if possible load them from cached binaries), and set the current device to 0.
 
 Parameters:
 fileNames: an array of C-strings including filenames to be compiled into program on each device. Can have either relative or full paths to files.
 numFiles: the number of files to be compiled
-cacheName (optional): The name of the precompiled binary to be loaded as a program. Each device will have a file named <cacheName>.device<deviceNumber>. If the binaries don't exist, then they are compiled and saved to disk for future use.
+cacheName (optional): The name of the precompiled binary to be loaded as a program. Each device will have a file named (cacheName).device(deviceNumber). If the binaries don't exist, then they are compiled and saved to disk for future use.
 options (optional): options passed to OpenCL compiler
 Return:
     CL_SUCCESS if no error occurred. Otherwise, an error code corresponding to the erroneous underlying OpenCL call is returned after performing the previously described error handling.
