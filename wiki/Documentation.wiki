@@ -120,7 +120,7 @@ clUtil makes no distinction between device platforms. Devices are devices and wi
   * Each device has a single context.
   * Each device has a single command queue. It executes operations in order. We plan to support event-based execution in the future.
 The device list is hidden from the user; they change the current device with a function call. Subsequent operations (memory allocations, kernels, etc.) will occur on the specified device. 
-Memory Model
+==Memory Model==
 
 clUtil uses a simple memory model that behaves more like C. Buffers are allocated and freed instead of OpenCL's release/retain model. Since clUtil implements buffers using clCreateBuffer() and clReleaseMemObject(), a release/retain model can still be used, but is not the preferred way to do things. Data is synchronously (e.g. blocking is CL_TRUE) copied between device and host using devicePut() and deviceGet(). We plan to offer asynchronous data transfers in future releases. clUtil uses OpenCL's cl_mem objects, so many vanilla OpenCL functions should work on clUtil memory objects.
 
@@ -133,21 +133,23 @@ In addition to vanilla buffers, clUtil supports 2D images. 2D images are an intu
 clUtil makes dramatically simplifies OpenCL's programming model. Developers no longer have to worry about kernels, programs, binaries, etc. clUtil takes a list of source code files at initialization and compiles them all for each device on the machine. Calling a kernel is as simple as calling clUtil_enqueueKernel() after initialization with the kernel name, work dimension, global work size, local work size, and the arguments to the kernel. 
 
 Since compiling source code can be take a while, developers can optionally pass a list of binary names to the initialization routine, causing clUtil to load kernels from these files if they exist. If they don't exist, clUtil will compile from source and save these binary files. This means that many applications can cache their programs after the first time the application is run.
-Thread safety
+
+==Thread safety==
 
 clUtil is not currently thread safe. Switching devices occurs on a global level and calling different operations from different threads can cause race conditions on devices' queues. We plan to add thread safety by making the current device number a thread-local variable and adding mutex locking to command queues. For the time being, changing devices and issuing threads should occur only in critical sections.
 
-==User Guide==
+=User Guide=
 
 A typical OpenCL, CUDA, or clUtil application has a motif similar to the following:
-Initialize
-Allocate memory
-Copy data to device
-Run kernels
-Copy data from device
-Repeat 3-5
-Shutdown
-Initialization
+  # Initialize
+  # Allocate memory
+  # Copy data to device
+  # Run kernels
+  # Copy data from device
+  # Repeat 3-5
+  # Shutdown
+
+==Initialization==
 
 With clUtil, step 1 is simplified to a single function call that initializes everything needed to run kernels and manipulate memory on any devices. The user does this by calling clUtil::initialize().
 
@@ -155,17 +157,16 @@ With clUtil, step 1 is simplified to a single function call that initializes eve
 
 Once initialization is complete, the user can allocate and destroy buffers using clUtil::alloc() and clUtil::free() respectively. Users do not need to worry about kernels using buffers completing after free is called; OpenCL's runtime handles this. So long as the kernel is enqueued before free is called, the program should run correctly.
 
-Data is copied from host to device using clUtil::devicePut(). Data is copied from device to host using clUtil::deviceGet(). Presently, all data transfers are blocking calls (e.g. they return when the transfer is complete).
-Device Management
+Data is copied from host to device using clUtil::devicePut(). Data is copied from device to host using clUtil::deviceGet(). Presently, all data transfers are blocking calls (e.g. they return when the transfer is complete). Device Management
 
 All devices on all platforms are flattened into a single list behind the scenes. Users are abstracted away from this list and can change the current device using clUtil::setDeviceNum() and query the current device using clUtil::getDeviceNum(). The total number of devices across all platforms is accessible using clUtil::getNumDevices().
 
 ==Error handling==
 
 Errors are signaled using return values as is done in C. When an error occurs, all clUtil functions do the following upon encountering an error on one of its internal OpenCL calls:
-print the source file, line number on which the error occurred in clUtil, and what the error was.
-raise a SIGTRAP
-return the error code
+  # print the source file, line number on which the error occurred in clUtil, and what the error was.
+  # raise a SIGTRAP
+  # return the error code
 This provides several different methods of debugging. Firstly, developers can lookup the file and line number in the clUtil library to see what function failed and try to find the offending calling code. Because of the SIGTRAP, the program will exit if SIGTRAP is not overloaded when run normally. However, if run in a debugger, the debugger will catch the SIGTRAP immediately pausing the program. This allows developers to get a stack trace with variable information and possibly continue execution.
 
 Some functions may print additional information. For example, if clUtil::initialize() fails because a source file contained syntax errors, it will print the build log containing said errors, print "clUtil.cc:645::Failed to build program." to stdout, raise a SIGTRAP, and return CL_BUILD_PROGRAM_FAILURE.
@@ -182,7 +183,7 @@ clUtil's image functions are designed to be used with matrix data for linear alg
 
 ==Platform/Device Specific Compilation==
 
-Presently, no implementation of OpenCL is perfect and each has various bugs and/or non-standard implementation details that need to have #define workarounds. Absent this, users may wish to include device-specific optimizations, such as using float4s on ATI hardware or unrolling loops to different lengths based on the underlying architecture. To facilitate this, clUtil defines macros for the current device vendor and (coming soon!) the current platform vendor. The macro defined is an uppercase version of the string returned by clGetDeviceInfo() with CL_DEVICE_VENDOR with spaces, commas, and periods replaced with underscores.
+Presently, no implementation of OpenCL is perfect and each has various bugs and/or non-standard implementation details that need to have #define workarounds. Absent this, users may wish to include device-specific optimizations, such as using float4s on ATI hardware or unrolling loops to different lengths based on the underlying architecture. To facilitate this, clUtil defines macros for the current device vendor and (coming soon!) the current platform vendor. The macro defined is an uppercase version of the string returned by clGetDeviceInfo() with CL_DEVICE_VENDOR with spaces, commas, and periods replaced with underscores. 
 NVIDIA CUDA SDK
 
   * Passing __constant address space pointers to kernels often causes compilation issues or doesn't work. Use __global instead.
