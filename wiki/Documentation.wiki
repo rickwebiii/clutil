@@ -272,8 +272,8 @@ Parameters:
   # gpuBuffer: a cl_mem handle to the device buffer.
 Return:
     CL_SUCCESS if no error occurred. Otherwise, an error code corresponding to the erroneous underlying OpenCL call is returned after performing the previously described error handling.
-Device Management
 
+==Device Management==
 ===clUtil::setDeviceNum()===
 {{{
 cl_int clUtil::setDeviceNum(cl_int device)
