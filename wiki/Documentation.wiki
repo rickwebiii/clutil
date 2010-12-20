@@ -272,133 +272,132 @@ Return:
     CL_SUCCESS if no error occurred. Otherwise, an error code corresponding to the erroneous underlying OpenCL call is returned after performing the previously described error handling.
 Device Management
 
-==clUtil::setDeviceNum()=
-
+===clUtil::setDeviceNum()===
+{{{
 cl_int clUtil::setDeviceNum(cl_int device)
+}}}
 Sets the current device to "device."
 
 Parameters:
 
-device: the cardinal number of the device to use. Devices can reside on any of the underlying platforms. Note that it's possible for the same device to appear several times if it's supported by multiple platforms. 
+  # device: the cardinal number of the device to use. Devices can reside on any of the underlying platforms. Note that it's possible for the same device to appear several times if it's supported by multiple platforms. 
 Return:
     CL_SUCCESS if no error occurred. CL_INVALID_VALUE if device is larger than the number returned by getNumDevices() or is negative.
-clUtil::getDeviceNum()
 
+===clUtil::getDeviceNum()===
+{{{
 cl_int clUtil::getDeviceNum()
+}}}
 Returns the cardinal number of the currently selected device or -1 if clUtil::initialize() has not been called.
 
 Parameters:
-
     None
 Return:
-
     The cardinal number of the currently selected device.
-clUtil::getNumDevices()
 
+===clUtil::getNumDevices()===
+{{{
 cl_uint clUtil::getNumDevices()
+}}}
 Returns the sum of all devices on all platforms or 0 if either clUtil::initialize() has not been called or no device is supported by any OpenCL platform. Some devices may be enumerated more than once if they are supported by more than one platform.
 
 Parameters:
-
     None
 Return:
-
     The total number of devices on the system.
 
-clUtil::getDeviceName()
-
+===clUtil::getDeviceName()===
+{{{
 char* clUtil::getDeviceName()
+}}}
 Returns a C-string containing the current device's name (e.g. GTX 480, Radeon 5870, etc.).
 
 Parameters:
-
     None
 Return:
-
     A C-string containing the currently selected device's name.
 
-clUtil::getDeviceVendor()
-
+===clUtil::getDeviceVendor()===
+{{{
 char* clUtil::getDeviceVendor()
+}}}
 Returns a C-string containing the current device's vendor (e.g. Intel, Advance Micro Devices Inc., etc.).
 
 Parameters:
-
     None
 Return:
-
     A C-string containing the currently selected device's vendor.
 
-clUtil::getDeviceDriver()
-
+===clUtil::getDeviceDriver()===
+{{{
 char* clUtil::getDeviceDriver()
+}}}
 Returns a C-string containing the current device's driver version number.
 
 Parameters:
-
     None
 Return:
-
     A C-string containing the currently selected device's driver version.
 
-clUtil::getMaxWriteImages()
-
+===clUtil::getMaxWriteImages()===
+{{{
 cl_uint clUtil::getMaxWriteImages()
+}}}
 Returns the maximum number of images any kernel can write to.
 
 Parameters:
-
     None
 Return:
-
     An unsigned integer containing the number of images a kernel running on the current device can write to.
 
-clUtil::getSupportedImageFormats()
-
+===clUtil::getSupportedImageFormats()===
+{{{
 void clUtil::getSupportedImageFormats()
-Prints all image formats supported by the currently selected device.
+}}}
+Prints all image formats supported by the currently selected device to stdout.
 
 Parameters:
-
     None
 Return:
-
     None
 
-Error handling
+==Error handling==
 
-clUtilCheckErrorVoid(err)
-
+===clUtilCheckErrorVoid(err)===
+{{{
 clUtilCheckErrorVoid(err) //[MACRO]
+}}}
 If err equals CL_SUCCESS, does nothing. Otherwise, it prints the file and line number of the call site as well as the plain text string of err. It then raises a trap signal and causes the calling function to immediately void return.
 
 Parameters:
-err: a cl_int representing an error code from an OpenCL or clUtil function call.
+  # err: a cl_int representing an error code from an OpenCL or clUtil function call.
 Return:
-
     Causes calling function to void return.
-clUtilCheckError(err, returnVal)
 
+===clUtilCheckError(err, returnVal)===
+{{{
 clUtilCheckError(err, returnVal) //[MACRO]
+}}}
 If err equals CL_SUCCESS, does nothing. Otherwise, it prints the file and line number of the call site as well as the plain text string of err. It then raises a trap signal and causes the calling function to immediately return returnVal.
 
 Parameters:
-
-err: a cl_int representing an error code from an OpenCL or clUtil function call.
-returnVal: the value the calling function should return.
+  # err: a cl_int representing an error code from an OpenCL or clUtil function call.
+  # returnVal: the value the calling function should return.
 Return:
     Causes the calling function to return returnVal.
-clUtil::getErrorCode()
 
+===clUtil::getErrorCode()===
+{{{
 const char* clUtil::getErrorCode(cl_int err)
+}}}
 Returns a C-string containing the English text description of OpenCL error code err.
 
 Parameters:
-
-err: a cl_int representing an error code from an OpenCL or clUtil function call.
+  # err: a cl_int representing an error code from an OpenCL or clUtil function call.
 Return:
     A C-string containing a description of err.
-Kernels
+
+==Kernels==
 
 clUtil_enqueueKernel()
 
