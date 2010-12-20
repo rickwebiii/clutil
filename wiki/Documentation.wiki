@@ -1,5 +1,4 @@
-
-Introduction
+=Introduction=
 
 If any of you have used OpenCL, you'll know that running a program in OpenCL is anything but easy. Consider the following example that fills an array with a specified value.
 main.cc:
@@ -101,16 +100,17 @@ int main(int argc, char** argv)
 }
 }}}
 
-Design
+=Design=
 
 Simplifying the OpenCL API requires several assumptions and design decisions that trade expressivity for flexibility. This being said, clUtil still provides enough options for most applications. These assumptions include:
 Simplified device/platform model
 Simpler memory model
 Stronger programming model
 clUtil uses many features not available in C such as parameter defaulting and STL objects. Additionally, it uses variadic templates for launching kernels. Because of these language features, clUtil requires a C++ compiler with at least variadic template support of the C++0x standard. As such, one of the following compilers is required:
-gcc 4.3 or later (use -std=c++0x flag on any file that includes clUtil.h). We have tested gcc 4.4.1 with x86_64-linux-gnu target.
+  * gcc 4.3 or later (use -std=c++0x flag on any file that includes clUtil.h). We have tested gcc 4.4.1 with x86_64-linux-gnu target.
 We currently support Linux running OpenCL 1.0 or later. At present, we have tested clUtil using ATI's StreamSDK and Nvidia's CUDA. Unfortunately, there are known issues with both of these runtimes. As such, we have included mechanisms to allow users to design workarounds.
-Device Model
+
+==Device Model==
 
 clUtil makes no distinction between device platforms. Devices are devices and will implicitly run on the correct platform. On initialization, clUtil queries every platform available and combines all their device listings into a unified device list with the following assumptions (which will likely be loosened in the future):
 No more than 64 platforms. Any platform beyond 64 are ignored.
@@ -126,7 +126,7 @@ clUtil's memory model provides fewer options than vanilla OpenCL. All buffers ar
 
 In addition to vanilla buffers, clUtil supports 2D images. 2D images are an intuitive way to represent matrices that allows accelerating memory operations through the texture cache (in particular, ATI cards benefit greatly from the texture cache). 1D and 3D textures are currently not supported, but we plan to do so in the future. Like buffers, clUtil uses cl_mem handles to represent images, so they can be manipulated using OpenCL calls. clUtil presently creates images from existing global buffers; the API takes the strides of a 2D array stored in a buffer and copies it to an image along with possible padding.
 
-Programming model
+==Programming model==
 
 clUtil makes dramatically simplifies OpenCL's programming model. Developers no longer have to worry about kernels, programs, binaries, etc. clUtil takes a list of source code files at initialization and compiles them all for each device on the machine. Calling a kernel is as simple as calling clUtil_enqueueKernel() after initialization with the kernel name, work dimension, global work size, local work size, and the arguments to the kernel. 
 
@@ -135,7 +135,7 @@ Thread safety
 
 clUtil is not currently thread safe. Switching devices occurs on a global level and calling different operations from different threads can cause race conditions on devices' queues. We plan to add thread safety by making the current device number a thread-local variable and adding mutex locking to command queues. For the time being, changing devices and issuing threads should occur only in critical sections.
 
-User Guide
+==User Guide==
 
 A typical OpenCL, CUDA, or clUtil application has a motif similar to the following:
 Initialize
@@ -149,7 +149,7 @@ Initialization
 
 With clUtil, step 1 is simplified to a single function call that initializes everything needed to run kernels and manipulate memory on any devices. The user does this by calling clUtil::initialize().
 
-Memory Management
+==Memory Management==
 
 Once initialization is complete, the user can allocate and destroy buffers using clUtil::alloc() and clUtil::free() respectively. Users do not need to worry about kernels using buffers completing after free is called; OpenCL's runtime handles this. So long as the kernel is enqueued before free is called, the program should run correctly.
 
@@ -158,7 +158,7 @@ Device Management
 
 All devices on all platforms are flattened into a single list behind the scenes. Users are abstracted away from this list and can change the current device using clUtil::setDeviceNum() and query the current device using clUtil::getDeviceNum(). The total number of devices across all platforms is accessible using clUtil::getNumDevices().
 
-Error handling
+==Error handling==
 
 Errors are signaled using return values as is done in C. When an error occurs, all clUtil functions do the following upon encountering an error on one of its internal OpenCL calls:
 print the source file, line number on which the error occurred in clUtil, and what the error was.
@@ -170,13 +170,15 @@ Some functions may print additional information. For example, if clUtil::initial
 
 The error handling macros used by clUtil that do the above are clUtilCheckErrorVoid() and clUtilCheckError(). The former should be used by functions that return void while the latter should be used by functions that return a value. Additionally, OpenCL error codes can be turned into plain English strings using clUtil::getErrorCode().
 
-Kernels
+==Kernels==
 
 To launch a kernel, call clUtil_enqueueKernel() with the name of the kernel, the work dimension, global size, local size, and arguments to the kernel. This function looks up the kernel by name in a hash table for the current device that is created when clUtil is initialized.
-Images
+
+==Images==
 
 clUtil's image functions are designed to be used with matrix data for linear algebra routines. They are intended to temporarily hold copies of matrices in images so they can run through the texture cache as inputs to a kernel. 
-Platform/Device Specific Compilation
+
+==Platform/Device Specific Compilation==
 
 Presently, no implementation of OpenCL is perfect and each has various bugs and/or non-standard implementation details that need to have #define workarounds. Absent this, users may wish to include device-specific optimizations, such as using float4s on ATI hardware or unrolling loops to different lengths based on the underlying architecture. To facilitate this, clUtil defines macros for the current device vendor and (coming soon!) the current platform vendor. The macro defined is an uppercase version of the string returned by clGetDeviceInfo() with CL_DEVICE_VENDOR with spaces, commas, and periods replaced with underscores.
 NVIDIA CUDA SDK
