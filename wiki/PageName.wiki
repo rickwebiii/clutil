@@ -1,1 +1,1 @@
-Wiki is [https://sites.google.com/site/taclwiki/wiki-portal/clutil---a-library-for-making-opencl-as-painless-as-cuda here]
+Documentation, user guide, and reference is [https://sites.google.com/site/taclwiki/wiki-portal/clutil---a-library-for-making-opencl-as-painless-as-cuda here]
