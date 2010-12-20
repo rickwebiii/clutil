@@ -400,174 +400,170 @@ Return:
     A C-string containing a description of err.
 
 ==Kernels==
-
-clUtil_enqueueKernel()
-
+===clUtil_enqueueKernel()===
+{{{
 void clUtil_enqueueKernel(const char* kernelName,
                           size_t dim,
                           size_t* global,
                           size_t* local,
                           Args... args)
+}}}
 Enqueues a kernel with function name kernelName on the current device. This function is variadic, so an arbitrary number of arguments can be specified as parameters to the kernel.
 
 Parameters:
-
-kernelName: The actual name of the kernel. For example, if in my source files I have __kernel void foo(), then "foo" is the kernel name.
-dim: The dimension of the work size
-global: an array containing the sizes of the total work item dimensions
-local: an array containing the sizes of the work group dimensions.
-args: each argument corresponds to an argument the kernel accepts.
+  # kernelName: The actual name of the kernel. For example, if in my source files I have __kernel void foo(), then "foo" is the kernel name.
+  # dim: The dimension of the work size
+  # global: an array containing the sizes of the total work item dimensions
+  # local: an array containing the sizes of the work group dimensions.
+  # args: each argument corresponds to an argument the kernel accepts.
 Return:
     None, but will print, trap, return if kernel does not exist, arguments don't match, or kernel fails to enqueue.
-Images
 
-clUtil::copyToImageFloat()
-
+==Images==
+===clUtil::copyToImageFloat()===
+{{{
 cl_int clUtil::copyToImageFloat(cl_mem buffer,
                                 int offset,
                                 int m,
                                 int n,
                                 int ld,
                                 cl_mem* image)
+}}}
 Interpreting buffer starting at offset as a column-major single-precision matrix with m rows and n columns and a leading dimension of ld, allocate and copy this matrix into a 32-bit floating point alpha channel image. This image will have a width of m, a height of n, and one color per channel. This function is useful for accessing matrices through the texture cache. Upon return, "image" will point to the cl_mem handle containing the image. This function is an allocation, so you'll have to call clUtil::free() or clReleaseMemObject() to destroy it when you're finished with it.
 
 Parameters:
-
-buffer: a cl_mem handle to the buffer containing the source matrix
-offset: the number of elements to skip before the matrix starts
-m: the number of rows in the source matrix
-n: the number of columns in the source matrix
-ld: the leading dimension in the source matrix. Should be at least the number of columns.
-image: upon return, this will point to the allocated image's handle
+  # buffer: a cl_mem handle to the buffer containing the source matrix
+  # offset: the number of elements to skip before the matrix starts
+  # m: the number of rows in the source matrix
+  # n: the number of columns in the source matrix
+  # ld: the leading dimension in the source matrix. Should be at least the number of columns.
+  # image: upon return, this will point to the allocated image's handle
 Return:
     CL_SUCCESS if no error occurred. Otherwise, this function returns the internal error code.
-clUtil::copyToImageTransposeFloat()
 
+===clUtil::copyToImageTransposeFloat()===
+{{{
 cl_int clUtil::copyToImageTransposeFloat(cl_mem buffer,
                                          int offset,
                                          int m,
                                          int n,
                                          int ld,
                                          cl_mem* image)
+}}}
 Interpreting buffer starting at offset as a column-major single-precision matrix with m rows and n columns and a leading dimension of ld, allocate and transpose this matrix into a 32-bit floating point alpha channel image. This image will have a width of n, a height of m, and one color per channel. This function is useful for accessing matrices through the texture cache. Upon return, "image" will point to the cl_mem handle containing the image. This function is an allocation, so you'll have to call clUtil::free() or clReleaseMemObject() to destroy it when you're finished with it.
 
 Parameters:
-
-buffer: a cl_mem handle to the buffer containing the source matrix
-offset: the number of elements to skip before the matrix starts
-m: the number of rows in the source matrix
-n: the number of columns in the source matrix
-ld: the leading dimension in the source matrix. Should be at least the number of columns.
-image: upon return, this will point to the allocated image's handle
+  # buffer: a cl_mem handle to the buffer containing the source matrix
+  # offset: the number of elements to skip before the matrix starts
+  # m: the number of rows in the source matrix
+  # n: the number of columns in the source matrix
+  # ld: the leading dimension in the source matrix. Should be at least the number of columns.
+  # image: upon return, this will point to the allocated image's handle
 Return:
     CL_SUCCESS if no error occurred. Otherwise, this function returns the internal error code.
 
-clUtil::copyToImageDouble()
-
+===clUtil::copyToImageDouble()===
+{{{
 cl_int clUtil::copyToImageDouble(cl_mem buffer,
                                  int offset,
                                  int m,
                                  int n,
                                  int ld,
                                  cl_mem* image)
+}}}
 Interpreting buffer starting at offset as a column-major double-precision matrix with m rows and n columns and a leading dimension of ld, allocate and copy this matrix into a 32-bit floating point red-green channel image. This image will have a width of n, a height of m, and two colors per channel. Use as_double() to reinterpret float2s as doubles. This function is useful for accessing matrices through the texture cache. Upon return, "image" will point to the cl_mem handle containing the image. This function is an allocation, so you'll have to call clUtil::free() or clReleaseMemObject() to destroy it when you're finished with it.
 
 Parameters:
-
-buffer: a cl_mem handle to the buffer containing the source matrix
-offset: the number of elements to skip before the matrix starts
-m: the number of rows in the source matrix
-n: the number of columns in the source matrix
-ld: the leading dimension in the source matrix. Should be at least the number of columns.
-image: upon return, this will point to the allocated image's handle
+  # buffer: a cl_mem handle to the buffer containing the source matrix
+  # offset: the number of elements to skip before the matrix starts
+  # m: the number of rows in the source matrix
+  # n: the number of columns in the source matrix
+  # ld: the leading dimension in the source matrix. Should be at least the number of columns.
+  # image: upon return, this will point to the allocated image's handle
 Return:
     CL_SUCCESS if no error occurred. Otherwise, this function returns the internal error code.
 
-clUtil::copyToImageTransposeDouble()
-
+===clUtil::copyToImageTransposeDouble()===
+{{{
 cl_int clUtil::copyToImageTransposeDouble(cl_mem buffer,
                                           int offset,
                                           int m,
                                           int n,
                                           int ld,
                                           cl_mem* image)
+}}}
 Interpreting buffer starting at offset as a column-major double-precision matrix with m rows and n columns and a leading dimension of ld, allocate and transpose this matrix into a 32-bit floating point red-green channel image. This image will have a width of m, a height of n, and two colors per channel. Use as_double() in kernels to reinterpret float2s as doubles. This function is useful for accessing matrices through the texture cache. Upon return, "image" will point to the cl_mem handle containing the image. This function is an allocation, so you'll have to call clUtil::free() or clReleaseMemObject() to destroy it when you're finished with it.
 
 Parameters:
-
-buffer: a cl_mem handle to the buffer containing the source matrix
-offset: the number of elements to skip before the matrix starts
-m: the number of rows in the source matrix
-n: the number of columns in the source matrix
-ld: the leading dimension in the source matrix. Should be at least the number of columns.
-image: upon return, this will point to the allocated image's handle
+  # buffer: a cl_mem handle to the buffer containing the source matrix
+  # offset: the number of elements to skip before the matrix starts
+  # m: the number of rows in the source matrix
+  # n: the number of columns in the source matrix
+  # ld: the leading dimension in the source matrix. Should be at least the number of columns.
+  # image: upon return, this will point to the allocated image's handle
 Return:
     CL_SUCCESS if no error occurred. Otherwise, this function returns the internal error code.
 
-clUtil::copyToImageFloat4()
-
+===clUtil::copyToImageFloat4()===
+{{{
 cl_int clUtil::copyToImageFloat4(cl_mem buffer,
                                  int offset,
                                  int m,
                                  int n,
                                  int ld,
                                  cl_mem* image)
-
+}}}
 Interpreting buffer starting at offset as a column-major single-precision matrix with m rows and n columns and a leading dimension of ld, allocate and copy this matrix into a 32-bit floating point red-green-blue-alpha channel image. This image will have a width of m/4 if 4 divides m and m/4 + 1 otherwise, a height of n, and four colors per channel. If m is not a multiple of 4, image will have padding (0.0f) in some of the channels in the last pixel. This function is useful for accessing matrices through the texture cache. Upon return, "image" will point to the cl_mem handle containing the image. This function is an allocation, so you'll have to call clUtil::free() or clReleaseMemObject() to destroy it when you're finished with it.
 
 Parameters:
-
-buffer: a cl_mem handle to the buffer containing the source matrix
-offset: the number of elements to skip before the matrix starts
-m: the number of rows in the source matrix
-n: the number of columns in the source matrix
-ld: the leading dimension in the source matrix. Should be at least the number of columns.
-image: upon return, this will point to the allocated image's handle
+  # buffer: a cl_mem handle to the buffer containing the source matrix
+  # offset: the number of elements to skip before the matrix starts
+  # m: the number of rows in the source matrix
+  # n: the number of columns in the source matrix
+  # ld: the leading dimension in the source matrix. Should be at least the number of columns.
+  # image: upon return, this will point to the allocated image's handle
 Return:
     CL_SUCCESS if no error occurred. Otherwise, this function returns the internal error code.
 
-clUtil::copyToImageTransposeFloat4()
-
+===clUtil::copyToImageTransposeFloat4()===
+{{{
 cl_int clUtil::copyToImageTransposeFloat4(cl_mem buffer,
                                           int offset,
                                           int m,
                                           int n,
                                           int ld,
                                           cl_mem* image)
-
+}}}
 Interpreting buffer starting at offset as a column-major single-precision matrix with m rows and n columns and a leading dimension of ld, allocate and copy this matrix into a 32-bit floating point red-green-blue-alpha channel image. This image will have a width of n/4 if 4 divides m and n/4 + 1 otherwise, a height of m, and four colors per channel. If n is not a multiple of 4, image will have padding (0.0f) in some of the channels in the last pixel. This function is useful for accessing matrices through the texture cache. Upon return, "image" will point to the cl_mem handle containing the image. This function is an allocation, so you'll have to call clUtil::free() or clReleaseMemObject() to destroy it when you're finished with it.
 
 Parameters:
-
-buffer: a cl_mem handle to the buffer containing the source matrix
-offset: the number of elements to skip before the matrix starts
-m: the number of rows in the source matrix
-n: the number of columns in the source matrix
-ld: the leading dimension in the source matrix. Should be at least the number of columns.
-image: upon return, this will point to the allocated image's handle
+  # buffer: a cl_mem handle to the buffer containing the source matrix
+  # offset: the number of elements to skip before the matrix starts
+  # m: the number of rows in the source matrix
+  # n: the number of columns in the source matrix
+  # ld: the leading dimension in the source matrix. Should be at least the number of columns.
+  # image: upon return, this will point to the allocated image's handle
 Return:
     CL_SUCCESS if no error occurred. Otherwise, this function returns the internal error code.
 
-clUtil::copyToImageDouble2()
+===clUtil::copyToImageDouble2()===
 
-clUtil::copyToImageTransposeDouble2()
+===clUtil::copyToImageTransposeDouble2()===
 
-Debugging
+==Debugging==
 
-clUtil::debugPrintImageFloat()
+===clUtil::debugPrintImageFloat()===
 
-clUtil::debugPrintImageDouble()
+===clUtil::debugPrintImageDouble()===
 
-Timing
-
-clUtil::getTime()
-
+==Timing==
+==clUtil::getTime()==
+{{{
 double clUtil::getTime()
+}}}
 Gets the "current time" in seconds with at least microsecond resolution. The difference between two calls of this function is the time elapsed between those two calls in seconds.
 
 Parameters:
-
     None
 Return:
-
     The current "time" in double precision. 
