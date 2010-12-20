@@ -185,11 +185,11 @@ clUtil's image functions are designed to be used with matrix data for linear alg
 Presently, no implementation of OpenCL is perfect and each has various bugs and/or non-standard implementation details that need to have #define workarounds. Absent this, users may wish to include device-specific optimizations, such as using float4s on ATI hardware or unrolling loops to different lengths based on the underlying architecture. To facilitate this, clUtil defines macros for the current device vendor and (coming soon!) the current platform vendor. The macro defined is an uppercase version of the string returned by clGetDeviceInfo() with CL_DEVICE_VENDOR with spaces, commas, and periods replaced with underscores.
 NVIDIA CUDA SDK
 
-Passing __constant address space pointers to kernels often causes compilation issues or doesn't work. Use __global instead.
+  * Passing __constant address space pointers to kernels often causes compilation issues or doesn't work. Use __global instead.
 AMD Stream SDK 2.3
 
-Double precision is enabled via #pragma cl_amd_fp64 : enable instead of cl_khr_fp64 : enable.
-Samplers can be inline declared in OpenCL programs using const sampler_t mySampler = CLK_NORMALIZED_COORDS_TRUE or __constant sampler_t mySampler = CLK_NORMALIZED_COORDS_TRUE. The former is non-standard and the only way to do it in v2.2. The latter is the standard way and is only supported in v2.3 and later.
+  * Double precision is enabled via #pragma cl_amd_fp64 : enable instead of cl_khr_fp64 : enable.
+  * Samplers can be inline declared in OpenCL programs using const sampler_t mySampler = CLK_NORMALIZED_COORDS_TRUE or __constant sampler_t mySampler = CLK_NORMALIZED_COORDS_TRUE. The former is non-standard and the only way to do it in v2.2. The latter is the standard way and is only supported in v2.3 and later.
 
 ----
 
