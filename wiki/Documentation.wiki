@@ -189,76 +189,90 @@ AMD Stream SDK 2.3
 Double precision is enabled via #pragma cl_amd_fp64 : enable instead of cl_khr_fp64 : enable.
 Samplers can be inline declared in OpenCL programs using const sampler_t mySampler = CLK_NORMALIZED_COORDS_TRUE or __constant sampler_t mySampler = CLK_NORMALIZED_COORDS_TRUE. The former is non-standard and the only way to do it in v2.2. The latter is the standard way and is only supported in v2.3 and later.
 
+----
+
 =Reference=
 
 ==Initialization==
 
 ===clUtil::initialize()===
-
-`cl_int clUtil::initialize(char** fileNames, 
+{{{
+cl_int clUtil::initialize(char** fileNames, 
                           size_t numFiles, 
                           const char* cacheName = NULL, 
-                          const char* options = NULL)`
+                          const char* options = NULL)
+}}}
 
 This function initializes the clUtil runtime and must be the first clUtil function called. It initializes all devices on all platforms, creates a single context and command queue on each device, compiles all files given in fileNames into a single program on each device (or if possible load them from cached binaries), and set the current device to 0.
 
 Parameters:
-fileNames: an array of C-strings including filenames to be compiled into program on each device. Can have either relative or full paths to files.
-numFiles: the number of files to be compiled
-cacheName (optional): The name of the precompiled binary to be loaded as a program. Each device will have a file named (cacheName).device(deviceNumber). If the binaries don't exist, then they are compiled and saved to disk for future use.
-options (optional): options passed to OpenCL compiler
+  # fileNames: an array of C-strings including filenames to be compiled into program on each device. Can have either relative or full paths to files.
+  # numFiles: the number of files to be compiled
+  # cacheName (optional): The name of the precompiled binary to be loaded as a program. Each device will have a file named (cacheName).device(deviceNumber). If the binaries don't exist, then they are compiled and saved to disk for future use.
+  # options (optional): options passed to OpenCL compiler
 Return:
     CL_SUCCESS if no error occurred. Otherwise, an error code corresponding to the erroneous underlying OpenCL call is returned after performing the previously described error handling.
-Memory Management
 
-clUtil::alloc()
+==Memory Management==
 
+===clUtil::alloc()===
+
+{{{
 clUtil::alloc(size_t bytes, cl_mem* gpuBuffer)
+}}}
 
 Allocates memory on the currently selected device.
 
 Parameters:
-bytes: number of bytes to be allocated
-gpuBuffer: points to a cl_mem handle that is assigned if memory is successfully allocated.
+  # bytes: number of bytes to be allocated
+  # gpuBuffer: points to a cl_mem handle that is assigned if memory is successfully allocated.
+
 Return:
     CL_SUCCESS if no error occurred. Otherwise, an error code corresponding to the erroneous underlying OpenCL call is returned after performing the previously described error handling.
-clUtil::free()
 
+===clUtil::free()===
+{{{
 clUtil::free(cl_mem buffer)
+}}}
 Frees a buffer after all previously enqueued kernels referencing it finish.
 
 Parameters:
 
-buffer: a cl_mem handle to the buffer to be freed
+  # buffer: a cl_mem handle to the buffer to be freed
+
 Return:
     CL_SUCCESS if no error occurred. Otherwise, an error code corresponding to the erroneous underlying OpenCL call is returned after performing the previously described error handling.
-clUtil::devicePut()
 
+===clUtil::devicePut()===
+{{{
 cl_int clUtil::devicePut(void* buffer, size_t len, cl_mem gpuBuffer)
+}}}
 Copies data from the host buffer "buffer" to the device buffer "gpuBuffer" and returns when the copy is complete. Note: gpuBuffer must reside on the currently selected device or an error will occur.
 
 Parameters:
 
-buffer: a pointer to the zeroth element on the host's buffer
-len: number of bytes of data to be copied
-gpuBuffer: a cl_mem handle to the device buffer.
+  # buffer: a pointer to the zeroth element on the host's buffer
+  # len: number of bytes of data to be copied
+  # gpuBuffer: a cl_mem handle to the device buffer.
 Return:
     CL_SUCCESS if no error occurred. Otherwise, an error code corresponding to the erroneous underlying OpenCL call is returned after performing the previously described error handling.
-clUtil::deviceGet()
 
+===clUtil::deviceGet()===
+{{{
 cl_int clUtil::deviceGet(void* buffer, size_t len, cl_mem gpuBuffer)
+}}}
 Copies data from the device buffer "gpuBuffer" to the host buffer "buffer" and returns when the copy is complete. Note: gpuBuffer must reside on the currently selected device or an error will occur.
 
 Parameters:
 
-buffer: a pointer to the zeroth element on the host's buffer
-len: number of bytes of data to be copied
-gpuBuffer: a cl_mem handle to the device buffer.
+  # buffer: a pointer to the zeroth element on the host's buffer
+  # len: number of bytes of data to be copied
+  # gpuBuffer: a cl_mem handle to the device buffer.
 Return:
     CL_SUCCESS if no error occurred. Otherwise, an error code corresponding to the erroneous underlying OpenCL call is returned after performing the previously described error handling.
 Device Management
 
-clUtil::setDeviceNum()
+==clUtil::setDeviceNum()=
 
 cl_int clUtil::setDeviceNum(cl_int device)
 Sets the current device to "device."
