@@ -1,3 +1,5 @@
+<wiki:toc max_depth="3" />
+
 =Introduction=
 
 If any of you have used OpenCL, you'll know that running a program in OpenCL is anything but easy. Consider the following example that fills an array with a specified value.
