@@ -72,7 +72,7 @@ const char* clUtil::getErrorCode(cl_int err)
     case CL_INVALID_KERNEL_DEFINITION:
       return "Invalid kernel definition.";
     case CL_BUILD_PROGRAM_FAILURE:
-      return "Failed to build program."
+      return "Failed to build program.";
     default:
       return "Unknown error.";
   }
