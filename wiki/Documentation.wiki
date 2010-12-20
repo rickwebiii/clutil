@@ -115,10 +115,10 @@ We currently support Linux running OpenCL 1.0 or later. At present, we have test
 ==Device Model==
 
 clUtil makes no distinction between device platforms. Devices are devices and will implicitly run on the correct platform. On initialization, clUtil queries every platform available and combines all their device listings into a unified device list with the following assumptions (which will likely be loosened in the future):
-No more than 64 platforms. Any platform beyond 64 are ignored.
-No more than 64 devices. Any devices beyond 64 are ignored.
-Each device has a single context.
-Each device has a single command queue. It executes operations in order. We plan to support event-based execution in the future.
+  * No more than 64 platforms. Any platform beyond 64 are ignored.
+  * No more than 64 devices. Any devices beyond 64 are ignored.
+  * Each device has a single context.
+  * Each device has a single command queue. It executes operations in order. We plan to support event-based execution in the future.
 The device list is hidden from the user; they change the current device with a function call. Subsequent operations (memory allocations, kernels, etc.) will occur on the specified device. 
 Memory Model
 
