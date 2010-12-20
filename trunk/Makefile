@@ -1,7 +1,7 @@
 OBJ=clUtil.o clUtilImage.o clUtilKernel.o
 
 #Directory containing OpenCL header files
-OpenCLInclude=
+OpenCLInclude=/usr/include
 
 LIB=
 CPPFLAGS=-g -O0 -std=c++0x -I$(OpenCLInclude)
