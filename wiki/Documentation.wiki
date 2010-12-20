@@ -71,7 +71,7 @@ __kernel void fill(__global float* array, unsigned int arrayLength, float val)
 {
     if(get_global_id(0) < arrayLength)
     {
-        arrayLength[get_global_id(0)] = val;
+        array[get_global_id(0)] = val;
     }
 }
 }}}
@@ -81,7 +81,7 @@ main.cc:
 
 int main(int argc, char** argv)
 {
-    char* kernelFiles[] = {"kernel.cl"};
+    const char* kernelFiles[] = {"kernel.cl"};
     cl_mem buffer;
     float array[2000];
     unsigned int length = 2000;
@@ -93,9 +93,9 @@ int main(int argc, char** argv)
     size_t global;
     size_t local = 64;    
 
-    global = global % local == 0 ? length : (length / local + 1) * local;
+    global = length % local == 0 ? length : (length / local + 1) * local;
  
-    clUtil_enqueueKernel("fill", 1, global, local, buffer, length, val);
+    clUtil_enqueueKernel("fill", 1, &global, &local, buffer, length, val);
     clUtil::deviceGet(array, sizeof(array), buffer);
 
     clUtil::free(buffer);
