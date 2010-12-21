@@ -117,6 +117,7 @@ class clUtil
                                 size_t numFiles,
                                 const char* options);
     static cl_int getKernels();
+    static cl_int loadBinaries(const char* cachename);
   public:
     //Init and management crap
     static cl_int initialize(const char** filenames, 
