@@ -86,14 +86,14 @@ static char* fileToString(const char* filename, size_t * filesize)
 
   if(fid == -1) 
   {
-    printf("%s:%d::Could not open file %s.\n", __FILE__, __LINE__, filename);
+    //printf("%s:%d::Could not open file %s.\n", __FILE__, __LINE__, filename);
     return NULL;
   }
 
   //Get the file's size and allocate a buffer to hold its text
   if(fstat(fid, &fileInfo) != 0)
   {
-    printf("%s:%d::Could not stat file %s.\n", __FILE__, __LINE__, filename);
+    //printf("%s:%d::Could not stat file %s.\n", __FILE__, __LINE__, filename);
     return NULL;
   }
 
@@ -105,6 +105,7 @@ static char* fileToString(const char* filename, size_t * filesize)
   {
     printf("%s:%d::Could not read file %s.\n", __FILE__, __LINE__, filename);
     delete[] fileBuffer;
+    close(fid);
     return NULL;
   }
 
@@ -121,50 +122,63 @@ static char* fileToString(const char* filename, size_t * filesize)
   return fileBuffer;
 }
 
-cl_int clUtil::LoadBinaryFromDisk(const char *filename)
+cl_int clUtil::loadBinaries(const char* cachename)
 {
-	if (filename == NULL)
-	{
-		printf("%s:%d:%s\n", __FILE__, __LINE__, "empty filename");
-		return 1;
-	}
+  char binaryFileName[256];
+  cl_int err;
 
-	cl_int err;
-	size_t binary_size;
-
-	// read binary from file
-	char *ptx_code = fileToString (filename, &binary_size);
-
-	// create program from binary
-	gPrograms[gCurrentDevice] = clCreateProgramWithBinary (gContexts[gCurrentDevice], 
-			1,
-			gDevices, 
-			&binary_size, 
-			(const unsigned char **)&ptx_code, 
-			NULL, 
-			&err);
-	clUtilCheckError(err);
-
-  err = clBuildProgram(gPrograms[gCurrentDevice], 0, NULL, NULL, NULL, NULL);
-  if(err != CL_SUCCESS)
+  for(unsigned int curDevice = 0; curDevice < gNumDevices; curDevice++)
   {
-	  char errString[32768];
+    size_t fileSize;
+    char* binaryFile;
 
-	  err = clGetProgramBuildInfo(gPrograms[gCurrentDevice],
-			  gDevices[gCurrentDevice],
-			  CL_PROGRAM_BUILD_LOG,
-			  sizeof(errString),
-			  errString,
-			  NULL);
-	  clUtilCheckError(err);
-	  printf("%s", errString);
-	  return err;
+    snprintf(binaryFileName, 
+             sizeof(binaryFileName) - 1, 
+             "%s.device%u",
+             cachename,
+             curDevice);
+
+    binaryFile = fileToString(binaryFileName, &fileSize);
+
+    if(binaryFile == NULL)
+    {
+      return CL_INVALID_BINARY;
+    }
+
+    gPrograms[curDevice] = 
+      clCreateProgramWithBinary(gContexts[curDevice],
+                                1,
+                                &gDevices[curDevice],
+                                &fileSize,
+                                (const unsigned char**)&binaryFile,
+                                NULL,
+                                &err);
+    if(err != CL_SUCCESS)
+    {
+      return err;
+    }
+
+    err = clBuildProgram(gPrograms[curDevice],
+                         1,
+                         &gDevices[curDevice],
+                         NULL,
+                         NULL,
+                         NULL);
+    if(err != CL_SUCCESS)
+    {
+      char errString[32768];
+
+      err = clGetProgramBuildInfo(gPrograms[curDevice],
+                                  gDevices[curDevice],
+                                  CL_PROGRAM_BUILD_LOG,
+                                  sizeof(errString),
+                                  errString,
+                                  NULL);
+      return err;
+    }
   }
 
-  delete [] ptx_code;
-
   return CL_SUCCESS;
-
 }
 
 cl_kernel clUtil::getKernel(std::string& kernelName, cl_int* err)
@@ -495,11 +509,11 @@ cl_int clUtil::buildPrograms(const char** filenames,
     
   for(size_t curFile = 0; curFile < numFiles; curFile++)
   {
-	size_t filesize;
+    size_t filesize;
     files[curFile] = fileToString(filenames[curFile], &filesize);
     if(files[curFile] == NULL)
     {
-      printf("%s:%d::Could load source %s.\n", 
+      printf("%s:%d::Could not load source %s.\n", 
              __FILE__, 
              __LINE__, 
              files[curFile]);
@@ -543,14 +557,9 @@ cl_int clUtil::buildPrograms(const char** filenames,
       }
     }
 
-    //printf("%s\n", deviceVendor);
-
     snprintf(deviceFlags, 
              sizeof(deviceFlags) - 1, 
-             "-cl-mad-enable -D%s %s",	//(1) by default -cl-nv-opt-level=3 
-																		//(2) -cl-nv-verbose
-																		//	Output will be reported in the build log (accessible through the
-																		//	callback parameter to clBuildProgram).
+             "-cl-mad-enable -D%s %s",
              deviceVendor,
              options);
 
@@ -629,24 +638,50 @@ cl_int clUtil::initialize(const char** filenames,
                           const char* options)
 {
   cl_int err;
+  bool loadBinariesSucceeded = false;
 
   err = initDevices();
   clUtilCheckError(err);
   
   gCurrentDevice = 0;
 
-  if (filenames == NULL && cachename != NULL)
-	  LoadBinaryFromDisk(cachename);
-  else if (filenames != NULL)
-	  err = buildPrograms(filenames, numFiles, options);
-  else
+  if(cachename != NULL)
   {
-	  printf ("fail to initialize, check filenames and cachename\n");
-	  return 1;
+    loadBinariesSucceeded = true;
+
+    if(loadBinaries(cachename) != CL_SUCCESS)
+    {
+      loadBinariesSucceeded = false;
+    }
   }
+
+  if(filenames != NULL && loadBinariesSucceeded == false)
+  {
+	  err = buildPrograms(filenames, numFiles, options);
+    
+    //If cachename isn't NULL, dump binaries to disk
+    if(cachename != NULL)
+    {
+      for(unsigned int curDevice = 0; curDevice < gNumDevices; curDevice++)
+      {
+        char binaryFileName[256];
+
+        snprintf(binaryFileName, 
+                 sizeof(binaryFileName) - 1, 
+                 "%s.device%u",
+                 cachename,
+                 curDevice);
+        gCurrentDevice = curDevice;
+
+        dumpBinary(binaryFileName);
+      }
+    }
+  }
+
   clUtilCheckError(err);
 
   getKernels();
+  gCurrentDevice = 0;
 
   return err;
 }
