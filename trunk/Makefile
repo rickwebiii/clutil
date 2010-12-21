@@ -1,10 +1,10 @@
-OBJ=clUtil.o clUtilImage.o clUtilKernel.o
+OBJ=clUtil.o clUtilImage.o clUtilKernel.o clUtilInit.o
 
 #Directory containing OpenCL header files
 OpenCLInclude=/usr/include
 
 LIB=
-CPPFLAGS=-g -O0 -std=c++0x -I$(OpenCLInclude)
+CPPFLAGS=-g -Wall -O0 -std=c++0x -I$(OpenCLInclude)
 CXX=g++
 
 libclUtil.a: $(OBJ)

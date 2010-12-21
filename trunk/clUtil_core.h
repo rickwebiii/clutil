@@ -25,7 +25,7 @@
 {\
   if(err != CL_SUCCESS)\
   {\
-    printf("%s:%d::%s\n", __FILE__, __LINE__, clUtil::getErrorCode(err));\
+    printf("%s:%d::%s\n", __FILE__, __LINE__, clUtilGetErrorCode(err));\
     raise(SIGTRAP);\
     return;\
   }\
@@ -35,7 +35,7 @@
 {\
   if(err != CL_SUCCESS)\
   {\
-    printf("%s:%d::%s\n", __FILE__, __LINE__, clUtil::getErrorCode(err));\
+    printf("%s:%d::%s\n", __FILE__, __LINE__, clUtilGetErrorCode(err));\
     raise(SIGTRAP);\
     return err;\
   }\
@@ -94,115 +94,99 @@ class clMemPointer
     clMemPointer();
 };
 
-class clUtil
+namespace clUtil
 {
-  protected:
-    static cl_device_id gDevices[kCLUtilMaxDevices];
-    static cl_context gContexts[kCLUtilMaxDevices];
-    static cl_program gPrograms[kCLUtilMaxDevices];
-    static cl_command_queue gCommandQueues[kCLUtilMaxDevices];
-    static cl_uint gNumDevices;
-    static int gCurrentDevice;
-    static cl_kernel* gKernels[kCLUtilMaxDevices];
-    static std::map<std::string, cl_kernel> 
-      gKernelNameLookup[kCLUtilMaxDevices];
-
-    //Make constructors inaccessable; everything in this class is static
-    clUtil();
-    clUtil(const clUtil& copy);
-    
-    //Helper functions that should never be called by others
-    static cl_int initDevices();
-    static cl_int buildPrograms(const char** filenames, 
-                                size_t numFiles,
-                                const char* options);
-    static cl_int getKernels();
-    static cl_int loadBinaries(const char* cachename);
-  public:
-    //Init and management crap
-    static cl_int initialize(const char** filenames, 
-                             size_t numFiles, 
-                             const char* cachename = NULL,
-                             const char* options = NULL);
-    static cl_int setDeviceNum(cl_int device);
-    static cl_int getDeviceNum();
-    static cl_uint getNumDevices();
-    static cl_program getProgram();
-    static cl_command_queue getCommandQueue();
-    static cl_int LoadBinaryFromDisk(const char *);
-    static cl_kernel getKernel(std::string& kernelName, cl_int* err);
-
-    //Get info crap
-    static cl_int getPointerSize();
-    static size_t getMaxBlockSize();
-    static char* getDeviceName();
-    static char* getDeviceVendor();
-    static char* getDeviceDriver();
-    static cl_uint getMaxWriteImages();
-    static void dumpBinary(const char* filename);
-    static void getSupportedImageFormats();
-
-    //Turns error code into string
-    static const char* getErrorCode(cl_int err);
-
-    //Memory crap
-    static cl_int alloc(size_t bytes, cl_mem* gpuBuffer);
-    static cl_int devicePut(void* buffer, size_t len, cl_mem gpuBuffer);
-    static cl_int deviceGet(void* buffer, size_t len, cl_mem gpuBuffer);
-    static cl_int free(cl_mem buffer);
-
-    //Image copy crap
-    static cl_int copyToImageFloat(cl_mem buffer, 
-                                   int offset,
-                                   int m,
-                                   int n,
-                                   int ld,
-                                   cl_mem* image);
-    static cl_int copyToImageTransposeFloat(cl_mem buffer, 
-                                            int offset,
-                                            int m,
-                                            int n,
-                                            int ld,
-                                            cl_mem* image);
-    static cl_int copyToImageDouble(cl_mem buffer, 
-                                    int offset,
-                                    int m,
-                                    int n,
-                                    int ld,
-                                    cl_mem* image);
-    static cl_int copyToImageTransposeDouble(cl_mem buffer, 
-                                             int offset,
-                                             int m,
-                                             int n,
-                                             int ld,
-                                             cl_mem* image);
-    static cl_int copyToImageFloat4(cl_mem buffer, 
-                                    int offset,
-                                    int m,
-                                    int n,
-                                    int ld,
-                                    cl_mem* image);
-    static cl_int copyToImageTransposeFloat4(cl_mem buffer, 
-                                             int offset,
-                                             int m,
-                                             int n,
-                                             int ld,
-                                             cl_mem* image);
-    static cl_int copyToImageDouble2(cl_mem buffer, 
-                                     int offset,
-                                     int m,
-                                     int n,
-                                     int ld,
-                                     cl_mem* image);
-    static cl_int copyToImageTransposeDouble2(cl_mem buffer, 
-                                              int offset,
-                                              int m,
-                                              int n,
-                                              int ld,
-                                              cl_mem* image);
-    static cl_int debugPrintImageFloat(cl_mem image);
-    static cl_int debugPrintImageDouble(cl_mem image);
-
-    //Timing
-    static double getTime();
+  extern cl_device_id gDevices[kCLUtilMaxDevices];
+  extern cl_context gContexts[kCLUtilMaxDevices];
+  extern cl_program gPrograms[kCLUtilMaxDevices];
+  extern cl_command_queue gCommandQueues[kCLUtilMaxDevices];
+  extern cl_uint gNumDevices;
+  extern unsigned int gCurrentDevice;
+  extern cl_kernel* gKernels[kCLUtilMaxDevices];
+  extern std::map<std::string, cl_kernel> gKernelNameLookup[kCLUtilMaxDevices];
 };
+
+//Init and management crap
+cl_int clUtilInitialize(const char** filenames, 
+                        size_t numFiles, 
+                        const char* cachename = NULL,
+                        const char* options = NULL);
+cl_int clUtilSetDeviceNum(cl_int device);
+cl_int clUtilGetDeviceNum();
+cl_uint clUtilGetNumDevices();
+cl_program clUtilGetProgram();
+cl_command_queue clUtilGetCommandQueue();
+cl_kernel clUtilGetKernel(std::string& kernelName, cl_int* err);
+
+//Get info crap
+cl_int clUtilGetPointerSize();
+size_t clUtilGetMaxBlockSize();
+char* clUtilGetDeviceName();
+char* clUtilGetDeviceVendor();
+char* clUtilGetDeviceDriver();
+cl_uint clUtilGetMaxWriteImages();
+void clUtilGetSupportedImageFormats();
+
+//Turns error code into string
+const char* clUtilGetErrorCode(cl_int err);
+
+//Memory crap
+cl_int clUtilAlloc(size_t bytes, cl_mem* gpuBuffer);
+cl_int clUtilDevicePut(void* buffer, size_t len, cl_mem gpuBuffer);
+cl_int clUtilDeviceGet(void* buffer, size_t len, cl_mem gpuBuffer);
+cl_int clUtilFree(cl_mem buffer);
+
+//Image copy crap
+cl_int clUtilCopyToImageFloat(cl_mem buffer, 
+                              int offset,
+                              int m,
+                              int n,
+                              int ld,
+                              cl_mem* image);
+cl_int clUtilCopyToImageTransposeFloat(cl_mem buffer, 
+                                       int offset,
+                                       int m,
+                                       int n,
+                                       int ld,
+                                       cl_mem* image);
+cl_int clUtilCopyToImageDouble(cl_mem buffer, 
+                               int offset,
+                               int m,
+                               int n,
+                               int ld,
+                               cl_mem* image);
+cl_int clUtilCopyToImageTransposeDouble(cl_mem buffer, 
+                                        int offset,
+                                        int m,
+                                        int n,
+                                        int ld,
+                                        cl_mem* image);
+cl_int clUtilCopyToImageFloat4(cl_mem buffer, 
+                               int offset,
+                               int m,
+                               int n,
+                               int ld,
+                               cl_mem* image);
+cl_int clUtilCopyToImageTransposeFloat4(cl_mem buffer, 
+                                        int offset,
+                                        int m,
+                                        int n,
+                                        int ld,
+                                        cl_mem* image);
+cl_int clUtilCopyToImageDouble2(cl_mem buffer, 
+                                int offset,
+                                int m,
+                                int n,
+                                int ld,
+                                cl_mem* image);
+cl_int clUtilCopyToImageTransposeDouble2(cl_mem buffer, 
+                                         int offset,
+                                         int m,
+                                         int n,
+                                         int ld,
+                                         cl_mem* image);
+cl_int clUtilDebugPrintImageFloat(cl_mem image);
+cl_int clUtilDebugPrintImageDouble(cl_mem image);
+
+//Timing
+double clUtilGetTime();
