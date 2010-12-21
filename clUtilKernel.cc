@@ -1,22 +1,26 @@
 #include "clUtil_kernel.h"
 
-void clUtil_setArgs(cl_kernel kernel,
-                    const char* kernelName,
-                    size_t dim,
-                    size_t* global,
-                    size_t* local,
-                    size_t argIndex)
+void clUtilSetArgs(cl_kernel kernel,
+                   const char* kernelName,
+                   clUtil::Grid& workGrid,
+                   size_t argIndex)
 {
   cl_int err;
 
-  err = clEnqueueNDRangeKernel(clUtil::getCommandQueue(),
+  err = clEnqueueNDRangeKernel(clUtilGetCommandQueue(),
                                kernel,
-                               dim,
+                               workGrid.getDim(),
                                NULL,
-                               global,
-                               local,
+                               workGrid.getGlobal(),
+                               workGrid.getLocal(),
                                0,
                                NULL,
                                NULL);
   clUtilCheckErrorVoid(err);
+}
+
+void gridSetGlobalLocal(size_t* global, 
+                        size_t* local, 
+                        unsigned int curDim)
+{
 }

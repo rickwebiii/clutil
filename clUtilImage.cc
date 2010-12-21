@@ -1,6 +1,8 @@
 #include "clUtil.h"
 
-cl_int clUtil::copyToImageFloat(cl_mem buffer, 
+using namespace clUtil;
+
+cl_int clUtilCopyToImageFloat(cl_mem buffer, 
                                 int offset, 
                                 int m, 
                                 int n, 
@@ -8,21 +10,8 @@ cl_int clUtil::copyToImageFloat(cl_mem buffer,
                                 cl_mem* image)
 {
   cl_int err;
-  static int lastDevice = -1;
-  static cl_kernel kernel = 0;
-  size_t globalWork[2];
-  size_t localWork[2];
   cl_image_format format;
   int imageWidth;
-  size_t maxWorkSize;
-
-  if(lastDevice != gCurrentDevice)
-  {
-    kernel = clCreateKernel(getProgram(),
-                            "copyToImageFloat",
-                            &err);
-    clUtilCheckError(err);
-  }
 
   imageWidth = m;
 
@@ -39,47 +28,20 @@ cl_int clUtil::copyToImageFloat(cl_mem buffer,
                            NULL,
                            &err);
   clUtilCheckError(err);
-
-  err = clSetKernelArg(kernel, 0, sizeof(buffer), &buffer);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 1, sizeof(offset), &offset);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 2, sizeof(m), &m);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 3, sizeof(n), &n);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 4, sizeof(ld), &ld);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 5, sizeof(*image), image);
-  clUtilCheckError(err);
-
-  maxWorkSize = getMaxBlockSize();
-  localWork[0] = maxWorkSize < 64 ? 1 : 8;
-  localWork[1] = localWork[0];
-
-  globalWork[0] = imageWidth % localWork[0] == 0 && imageWidth >= localWork[0] ?
-    imageWidth :
-    (imageWidth/localWork[0] + 1) * localWork[0];
-  globalWork[1] = n % localWork[0] == 0 && n >= localWork[0] ?
-    n :
-    (n/localWork[0] + 1) * localWork[0];
-
-  err = clEnqueueNDRangeKernel(getCommandQueue(),
-                               kernel,
-                               2,
-                               NULL,
-                               globalWork,
-                               localWork,
-                               0,
-                               NULL,
-                               NULL);
-  clUtilCheckError(err);
-  clFinish(getCommandQueue());
-
+  
+  clUtilEnqueueKernel("copyToImageFloat",
+                      clUtilCreateGrid(imageWidth, 8, n, 8),
+                      buffer,
+                      offset,
+                      m,
+                      n,
+                      ld,
+                      image);
+  
   return CL_SUCCESS;
 }
 
-cl_int clUtil::copyToImageTransposeFloat(cl_mem buffer, 
+cl_int clUtilCopyToImageTransposeFloat(cl_mem buffer, 
                                          int offset, 
                                          int m, 
                                          int n, 
@@ -87,21 +49,8 @@ cl_int clUtil::copyToImageTransposeFloat(cl_mem buffer,
                                          cl_mem* image)
 {
   cl_int err;
-  static int lastDevice = -1;
-  static cl_kernel kernel = 0;
-  size_t globalWork[2];
-  size_t localWork[2];
   cl_image_format format;
   int imageWidth;
-  size_t maxWorkSize;
-
-  if(lastDevice != gCurrentDevice)
-  {
-    kernel = clCreateKernel(getProgram(),
-                            "copyToImageTransposeFloat",
-                            &err);
-    clUtilCheckError(err);
-  }
 
   imageWidth = n;
 
@@ -118,47 +67,20 @@ cl_int clUtil::copyToImageTransposeFloat(cl_mem buffer,
                            NULL,
                            &err);
   clUtilCheckError(err);
-
-  err = clSetKernelArg(kernel, 0, sizeof(buffer), &buffer);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 1, sizeof(offset), &offset);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 2, sizeof(m), &m);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 3, sizeof(n), &n);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 4, sizeof(ld), &ld);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 5, sizeof(*image), image);
-  clUtilCheckError(err);
-
-  maxWorkSize = getMaxBlockSize();
-  localWork[0] = maxWorkSize < 64 ? 1 : 8;
-  localWork[1] = localWork[0];
-
-  globalWork[1] = n % localWork[0] == 0 && n >= localWork[0] ?
-    n :
-    (m/localWork[0] + 1) * localWork[0];
-  globalWork[0] = imageWidth % localWork[1] == 0 && imageWidth >= localWork[1] ?
-    imageWidth :
-    (imageWidth/localWork[1] + 1) * localWork[1];
-
-  err = clEnqueueNDRangeKernel(getCommandQueue(),
-                               kernel,
-                               2,
-                               NULL,
-                               globalWork,
-                               localWork,
-                               0,
-                               NULL,
-                               NULL);
-  clUtilCheckError(err);
-  clFinish(getCommandQueue());
-
+  
+  clUtilEnqueueKernel("copyToImageTransposeFloat",
+                      clUtilCreateGrid(imageWidth, 8, m, 8),
+                      buffer,
+                      offset,
+                      m,
+                      n,
+                      ld,
+                      image);
+  
   return CL_SUCCESS;
 }
 
-cl_int clUtil::copyToImageDouble(cl_mem buffer, 
+cl_int clUtilCopyToImageDouble(cl_mem buffer, 
                                  int offset, 
                                  int m, 
                                  int n, 
@@ -166,21 +88,8 @@ cl_int clUtil::copyToImageDouble(cl_mem buffer,
                                  cl_mem* image)
 {
   cl_int err;
-  static int lastDevice = -1;
-  static cl_kernel kernel = 0;
-  size_t globalWork[2];
-  size_t localWork[2];
   cl_image_format format;
   int imageWidth;
-  size_t maxWorkSize;
-
-  if(lastDevice != gCurrentDevice)
-  {
-    kernel = clCreateKernel(getProgram(),
-                            "copyToImageDouble",
-                            &err);
-    clUtilCheckError(err);
-  }
 
   imageWidth = m;
 
@@ -198,46 +107,19 @@ cl_int clUtil::copyToImageDouble(cl_mem buffer,
                            &err);
   clUtilCheckError(err);
 
-  err = clSetKernelArg(kernel, 0, sizeof(buffer), &buffer);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 1, sizeof(offset), &offset);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 2, sizeof(m), &m);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 3, sizeof(n), &n);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 4, sizeof(ld), &ld);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 5, sizeof(*image), image);
-  clUtilCheckError(err);
-
-  maxWorkSize = getMaxBlockSize();
-  localWork[0] = maxWorkSize < 64 ? 1 : 8;
-  localWork[1] = localWork[0];
-
-  globalWork[0] = imageWidth % localWork[0] == 0 && imageWidth >= localWork[0] ?
-    imageWidth :
-    (imageWidth/localWork[0] + 1) * localWork[0];
-  globalWork[1] = n % localWork[0] == 0 && n >= localWork[0] ?
-    n :
-    (n/localWork[0] + 1) * localWork[0];
-
-  err = clEnqueueNDRangeKernel(getCommandQueue(),
-                               kernel,
-                               2,
-                               NULL,
-                               globalWork,
-                               localWork,
-                               0,
-                               NULL,
-                               NULL);
-  clUtilCheckError(err);
-  clFinish(getCommandQueue());
+  clUtilEnqueueKernel("copyToImageDouble",
+                      clUtilCreateGrid(imageWidth, 8, n, 8),
+                      buffer,
+                      offset,
+                      m,
+                      n,
+                      ld,
+                      image);
 
   return CL_SUCCESS;
 }
 
-cl_int clUtil::copyToImageTransposeDouble(cl_mem buffer, 
+cl_int clUtilCopyToImageTransposeDouble(cl_mem buffer, 
                                           int offset, 
                                           int m, 
                                           int n, 
@@ -245,21 +127,8 @@ cl_int clUtil::copyToImageTransposeDouble(cl_mem buffer,
                                           cl_mem* image)
 {
   cl_int err;
-  static int lastDevice = -1;
-  static cl_kernel kernel = 0;
-  size_t globalWork[2];
-  size_t localWork[2];
   cl_image_format format;
   int imageWidth;
-  size_t maxWorkSize;
-
-  if(lastDevice != gCurrentDevice)
-  {
-    kernel = clCreateKernel(getProgram(),
-                            "copyToImageTransposeDouble",
-                            &err);
-    clUtilCheckError(err);
-  }
 
   imageWidth = n;
 
@@ -276,47 +145,22 @@ cl_int clUtil::copyToImageTransposeDouble(cl_mem buffer,
                            NULL,
                            &err);
   clUtilCheckError(err);
+  
+  clUtilEnqueueKernel("copyToImageTransposeDouble",
+                      clUtilCreateGrid(imageWidth, 8, m, 8),
+                      buffer,
+                      offset,
+                      m,
+                      n,
+                      ld,
+                      image);
 
-  err = clSetKernelArg(kernel, 0, sizeof(buffer), &buffer);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 1, sizeof(offset), &offset);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 2, sizeof(m), &m);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 3, sizeof(n), &n);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 4, sizeof(ld), &ld);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 5, sizeof(*image), image);
-  clUtilCheckError(err);
 
-  maxWorkSize = getMaxBlockSize();
-  localWork[0] = maxWorkSize < 64 ? 1 : 8;
-  localWork[1] = localWork[0];
-
-  globalWork[1] = n % localWork[0] == 0 && n >= localWork[0] ?
-    n :
-    (m/localWork[0] + 1) * localWork[0];
-  globalWork[0] = imageWidth % localWork[1] == 0 && imageWidth >= localWork[1] ?
-    imageWidth :
-    (imageWidth/localWork[1] + 1) * localWork[1];
-
-  err = clEnqueueNDRangeKernel(getCommandQueue(),
-                               kernel,
-                               2,
-                               NULL,
-                               globalWork,
-                               localWork,
-                               0,
-                               NULL,
-                               NULL);
-  clUtilCheckError(err);
-  clFinish(getCommandQueue());
 
   return CL_SUCCESS;
 }
 
-cl_int clUtil::copyToImageFloat4(cl_mem buffer, 
+cl_int clUtilCopyToImageFloat4(cl_mem buffer, 
                                  int offset, 
                                  int m, 
                                  int n, 
@@ -324,21 +168,8 @@ cl_int clUtil::copyToImageFloat4(cl_mem buffer,
                                  cl_mem* image)
 {
   cl_int err;
-  static int lastDevice = -1;
-  static cl_kernel kernel = 0;
-  size_t globalWork[2];
-  size_t localWork[2];
   cl_image_format format;
   int imageWidth;
-  size_t maxWorkSize;
-
-  if(lastDevice != gCurrentDevice)
-  {
-    kernel = clCreateKernel(getProgram(),
-                            "copyToImageFloat4",
-                            &err);
-    clUtilCheckError(err);
-  }
 
   imageWidth = m % 4 == 0 ? m / 4 : m / 4 + 1;
 
@@ -356,46 +187,19 @@ cl_int clUtil::copyToImageFloat4(cl_mem buffer,
                            &err);
   clUtilCheckError(err);
 
-  err = clSetKernelArg(kernel, 0, sizeof(buffer), &buffer);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 1, sizeof(offset), &offset);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 2, sizeof(m), &m);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 3, sizeof(n), &n);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 4, sizeof(ld), &ld);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 5, sizeof(*image), image);
-  clUtilCheckError(err);
-
-  maxWorkSize = getMaxBlockSize();
-  localWork[0] = maxWorkSize < 64 ? 1 : 8;
-  localWork[1] = localWork[0];
-
-  globalWork[0] = imageWidth % localWork[0] == 0 && imageWidth >= localWork[0] ?
-    imageWidth :
-    (imageWidth/localWork[0] + 1) * localWork[0];
-  globalWork[1] = n % localWork[0] == 0 && n >= localWork[0] ?
-    n :
-    (n/localWork[0] + 1) * localWork[0];
-
-  err = clEnqueueNDRangeKernel(getCommandQueue(),
-                               kernel,
-                               2,
-                               NULL,
-                               globalWork,
-                               localWork,
-                               0,
-                               NULL,
-                               NULL);
-  clUtilCheckError(err);
-  clFinish(getCommandQueue());
-
+  clUtilEnqueueKernel("copyToImageFloat4",
+                      clUtilCreateGrid(imageWidth, 8, n, 8),
+                      buffer,
+                      offset,
+                      m,
+                      n,
+                      ld,
+                      image);
+  
   return CL_SUCCESS;
 }
 
-cl_int clUtil::copyToImageTransposeFloat4(cl_mem buffer, 
+cl_int clUtilCopyToImageTransposeFloat4(cl_mem buffer, 
                                           int offset, 
                                           int m, 
                                           int n, 
@@ -403,21 +207,8 @@ cl_int clUtil::copyToImageTransposeFloat4(cl_mem buffer,
                                           cl_mem* image)
 {
   cl_int err;
-  static int lastDevice = -1;
-  static cl_kernel kernel = 0;
-  size_t globalWork[2];
-  size_t localWork[2];
   cl_image_format format;
   int imageWidth;
-  size_t maxWorkSize;
-
-  if(lastDevice != gCurrentDevice)
-  {
-    kernel = clCreateKernel(getProgram(),
-                            "copyToImageTransposeFloat4",
-                            &err);
-    clUtilCheckError(err);
-  }
 
   imageWidth = n % 4 == 0 ? n / 4 : n / 4 + 1;
 
@@ -435,46 +226,19 @@ cl_int clUtil::copyToImageTransposeFloat4(cl_mem buffer,
                            &err);
   clUtilCheckError(err);
 
-  err = clSetKernelArg(kernel, 0, sizeof(buffer), &buffer);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 1, sizeof(offset), &offset);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 2, sizeof(m), &m);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 3, sizeof(n), &n);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 4, sizeof(ld), &ld);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 5, sizeof(*image), image);
-  clUtilCheckError(err);
-
-  maxWorkSize = getMaxBlockSize();
-  localWork[0] = maxWorkSize < 64 ? 1 : 8;
-  localWork[1] = localWork[0];
-
-  globalWork[1] = n % localWork[0] == 0 && n >= localWork[0] ?
-    n :
-    (m/localWork[0] + 1) * localWork[0];
-  globalWork[0] = imageWidth % localWork[1] == 0 && imageWidth >= localWork[1] ?
-    imageWidth :
-    (imageWidth/localWork[1] + 1) * localWork[1];
-
-  err = clEnqueueNDRangeKernel(getCommandQueue(),
-                               kernel,
-                               2,
-                               NULL,
-                               globalWork,
-                               localWork,
-                               0,
-                               NULL,
-                               NULL);
-  clUtilCheckError(err);
-  clFinish(getCommandQueue());
+  clUtilEnqueueKernel("copyToImageTransposeFloat4",
+                      clUtilCreateGrid(imageWidth, 8, m, 8),
+                      buffer,
+                      offset,
+                      m,
+                      n,
+                      ld,
+                      image);
 
   return CL_SUCCESS;
 }
 
-cl_int clUtil::copyToImageDouble2(cl_mem buffer, 
+cl_int clUtilCopyToImageDouble2(cl_mem buffer, 
                                   int offset, 
                                   int m, 
                                   int n, 
@@ -482,21 +246,8 @@ cl_int clUtil::copyToImageDouble2(cl_mem buffer,
                                   cl_mem* image)
 {
   cl_int err;
-  static int lastDevice = -1;
-  static cl_kernel kernel = 0;
-  size_t globalWork[2];
-  size_t localWork[2];
   cl_image_format format;
   int imageWidth;
-  size_t maxWorkSize;
-
-  if(lastDevice != gCurrentDevice)
-  {
-    kernel = clCreateKernel(getProgram(),
-                            "copyToImageDouble2",
-                            &err);
-    clUtilCheckError(err);
-  }
 
   imageWidth = m % 2 == 0 ? m / 2 : m / 2 + 1;
 
@@ -513,47 +264,20 @@ cl_int clUtil::copyToImageDouble2(cl_mem buffer,
                            NULL,
                            &err);
   clUtilCheckError(err);
-
-  err = clSetKernelArg(kernel, 0, sizeof(buffer), &buffer);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 1, sizeof(offset), &offset);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 2, sizeof(m), &m);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 3, sizeof(n), &n);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 4, sizeof(ld), &ld);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 5, sizeof(*image), image);
-  clUtilCheckError(err);
-
-  maxWorkSize = getMaxBlockSize();
-  localWork[0] = maxWorkSize < 64 ? 1 : 8;
-  localWork[1] = localWork[0];
-
-  globalWork[0] = imageWidth % localWork[0] == 0 && imageWidth >= localWork[0] ?
-    imageWidth :
-    (imageWidth/localWork[0] + 1) * localWork[0];
-  globalWork[1] = n % localWork[0] == 0 && n >= localWork[0] ?
-    n :
-    (n/localWork[0] + 1) * localWork[0];
-
-  err = clEnqueueNDRangeKernel(getCommandQueue(),
-                               kernel,
-                               2,
-                               NULL,
-                               globalWork,
-                               localWork,
-                               0,
-                               NULL,
-                               NULL);
-  clUtilCheckError(err);
-  clFinish(getCommandQueue());
+  
+  clUtilEnqueueKernel("copyToImageDouble2",
+                      clUtilCreateGrid(imageWidth, 8, n, 8),
+                      buffer,
+                      offset,
+                      m,
+                      n,
+                      ld,
+                      image);
 
   return CL_SUCCESS;
 }
 
-cl_int clUtil::copyToImageTransposeDouble2(cl_mem buffer, 
+cl_int clUtilCopyToImageTransposeDouble2(cl_mem buffer, 
                                            int offset, 
                                            int m, 
                                            int n, 
@@ -561,21 +285,8 @@ cl_int clUtil::copyToImageTransposeDouble2(cl_mem buffer,
                                            cl_mem* image)
 {
   cl_int err;
-  static int lastDevice = -1;
-  static cl_kernel kernel = 0;
-  size_t globalWork[2];
-  size_t localWork[2];
   cl_image_format format;
   int imageWidth;
-  size_t maxWorkSize;
-
-  if(lastDevice != gCurrentDevice)
-  {
-    kernel = clCreateKernel(getProgram(),
-                            "copyToImageTransposeDouble2",
-                            &err);
-    clUtilCheckError(err);
-  }
 
   imageWidth = n % 2 == 0 ? n / 2 : n / 2 + 1;
 
@@ -593,46 +304,19 @@ cl_int clUtil::copyToImageTransposeDouble2(cl_mem buffer,
                            &err);
   clUtilCheckError(err);
 
-  err = clSetKernelArg(kernel, 0, sizeof(buffer), &buffer);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 1, sizeof(offset), &offset);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 2, sizeof(m), &m);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 3, sizeof(n), &n);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 4, sizeof(ld), &ld);
-  clUtilCheckError(err);
-  err = clSetKernelArg(kernel, 5, sizeof(*image), image);
-  clUtilCheckError(err);
-
-  maxWorkSize = getMaxBlockSize();
-  localWork[0] = maxWorkSize < 64 ? 1 : 8;
-  localWork[1] = localWork[0];
-
-  globalWork[1] = n % localWork[0] == 0 && n >= localWork[0] ?
-    n :
-    (m/localWork[0] + 1) * localWork[0];
-  globalWork[0] = imageWidth % localWork[1] == 0 && imageWidth >= localWork[1] ?
-    imageWidth :
-    (imageWidth/localWork[1] + 1) * localWork[1];
-
-  err = clEnqueueNDRangeKernel(getCommandQueue(),
-                               kernel,
-                               2,
-                               NULL,
-                               globalWork,
-                               localWork,
-                               0,
-                               NULL,
-                               NULL);
-  clUtilCheckError(err);
-  clFinish(getCommandQueue());
-
+  clUtilEnqueueKernel("copyToImageTransposeDouble2",
+                      clUtilCreateGrid(imageWidth, 8, m, 8),
+                      buffer,
+                      offset,
+                      m,
+                      n,
+                      ld,
+                      image);
+  
   return CL_SUCCESS;
 }
 
-cl_int clUtil::debugPrintImageFloat(cl_mem image)
+cl_int clUtilDebugPrintImageFloat(cl_mem image)
 {
   size_t width;
   size_t height;
@@ -671,7 +355,7 @@ cl_int clUtil::debugPrintImageFloat(cl_mem image)
   region[0] = width;
   region[1] = height;
 
-  err = clEnqueueReadImage(getCommandQueue(),
+  err = clEnqueueReadImage(clUtilGetCommandQueue(),
                            image,
                            CL_TRUE,
                            origin,
@@ -698,7 +382,7 @@ cl_int clUtil::debugPrintImageFloat(cl_mem image)
   return CL_SUCCESS;
 }
 
-cl_int clUtil::debugPrintImageDouble(cl_mem image)
+cl_int clUtilDebugPrintImageDouble(cl_mem image)
 {
   size_t width;
   size_t height;
@@ -737,7 +421,7 @@ cl_int clUtil::debugPrintImageDouble(cl_mem image)
   region[0] = width;
   region[1] = height;
 
-  err = clEnqueueReadImage(getCommandQueue(),
+  err = clEnqueueReadImage(clUtilGetCommandQueue(),
                            image,
                            CL_TRUE,
                            origin,
