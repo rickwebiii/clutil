@@ -30,7 +30,7 @@ cl_int clUtilCopyToImageFloat(cl_mem buffer,
   clUtilCheckError(err);
   
   clUtilEnqueueKernel("copyToImageFloat",
-                      clUtilCreateGrid(imageWidth, 8, n, 8),
+                      clUtilGrid(imageWidth, 8, n, 8),
                       buffer,
                       offset,
                       m,
@@ -69,7 +69,7 @@ cl_int clUtilCopyToImageTransposeFloat(cl_mem buffer,
   clUtilCheckError(err);
   
   clUtilEnqueueKernel("copyToImageTransposeFloat",
-                      clUtilCreateGrid(imageWidth, 8, m, 8),
+                      clUtilGrid(imageWidth, 8, m, 8),
                       buffer,
                       offset,
                       m,
@@ -108,7 +108,7 @@ cl_int clUtilCopyToImageDouble(cl_mem buffer,
   clUtilCheckError(err);
 
   clUtilEnqueueKernel("copyToImageDouble",
-                      clUtilCreateGrid(imageWidth, 8, n, 8),
+                      clUtilGrid(imageWidth, 8, n, 8),
                       buffer,
                       offset,
                       m,
@@ -147,7 +147,7 @@ cl_int clUtilCopyToImageTransposeDouble(cl_mem buffer,
   clUtilCheckError(err);
   
   clUtilEnqueueKernel("copyToImageTransposeDouble",
-                      clUtilCreateGrid(imageWidth, 8, m, 8),
+                      clUtilGrid(imageWidth, 8, m, 8),
                       buffer,
                       offset,
                       m,
@@ -188,7 +188,7 @@ cl_int clUtilCopyToImageFloat4(cl_mem buffer,
   clUtilCheckError(err);
 
   clUtilEnqueueKernel("copyToImageFloat4",
-                      clUtilCreateGrid(imageWidth, 8, n, 8),
+                      clUtilGrid(imageWidth, 8, n, 8),
                       buffer,
                       offset,
                       m,
@@ -227,7 +227,7 @@ cl_int clUtilCopyToImageTransposeFloat4(cl_mem buffer,
   clUtilCheckError(err);
 
   clUtilEnqueueKernel("copyToImageTransposeFloat4",
-                      clUtilCreateGrid(imageWidth, 8, m, 8),
+                      clUtilGrid(imageWidth, 8, m, 8),
                       buffer,
                       offset,
                       m,
@@ -266,7 +266,7 @@ cl_int clUtilCopyToImageDouble2(cl_mem buffer,
   clUtilCheckError(err);
   
   clUtilEnqueueKernel("copyToImageDouble2",
-                      clUtilCreateGrid(imageWidth, 8, n, 8),
+                      clUtilGrid(imageWidth, 8, n, 8),
                       buffer,
                       offset,
                       m,
@@ -305,7 +305,7 @@ cl_int clUtilCopyToImageTransposeDouble2(cl_mem buffer,
   clUtilCheckError(err);
 
   clUtilEnqueueKernel("copyToImageTransposeDouble2",
-                      clUtilCreateGrid(imageWidth, 8, m, 8),
+                      clUtilGrid(imageWidth, 8, m, 8),
                       buffer,
                       offset,
                       m,

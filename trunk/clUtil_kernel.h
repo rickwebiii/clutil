@@ -70,7 +70,7 @@ namespace clUtil
   };
 };
 
-template<typename... Args> clUtil::_Grid<Args...> clUtilCreateGrid(Args... args)
+template<typename... Args> clUtil::_Grid<Args...> clUtilGrid(Args... args)
 {
   return clUtil::_Grid<Args...>(args...);
 }
