@@ -89,13 +89,8 @@ int main(int argc, char** argv)
 
     clUtil::initialize(kernelFiles, 1);
     clUtil::alloc(sizeof(array), &buffer);
-    
-    size_t global;
-    size_t local = 64;    
 
-    global = length % local == 0 ? length : (length / local + 1) * local;
- 
-    clUtil_enqueueKernel("fill", 1, &global, &local, buffer, length, val);
+    clUtil_enqueueKernel("fill", clUtilGrid(length, 64), buffer, length, val);
     clUtil::deviceGet(array, sizeof(array), buffer);
 
     clUtil::free(buffer);
