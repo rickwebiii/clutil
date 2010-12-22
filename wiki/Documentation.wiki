@@ -401,22 +401,34 @@ Return:
     A C-string containing a description of err.
 
 ==Kernels==
-===clUtil_enqueueKernel()===
+===clUtilGrid()===
 {{{
-void clUtil_enqueueKernel(const char* kernelName,
-                          size_t dim,
-                          size_t* global,
-                          size_t* local,
-                          Args... args)
+clUtil::_Grid<> clUtilGrid(globalDim1, localDim1, globalDim2, localDim2, ...)
+}}}
+A variadic factory function that generates work information for clUtilEnqueueKernel(). Due to implementation details, this function should be used inline as a parameter to clUtilEnqueueKernel or assigned to an rvalue reference (e.g. clUtil::Grid&& gridRef = clUtilGrid(global1, local1, ...). This function rounds each global work size to the next largest multiple of the corresponding local size (unless the global work size is already a multiple of the local). Global and local work items must always come in pairs; failing to do so will result in a template instantiation error.
+
+Parameters:
+  # globalDim1: The total number of work items in the first dimension. See OpenCL spec on work items.
+  # localDim1: The number of works items per work group in the first dimension.
+  # ...
+
+Return:
+    A nasty subclassed templated thingy that should only be passed to clUtilEnqueueKernel.
+
+===clUtilEnqueueKernel()===
+{{{
+void clUtilEnqueueKernel(const char* kernelName,
+                         clUtilGrid(globalDim1, localDim1, globalDim2, localDim2, ...)
+                         Args... args)
 }}}
 Enqueues a kernel with function name kernelName on the current device. This function is variadic, so an arbitrary number of arguments can be specified as parameters to the kernel.
 
 Parameters:
   # kernelName: The actual name of the kernel. For example, if in my source files I have __kernel void foo(), then "foo" is the kernel name.
-  # dim: The dimension of the work size
-  # global: an array containing the sizes of the total work item dimensions
-  # local: an array containing the sizes of the work group dimensions.
-  # args: each argument corresponds to an argument the kernel accepts.
+  # call clUtilGrid() to generate an rvalue containing work size information
+  # args: each argument corresponds to an argument the kernel accepts
+  # ...
+
 Return:
     None, but will print, trap, return if kernel does not exist, arguments don't match, or kernel fails to enqueue.
 
