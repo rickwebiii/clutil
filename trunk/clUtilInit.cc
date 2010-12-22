@@ -286,7 +286,7 @@ static cl_int buildPrograms(const char** filenames,
              sizeof(deviceFlags) - 1, 
              "-cl-mad-enable -D%s %s",
              deviceVendor,
-             options);
+             options == NULL ? "" : options);
 
     err = clBuildProgram(gPrograms[curDevice],
                          1,

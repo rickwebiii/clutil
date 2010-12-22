@@ -20,4 +20,17 @@ int main(int argc, char** argv)
   clUtilDeviceGet(array, sizeof(array), buffer);
 
   clUtilFree(buffer);
+
+  for(unsigned int i = 0; i < 2000; i++)
+  {
+    if(array[i] != 20.0f)
+    {
+      printf("Test failed. Element %u", i);
+      return 1;
+    }
+  }
+
+  printf("Test Succeeded!\n");
+  
+  return 0;
 }
