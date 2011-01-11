@@ -136,7 +136,22 @@ cl_int clUtilDevicePut(void* buffer, size_t len, cl_mem gpuBuffer);
 cl_int clUtilDeviceGet(void* buffer, size_t len, cl_mem gpuBuffer);
 cl_int clUtilFree(cl_mem buffer);
 
-//Image copy crap
+//Image crap
+cl_int clUtilPutImage1D(cl_mem image,
+                        const size_t offset,
+                        const size_t region,
+                        void* ptr);
+
+cl_int clUtilGetImage1D(cl_mem image,
+                        const size_t offset,
+                        const size_t region,
+                        void* ptr);
+
+cl_int clUtilCreateImage1D(size_t numPixels,
+                           cl_channel_order order,
+                           cl_channel_type type,
+                           cl_mem* image);
+
 cl_int clUtilCopyToImageFloat(cl_mem buffer, 
                               int offset,
                               int m,

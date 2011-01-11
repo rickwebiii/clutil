@@ -2,6 +2,197 @@
 
 using namespace clUtil;
 
+cl_int clUtilPutImage1D(cl_mem image,
+                        const size_t offset,
+                        const size_t region,
+                        void* ptr)
+{
+  void* mappedImage;
+  size_t imageWidth;
+  size_t imageHeight;
+  size_t origin3D[3];
+  size_t region3D[3];
+  size_t pitch;
+  cl_int err;
+  void* hostStartAddress;
+  void* mappedImageStartAddress;
+  size_t pixelSize;
+
+  err = clGetImageInfo(image,
+                       CL_IMAGE_WIDTH,
+                       sizeof(imageWidth),
+                       &imageWidth,
+                       NULL);
+  clUtilCheckError(err);
+
+  err = clGetImageInfo(image,
+                       CL_IMAGE_HEIGHT,
+                       sizeof(imageHeight),
+                       &imageHeight,
+                       NULL);
+  clUtilCheckError(err);
+
+  err = clGetImageInfo(image,
+                       CL_IMAGE_ELEMENT_SIZE,
+                       sizeof(pixelSize),
+                       &pixelSize,
+                       NULL);
+  clUtilCheckError(err);
+
+  origin3D = {0, 0, 0};
+  region3D = {imageWidth, imageHeight, 1};
+
+  mappedImage = clEnqueueMapImage(gCommandQueues[gCurrentDevice],
+                                  image,
+                                  CL_TRUE,
+                                  CL_MAP_WRITE,
+                                  origin3D,
+                                  region3D,
+                                  &pitch,
+                                  NULL,
+                                  0,
+                                  NULL,
+                                  NULL,
+                                  &err);
+  clUtilCheckError(err);
+
+  hostStartAddress = (void*)((size_t)ptr + offset * pixelSize);
+  mappedImageStartAddress = 
+    (void*)((size_t)mappedImage + offset * pixelSize);
+
+  memcpy(mappedImageStartAddress, 
+         hostStartAddress, 
+         (region - offset) * pixelSize);
+
+  err = clEnqueueUnmapMemObject(gCommandQueues[gCurrentDevice],
+                                image,
+                                mappedImage,
+                                0,
+                                NULL,
+                                NULL);
+  clUtilCheckError(err);
+
+  err = clEnqueueBarrier(gCommandQueues[gCurrentDevice]);
+  clUtilCheckError(err);
+
+  return CL_SUCCESS;
+}
+
+cl_int clUtilGetImage1D(cl_mem image,
+                        const size_t offset,
+                        const size_t region,
+                        void* ptr)
+{
+  void* mappedImage;
+  size_t imageWidth;
+  size_t imageHeight;
+  size_t origin3D[3];
+  size_t region3D[3];
+  size_t pitch;
+  cl_int err;
+  void* hostStartAddress;
+  void* mappedImageStartAddress;
+  size_t pixelSize;
+
+  err = clGetImageInfo(image,
+                       CL_IMAGE_WIDTH,
+                       sizeof(imageWidth),
+                       &imageWidth,
+                       NULL);
+  clUtilCheckError(err);
+
+  err = clGetImageInfo(image,
+                       CL_IMAGE_HEIGHT,
+                       sizeof(imageHeight),
+                       &imageHeight,
+                       NULL);
+  clUtilCheckError(err);
+
+  err = clGetImageInfo(image,
+                       CL_IMAGE_ELEMENT_SIZE,
+                       sizeof(pixelSize),
+                       &pixelSize,
+                       NULL);
+  clUtilCheckError(err);
+
+  origin3D = {0, 0, 0};
+  region3D = {imageWidth, imageHeight, 1};
+
+  mappedImage = clEnqueueMapImage(gCommandQueues[gCurrentDevice],
+                                  image,
+                                  CL_TRUE,
+                                  CL_MAP_READ,
+                                  origin3D,
+                                  region3D,
+                                  &pitch,
+                                  NULL,
+                                  0,
+                                  NULL,
+                                  NULL,
+                                  &err);
+  clUtilCheckError(err);
+
+  hostStartAddress = (void*)((size_t)ptr + offset * pixelSize);
+  mappedImageStartAddress = 
+    (void*)((size_t)mappedImage + offset * pixelSize);
+
+  memcpy(hostStartAddress, 
+         mappedImageStartAddress,
+         (region - offset) * pixelSize);
+
+  err = clEnqueueUnmapMemObject(gCommandQueues[gCurrentDevice],
+                                image,
+                                mappedImage,
+                                0,
+                                NULL,
+                                NULL);
+  clUtilCheckError(err);
+
+  err = clEnqueueBarrier(gCommandQueues[gCurrentDevice]);
+  clUtilCheckError(err);
+
+  return CL_SUCCESS;
+}
+
+cl_int clUtilCreateImage1D(size_t numPixels, 
+                           cl_channel_order order,
+                           cl_channel_type type,
+                           cl_mem* image)
+{
+  size_t imageWidth;
+  size_t imageHeight;
+  size_t maxWidth;
+  cl_int err;
+  cl_image_format format;
+
+  format.image_channel_order = order;
+  format.image_channel_data_type = type;
+
+  err = clGetDeviceInfo(gDevices[gCurrentDevice],
+                        CL_DEVICE_IMAGE2D_MAX_WIDTH,
+                        sizeof(maxWidth),
+                        &maxWidth,
+                        NULL);
+  clUtilCheckError(err);
+
+  imageWidth = maxWidth;
+  imageHeight = numPixels % maxWidth == 0 ? 
+    numPixels / maxWidth :
+    (numPixels / maxWidth + 1);
+
+  *image = clCreateImage2D(gContexts[gCurrentDevice],
+                           CL_MEM_READ_WRITE,
+                           &format,
+                           imageWidth,
+                           imageHeight,
+                           0,
+                           NULL,
+                           &err);
+  clUtilCheckError(err);
+
+  return CL_SUCCESS;
+}
+
 cl_int clUtilCopyToImageFloat(cl_mem buffer, 
                                 int offset, 
                                 int m, 
