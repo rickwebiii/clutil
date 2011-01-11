@@ -428,6 +428,54 @@ Return:
     None, but will print, trap, return if kernel does not exist, arguments don't match, or kernel fails to enqueue.
 
 ==Images==
+===clUtilCreateImage1D()===
+{{{
+cl_int clUtilCreateImage1D(size_t numPixels,
+                           cl_channel_order order,
+                           cl_channel_type type,
+                           cl_mem* image)
+}}}
+Creates a 1D texture emulated on a 2D texture. numPixels is the number of elements in the texture, each of which is defined by order and type.
+
+Parameters:
+  # numPixels: The number of pixels in the image. The actual number of pixels allocated will be at least this number.
+  # order: The channel order of each pixel. Table 5.5 of OpenCL spec lists valid options.
+  # type: The type of each channel. Table 5.6 of OpenCL spec lists valid options.
+  # image: A pointer to a handle that is assigned when texture is created.
+
+Return:
+    CL_SUCCESS if no error occurred. Otherwise, this function returns the internal error code.
+
+===clUtilPutImage1D()===
+{{{
+cl_int clUtilPutImage1D(cl_mem image, const size_t offset, const size_t region, void* ptr)
+}}}
+Copies pixels between offset and offset+region from ptr (on host) to image (on device).
+
+Parameters:
+  # image: texture residing on current device.
+  # offset: the number of pixels to skip over.
+  # region: the number of pixels to copy to device.
+  # ptr: address of first element of buffer containing image located on host.
+
+Return:
+    CL_SUCCESS if no error occurred. Otherwise, this function returns the internal error code.
+
+===clUtilGetImage1D()===
+{{{
+cl_int clUtilGetImage1D(cl_mem image, const size_t offset, const size_t region, void* ptr)
+}}}
+Copies pixels between offset and offset+region from image (on device) to ptr (on host).
+
+Parameters:
+  # image: texture residing on current device.
+  # offset: the number of pixels to skip over.
+  # region: the number of pixels to copy to device.
+  # ptr: address of first element of buffer containing image located on host.
+
+Return:
+    CL_SUCCESS if no error occurred. Otherwise, this function returns the internal error code.
+
 ===clUtilCopyToImageFloat()===
 {{{
 cl_int clUtilCopyToImageFloat(cl_mem buffer,
