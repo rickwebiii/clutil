@@ -62,7 +62,7 @@ cl_int clUtilPutImage1D(cl_mem image,
 
   memcpy(mappedImageStartAddress, 
          hostStartAddress, 
-         (region - offset) * pixelSize);
+         region * pixelSize);
 
   err = clEnqueueUnmapMemObject(gCommandQueues[gCurrentDevice],
                                 image,
@@ -138,7 +138,7 @@ cl_int clUtilGetImage1D(cl_mem image,
 
   memcpy(hostStartAddress, 
          mappedImageStartAddress,
-         (region - offset) * pixelSize);
+         region * pixelSize);
 
   err = clEnqueueUnmapMemObject(gCommandQueues[gCurrentDevice],
                                 image,
