@@ -1,3 +1,4 @@
+#include "clUtil_core.h"
 #include "clUtil_kernel.h"
 
 void clUtilSetArgs(cl_kernel kernel,
@@ -17,6 +18,18 @@ void clUtilSetArgs(cl_kernel kernel,
                                NULL,
                                NULL);
   clUtilCheckErrorVoid(err);
+}
+
+void clUtilRunLambda(cl_event event,
+                     cl_int status,
+                     void* user_data)
+{
+  clUtilCallback* callback = (clUtilCallback*)user_data;
+
+  (*callback)(event, status);
+
+  clReleaseEvent(event);
+
 }
 
 void gridSetGlobalLocal(size_t* global, 

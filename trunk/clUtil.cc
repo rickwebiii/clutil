@@ -152,6 +152,35 @@ char* clUtilGetDeviceDriver()
   return devName;
 }
 
+char* clUtilGetPlatformVersion()
+{
+  cl_int err;
+  cl_platform_id devicePlatform;
+  static char platformVersion[256];
+
+  err = clGetDeviceInfo(gDevices[gCurrentDevice],
+                        CL_DEVICE_PLATFORM,
+                        sizeof(devicePlatform),
+                        &devicePlatform,
+                        NULL);
+  if(err != CL_SUCCESS)
+  {
+    return NULL;
+  }
+
+  err = clGetPlatformInfo(devicePlatform,
+                          CL_PLATFORM_VERSION,
+                          sizeof(platformVersion),
+                          platformVersion,
+                          NULL);
+  if(err != CL_SUCCESS)
+  {
+    return NULL;
+  }
+
+  return platformVersion;
+}
+
 cl_uint clUtilGetMaxWriteImages()
 {
   cl_uint imageCount;
@@ -367,7 +396,9 @@ cl_int clUtilAlloc(size_t len, cl_mem* gpuBuffer)
   return CL_SUCCESS;
 }
 
-cl_int clUtilDevicePut(void* buffer, size_t len, cl_mem gpuBuffer)
+cl_int clUtilDevicePut(void* buffer, 
+                       size_t len, 
+                       cl_mem gpuBuffer)
 {
   cl_int err;
 
@@ -385,9 +416,41 @@ cl_int clUtilDevicePut(void* buffer, size_t len, cl_mem gpuBuffer)
   return CL_SUCCESS;
 }
 
+cl_int clUtilDevicePut(void* buffer, 
+                       size_t len, 
+                       cl_mem gpuBuffer, 
+                       std::function<void (cl_event, cl_int)>&& callback)
+{
+  cl_int err;
+  cl_event event;
+
+  err = clEnqueueWriteBuffer(gCommandQueues[gCurrentDevice],
+                             gpuBuffer,
+                             CL_FALSE,
+                             0,
+                             len,
+                             buffer,
+                             0,
+                             NULL,
+                             &event);
+  clUtilCheckError(err);
+
+  err = clSetEventCallback(event,
+                           CL_COMPLETE, 
+                           clUtilRunLambda, 
+                           &callback);
+  clUtilCheckError(err);
+
+  return CL_SUCCESS;
+}
+
 cl_int clUtilDeviceGet(void* buffer, size_t len, cl_mem gpuBuffer)
 {
   cl_int err;
+  cl_event event;
+
+  event = clCreateUserEvent(gContexts[gCurrentDevice], &err);
+  clUtilCheckError(err);
 
   err = clEnqueueReadBuffer(gCommandQueues[gCurrentDevice],
                             gpuBuffer,
