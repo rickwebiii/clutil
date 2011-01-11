@@ -121,7 +121,7 @@ clUtil uses a simple memory model that behaves more like C. Buffers are allocate
 
 clUtil's memory model provides fewer options than vanilla OpenCL. All buffers are allocated on the currently selected device's only context. All buffers are read/write and do not use host pointer capabilities. We may add host pointer capabilities in future releases to accommodate performance improvements on devices that share host and device memory, such as AMD Fusion and Nvida mobile GPUs.
 
-clUtil adds convenience functions for representing matrices as 2D images. Furthermore, clUtil adds support for 1D images by emulating them using 2D images. They are visible to kernels as image1d_t types and are read and written to using [ language extensions].
+clUtil adds convenience functions for representing matrices as 2D images. Furthermore, clUtil adds support for 1D images by emulating them using 2D images. Additional functions exist in clUtil to create, copy to, and copy from 1-D images. They are visible to kernels as image1d_t types and are read and written to using [http://code.google.com/p/clutil/wiki/Documentation#1D_Image_Routines language extensions].
 
 ==Programming model==
 
