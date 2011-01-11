@@ -622,4 +622,49 @@ Gets the "current time" in seconds with at least microsecond resolution. The dif
 Parameters:
     None
 Return:
-    The current "time" in double precision. 
+    The current "time" in double precision.
+
+=OpenCL Language Extensions=
+clUtil adds several additional utility functions callable by kernels.
+==1D Image Routines==
+===read_1Dimage{f|i|ui}()===
+{{{
+float4 read_1Dimagef(image1d_t image,
+                     samplet_t sampler,
+                     int coord)
+
+int4 read_1Dimagei(image1d_t image,
+                   samplet_t sampler,
+                   int coord)
+
+uint4 read_1Dimageui(image1d_t image,
+                     samplet_t sampler,
+                     int coord)
+}}}
+These functions are the 1-D analogues of the image sampling functions found in 6.11.13.2 of OpenCL spec. Because the textures are emulated with 2-D textures, some sampling methods will result in undefined behavior:
+  * Sampling beyond the bounds of the texture
+  * Normalized coordinates
+
+Parameters:
+  # image: The image to sample.
+  # sampler: The sampler to use.
+  # coord: integer location to sample.
+Return:
+    These functions return the pixel located at coord.
+
+===write_1Dimage{f|i|ui}()===
+{{{
+void write_1Dimagef(image1d_t image, int coord, float4 color)
+
+void write_1Dimagei(image1d_t image, int coord, int4 color)
+
+void write_1Dimageui(image1d_t image, int coord, uint4 color)
+}}}
+These functions are the 1-D analogues of the image writing functions found in 6.11.13.2 of the OpenCL spec. 
+
+Parameters:
+  # image: The image to sample.
+  # coord: integer index of where to write in image
+  # color: color to write to the index in texture.
+Return:
+    None.
