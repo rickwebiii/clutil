@@ -82,6 +82,32 @@ float4 read_1Dimagef(image1d_t image,
   return read_imagef(image, sampler, sampleCoord);
 }
 
+int4 read_1Dimagei(image1d_t image,
+                   sampler_t sampler,
+                   int coord)
+{
+  int2 imageDim = get_image_dim(image);
+  int2 sampleCoord;
+
+  sampleCoord.x = coord % imageDim.x;
+  sampleCoord.y = coord / imageDim.x;
+
+  return read_imagei(image, sampler, sampleCoord);
+}
+
+uint4 read_1Dimageui(image1d_t image,
+                     sampler_t sampler,
+                     int coord)
+{
+  int2 imageDim = get_image_dim(image);
+  int2 sampleCoord;
+
+  sampleCoord.x = coord % imageDim.x;
+  sampleCoord.y = coord / imageDim.x;
+
+  return read_imageui(image, sampler, sampleCoord);
+}
+
 void write_1Dimagef(image1d_t image,
                     int coord,
                     float4 color)
