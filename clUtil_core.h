@@ -17,6 +17,7 @@
 #include <new>
 #include <map>
 #include <string>
+#include <functional>
 
 #define kCLUtilMaxDevices 64
 #define kCLUtilMaxKernelNameLength 128
@@ -106,6 +107,14 @@ namespace clUtil
   extern std::map<std::string, cl_kernel> gKernelNameLookup[kCLUtilMaxDevices];
 };
 
+//typedef void (*clUtilCallback)(cl_event, cl_int);
+typedef std::function<void (cl_event, cl_int)> clUtilCallback;
+
+//Run user callback...
+void clUtilRunLambda(cl_event event,
+                     cl_int status,
+                     void* user_data);
+
 //Init and management crap
 cl_int clUtilInitialize(const char** filenames, 
                         size_t numFiles, 
@@ -124,15 +133,25 @@ size_t clUtilGetMaxBlockSize();
 char* clUtilGetDeviceName();
 char* clUtilGetDeviceVendor();
 char* clUtilGetDeviceDriver();
+char* clUtilGetPlatformVersion();
 cl_uint clUtilGetMaxWriteImages();
 void clUtilGetSupportedImageFormats();
 
 //Turns error code into string
 const char* clUtilGetErrorCode(cl_int err);
 
-//Memory crap
+//---Memory crap---
 cl_int clUtilAlloc(size_t bytes, cl_mem* gpuBuffer);
+
+//Synchronous
 cl_int clUtilDevicePut(void* buffer, size_t len, cl_mem gpuBuffer);
+
+//Asynchronous
+cl_int clUtilDevicePut(void* buffer, 
+                       size_t len,
+                       cl_mem gpuBuffer,
+                       clUtilCallback&& callback);
+
 cl_int clUtilDeviceGet(void* buffer, size_t len, cl_mem gpuBuffer);
 cl_int clUtilFree(cl_mem buffer);
 
