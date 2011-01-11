@@ -62,6 +62,39 @@ __constant sampler_t s7 = CLK_NORMALIZED_COORDS_FALSE | \
                           CLK_FILTER_NEAREST;
 #endif
 
+#ifndef NVIDIA_CORPORATION
+typedef image2d_t image1d_t;
+#else
+#define image1d_t image2d_t
+#endif
+
+
+float4 read_1Dimagef(image1d_t image,
+                     sampler_t sampler,
+                     int coord)
+{
+  int2 imageDim = get_image_dim(image);
+  int2 sampleCoord;
+
+  sampleCoord.x = coord % imageDim.x;
+  sampleCoord.y = coord / imageDim.x;
+
+  return read_imagef(image, sampler, sampleCoord);
+}
+
+void write_1Dimagef(image1d_t image,
+                    int coord,
+                    float4 color)
+{
+  int2 imageDim = get_image_dim(image);
+  int2 sampleCoord;
+
+  sampleCoord.x = coord % imageDim.x;
+  sampleCoord.y = coord / imageDim.x;
+
+  write_imagef(image, sampleCoord, color);
+}
+
 __kernel void copyToImageFloat(__global float* aBase,
                                int offset,
                                int m,
