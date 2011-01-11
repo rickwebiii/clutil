@@ -112,13 +112,39 @@ void write_1Dimagef(image1d_t image,
                     int coord,
                     float4 color)
 {
-  int2 imageDim = get_image_dim(image);
-  int2 sampleCoord;
+  int2 imagedim = get_image_dim(image);
+  int2 samplecoord;
 
-  sampleCoord.x = coord % imageDim.x;
-  sampleCoord.y = coord / imageDim.x;
+  samplecoord.x = coord % imagedim.x;
+  samplecoord.y = coord / imagedim.x;
 
-  write_imagef(image, sampleCoord, color);
+  write_imagef(image, samplecoord, color);
+}
+
+void write_1Dimagei(image1d_t image,
+                    int coord,
+                    int4 color)
+{
+  int2 imagedim = get_image_dim(image);
+  int2 samplecoord;
+
+  samplecoord.x = coord % imagedim.x;
+  samplecoord.y = coord / imagedim.x;
+
+  write_imagei(image, samplecoord, color);
+}
+
+void write_1Dimageui(image1d_t image,
+                     int coord,
+                     uint4 color)
+{
+  int2 imagedim = get_image_dim(image);
+  int2 samplecoord;
+
+  samplecoord.x = coord % imagedim.x;
+  samplecoord.y = coord / imagedim.x;
+
+  write_imageui(image, samplecoord, color);
 }
 
 __kernel void copyToImageFloat(__global float* aBase,
