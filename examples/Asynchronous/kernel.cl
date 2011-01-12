@@ -1,5 +1,3 @@
-#include <../../clUtil.cl>
-
 __kernel void fill(__global float* buffer, int n)
 {
   if(get_global_id(0) < n)
