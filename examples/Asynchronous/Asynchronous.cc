@@ -42,7 +42,7 @@ int main(int argc, char** argv)
   clFlush(clUtil::gCommandQueues[clUtil::gCurrentDevice]);
 
   //Wait for them to complete
-  while(buffersCopied != 2)
+  while(buffersCopied < 2)
   {}
 
   clUtilEnqueueKernel("add",

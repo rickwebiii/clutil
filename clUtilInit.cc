@@ -181,24 +181,37 @@ static cl_int initDevices()
   //Get devices from each platform
   for(cl_uint i = 0; i < numPlatforms; i++)
   {
+    //Skip the platform if it's not at least version 1.1
+    char platformVersion[256];
+    clUtilPlatformVersion version;
+
+    err = clGetPlatformInfo(platforms[i],
+                            CL_PLATFORM_VERSION,
+                            sizeof(platformVersion),
+                            platformVersion,
+                            NULL);
+    if(err != CL_SUCCESS)
+    {
+      version = {0, 0};
+    }
+    else
+    {
+      sscanf(platformVersion, "OpenCL %hu.%hu", &version.major, &version.minor);
+    }
+
+    if(version.major <= 1 && version.minor == 0)
+    {
+      continue;
+    }
+
     cl_uint platformDevices = 0;
 
     err = clGetDeviceIDs(platforms[i],
-                         CL_DEVICE_TYPE_GPU,
+                         CL_DEVICE_TYPE_ALL,
                          kCLUtilMaxDevices - gNumDevices,
-                         &gDevices[i],
+                         &gDevices[gNumDevices],
                          &platformDevices);
     clUtilCheckError(err);
-
-    char platformVersion[256];
-
-    clGetPlatformInfo(platforms[i],
-                      CL_PLATFORM_VERSION,
-                      sizeof(platformVersion),
-                      platformVersion,
-                      NULL);
-
-    //printf("%s\n", platformVersion);
 
     gNumDevices += platformDevices;
   }
@@ -297,14 +310,15 @@ static cl_int buildPrograms(const char** filenames,
     if(err != CL_SUCCESS)
     {
       char errString[32768];
+      cl_int err1;
 
-      err = clGetProgramBuildInfo(gPrograms[curDevice],
-                                  gDevices[curDevice],
-                                  CL_PROGRAM_BUILD_LOG,
-                                  sizeof(errString),
-                                  errString,
-                                  NULL);
-      clUtilCheckError(err);
+      err1 = clGetProgramBuildInfo(gPrograms[curDevice],
+                                   gDevices[curDevice],
+                                   CL_PROGRAM_BUILD_LOG,
+                                   sizeof(errString),
+                                   errString,
+                                   NULL);
+      clUtilCheckError(err1);
       printf("%s", errString);
       return err;
     }
