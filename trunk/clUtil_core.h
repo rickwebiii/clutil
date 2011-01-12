@@ -42,16 +42,12 @@
   }\
 }
 
-typedef struct _DeviceSize_t
+typedef struct _clUtilPlatformVersion
 {
-  size_t deviceWidth;
-  union
-  {
-    size_t host;
-    long long device;
-    unsigned int devicePart[2];
-  };
-}DeviceSize_t;
+  unsigned short major;
+  unsigned short minor;
+}clUtilPlatformVersion;
+
 
 class clMemPointer
 {
@@ -133,7 +129,7 @@ size_t clUtilGetMaxBlockSize();
 char* clUtilGetDeviceName();
 char* clUtilGetDeviceVendor();
 char* clUtilGetDeviceDriver();
-char* clUtilGetPlatformVersion();
+clUtilPlatformVersion clUtilGetPlatformVersion();
 cl_uint clUtilGetMaxWriteImages();
 void clUtilGetSupportedImageFormats();
 

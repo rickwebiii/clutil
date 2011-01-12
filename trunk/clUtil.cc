@@ -152,11 +152,12 @@ char* clUtilGetDeviceDriver()
   return devName;
 }
 
-char* clUtilGetPlatformVersion()
+clUtilPlatformVersion clUtilGetPlatformVersion()
 {
   cl_int err;
   cl_platform_id devicePlatform;
-  static char platformVersion[256];
+  char platformVersion[256];
+  clUtilPlatformVersion version;
 
   err = clGetDeviceInfo(gDevices[gCurrentDevice],
                         CL_DEVICE_PLATFORM,
@@ -165,7 +166,7 @@ char* clUtilGetPlatformVersion()
                         NULL);
   if(err != CL_SUCCESS)
   {
-    return NULL;
+    return {0, 0};
   }
 
   err = clGetPlatformInfo(devicePlatform,
@@ -175,10 +176,12 @@ char* clUtilGetPlatformVersion()
                           NULL);
   if(err != CL_SUCCESS)
   {
-    return NULL;
+    return {0, 0};
   }
 
-  return platformVersion;
+  sscanf(platformVersion, "OpenCL %hu.%hu", &version.major, &version.minor);
+
+  return version;
 }
 
 cl_uint clUtilGetMaxWriteImages()
