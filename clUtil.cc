@@ -399,9 +399,17 @@ cl_int clUtilAlloc(size_t len, cl_mem* gpuBuffer)
   return CL_SUCCESS;
 }
 
-cl_int clUtilDevicePut(void* buffer, 
-                       size_t len, 
-                       cl_mem gpuBuffer)
+cl_int clUtilFree(cl_mem buffer)
+{
+  cl_int err;
+
+  err = clReleaseMemObject(buffer);
+  clUtilCheckError(err);
+
+  return CL_SUCCESS;
+}
+
+cl_int clUtilDevicePut(void* buffer, size_t len, cl_mem gpuBuffer)
 {
   cl_int err;
 
@@ -414,34 +422,6 @@ cl_int clUtilDevicePut(void* buffer,
                              0,
                              NULL,
                              NULL);
-  clUtilCheckError(err);
-
-  return CL_SUCCESS;
-}
-
-cl_int clUtilDevicePut(void* buffer, 
-                       size_t len, 
-                       cl_mem gpuBuffer, 
-                       std::function<void (cl_event, cl_int)>&& callback)
-{
-  cl_int err;
-  cl_event event;
-
-  err = clEnqueueWriteBuffer(gCommandQueues[gCurrentDevice],
-                             gpuBuffer,
-                             CL_FALSE,
-                             0,
-                             len,
-                             buffer,
-                             0,
-                             NULL,
-                             &event);
-  clUtilCheckError(err);
-
-  err = clSetEventCallback(event,
-                           CL_COMPLETE, 
-                           clUtilRunLambda, 
-                           &callback);
   clUtilCheckError(err);
 
   return CL_SUCCESS;
@@ -469,12 +449,70 @@ cl_int clUtilDeviceGet(void* buffer, size_t len, cl_mem gpuBuffer)
   return CL_SUCCESS;
 }
 
-cl_int clUtilFree(cl_mem buffer)
+cl_int clUtilDevicePut(void* buffer, 
+                       size_t len, 
+                       cl_mem gpuBuffer, 
+                       clUtilCallback&& callback,
+                       bool shouldFlush)
 {
   cl_int err;
+  cl_event event;
 
-  err = clReleaseMemObject(buffer);
+  err = clEnqueueWriteBuffer(gCommandQueues[gCurrentDevice],
+                             gpuBuffer,
+                             CL_FALSE,
+                             0,
+                             len,
+                             buffer,
+                             0,
+                             NULL,
+                             &event);
   clUtilCheckError(err);
+
+  err = clSetEventCallback(event,
+                           CL_COMPLETE, 
+                           clUtilRunLambda, 
+                           &callback);
+  clUtilCheckError(err);
+
+  if(shouldFlush == true)
+  {
+    clFlush(gCommandQueues[gCurrentDevice]);
+  }
+
+  return CL_SUCCESS;
+}
+
+cl_int clUtilDeviceGet(void* buffer, 
+                       size_t len, 
+                       cl_mem gpuBuffer, 
+                       clUtilCallback&& callback,
+                       bool shouldFlush)
+{
+  cl_int err;
+  cl_event event;
+
+  err = clEnqueueReadBuffer(gCommandQueues[gCurrentDevice],
+                            gpuBuffer,
+                            CL_FALSE,
+                            0,
+                            len,
+                            buffer,
+                            0,
+                            NULL,
+                            &event);
+  clUtilCheckError(err);
+
+  err = clSetEventCallback(event,
+                           CL_COMPLETE, 
+                           clUtilRunLambda, 
+                           &callback);
+  clUtilCheckError(err);
+
+  if(shouldFlush == true)
+  {
+    clFlush(gCommandQueues[gCurrentDevice]);
+  }
 
   return CL_SUCCESS;
 }

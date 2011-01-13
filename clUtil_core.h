@@ -104,7 +104,7 @@ namespace clUtil
 };
 
 //typedef void (*clUtilCallback)(cl_event, cl_int);
-typedef std::function<void (cl_event, cl_int)> clUtilCallback;
+typedef std::function<void (void)> clUtilCallback;
 
 //Run user callback...
 void clUtilRunLambda(cl_event event,
@@ -137,21 +137,31 @@ void clUtilGetSupportedImageFormats();
 const char* clUtilGetErrorCode(cl_int err);
 
 //---Memory crap---
+//Allocation
 cl_int clUtilAlloc(size_t bytes, cl_mem* gpuBuffer);
+cl_int clUtilFree(cl_mem buffer);
 
+//Data transfers
 //Synchronous
 cl_int clUtilDevicePut(void* buffer, size_t len, cl_mem gpuBuffer);
+cl_int clUtilDeviceGet(void* buffer, size_t len, cl_mem gpuBuffer);
 
 //Asynchronous
 cl_int clUtilDevicePut(void* buffer, 
                        size_t len,
                        cl_mem gpuBuffer,
-                       clUtilCallback&& callback);
+                       clUtilCallback&& callback,
+                       bool shouldFlush = true);
 
-cl_int clUtilDeviceGet(void* buffer, size_t len, cl_mem gpuBuffer);
-cl_int clUtilFree(cl_mem buffer);
+cl_int clUtilDeviceGet(void* buffer, 
+                       size_t len,
+                       cl_mem gpuBuffer,
+                       clUtilCallback&& callback,
+                       bool shouldFlush = true);
 
-//Image crap
+//---Image crap---
+//Data transfers
+//Synchronous
 cl_int clUtilPutImage1D(cl_mem image,
                         const size_t offset,
                         const size_t region,
@@ -167,6 +177,7 @@ cl_int clUtilCreateImage1D(size_t numPixels,
                            cl_channel_type type,
                            cl_mem* image);
 
+//Matrix copies from global memory to image
 cl_int clUtilCopyToImageFloat(cl_mem buffer, 
                               int offset,
                               int m,

@@ -1,5 +1,5 @@
 #pragma once
-#include <stdarg.h>
+//#include <stdarg.h>
 
 #include "clUtil_core.h"
 
@@ -34,8 +34,10 @@ void gridSetGlobalLocal(size_t* global,
   gridSetGlobalLocal(global, local, curDim + 1, args...);
 }
 
+//Grid class definitions for defining work items
 namespace clUtil
 {
+  //Base class. Exists for virtual function overloading.
   class Grid
   {
     public:
@@ -44,25 +46,23 @@ namespace clUtil
       virtual size_t* getLocal() = 0;
   };
 
+  //Created by clUtilGrid(). Actually contains work group information.
   template<typename... Args> class _Grid : public Grid
   {
     public:
       _Grid(Args... args)
       {
-        mDim = sizeof...(Args) / 2;
-
         gridSetGlobalLocal(mGlobal,
                            mLocal,
                            0,
                            args...);
       }
 
-      size_t getDim(){return mDim;}
+      size_t getDim(){return sizeof...(Args) / 2;}
       size_t* getGlobal(){return mGlobal;}
       size_t* getLocal(){return mLocal;}
 
     private:
-      size_t mDim;
       size_t mGlobal[sizeof...(Args) / 2];
       size_t mLocal[sizeof...(Args) / 2];
 
@@ -70,6 +70,8 @@ namespace clUtil
   };
 };
 
+//Wrapper function to create a grid object of the correct type so you don't
+//have to fuck with template arguments.
 template<typename... Args> clUtil::_Grid<Args...> clUtilGrid(Args... args)
 {
   return clUtil::_Grid<Args...>(args...);
@@ -100,6 +102,46 @@ void clUtilSetArgs(cl_kernel kernel,
                 args...);
 }
 
+//Asynchronous callback version
+template<typename... Args> 
+void clUtilEnqueueKernel(const char* kernelName,
+                         clUtilCallback&& callback,
+                         clUtil::Grid&& workGrid,
+                         Args... args)
+{
+  cl_int err;
+  cl_kernel kernel;
+  std::string kernelNameStr(kernelName);
+  cl_event event;
+
+  kernel = clUtilGetKernel(kernelNameStr, &err);
+  clUtilCheckErrorVoid(err);
+
+  clUtilSetArgs(kernel,
+                kernelName,
+                workGrid,
+                0,
+                args...);
+  
+  err = clEnqueueNDRangeKernel(clUtilGetCommandQueue(),
+                               kernel,
+                               workGrid.getDim(),
+                               NULL,
+                               workGrid.getGlobal(),
+                               workGrid.getLocal(),
+                               0,
+                               NULL,
+                               &event);
+  clUtilCheckErrorVoid(err);
+
+  err = clSetEventCallback(event,
+                           CL_COMPLETE, 
+                           clUtilRunLambda, 
+                           &callback);
+  clUtilCheckErrorVoid(err);
+}
+
+//No callback version
 template<typename... Args> 
 void clUtilEnqueueKernel(const char* kernelName,
                          clUtil::Grid&& workGrid,
@@ -117,4 +159,15 @@ void clUtilEnqueueKernel(const char* kernelName,
                 workGrid,
                 0,
                 args...);
+  
+  err = clEnqueueNDRangeKernel(clUtilGetCommandQueue(),
+                               kernel,
+                               workGrid.getDim(),
+                               NULL,
+                               workGrid.getGlobal(),
+                               workGrid.getLocal(),
+                               0,
+                               NULL,
+                               NULL);
+  clUtilCheckErrorVoid(err);
 }
