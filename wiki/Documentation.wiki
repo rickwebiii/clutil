@@ -129,6 +129,10 @@ clUtil makes dramatically simplifies OpenCL's programming model. Developers no l
 
 Since compiling source code can be take a while, developers can optionally pass a list of binary names to the initialization routine, causing clUtil to load kernels from these files if they exist. If they don't exist, clUtil will compile from source and save these binary files. This means that many applications can cache their programs after the first time the application is run.
 
+clUtil supports both a synchronous execution model and an asynchronous out-of order execution model. The synchronous model is what most developers expect: data transfers are blocking and kernels execute in FIFO manner. 
+
+The asynchronous execution model is built with C++0x lambdas in mind (requiring gcc 4.5 or later), though traditional functions should work as well. Lambdas are essentially anonymous functions that are defined inline in user code. This allows the callback function to be declared close to its use and provides better scoping capabilities than traditional functions. All callbacks must be thread safe, as the main thread generally doesn't execute callbacks. Asynchronous execution models, while more complicated, allow for better application performance by putting copies in the background, allowing the main CPU thread to do useful work, or alternatively, issuing tasks to multiple devices in rapid succession without ever blocking for a data transfer. For an asynchronous execution example, see examples/Asynchronous.
+
 ==Thread safety==
 
 clUtil is not currently thread safe. Switching devices occurs on a global level and calling different operations from different threads can cause race conditions on devices' queues. We plan to add thread safety by making the current device number a thread-local variable and adding mutex locking to command queues. For the time being, changing devices and issuing threads should occur only in critical sections.
