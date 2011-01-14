@@ -69,7 +69,7 @@ typedef image2d_t image1d_t;
 #endif
 
 
-float4 read_1Dimagef(image1d_t image,
+float4 read_1Dimagef(read_only image1d_t image,
                      sampler_t sampler,
                      int coord)
 {
@@ -82,7 +82,7 @@ float4 read_1Dimagef(image1d_t image,
   return read_imagef(image, sampler, sampleCoord);
 }
 
-int4 read_1Dimagei(image1d_t image,
+int4 read_1Dimagei(read_only image1d_t image,
                    sampler_t sampler,
                    int coord)
 {
@@ -95,7 +95,7 @@ int4 read_1Dimagei(image1d_t image,
   return read_imagei(image, sampler, sampleCoord);
 }
 
-uint4 read_1Dimageui(image1d_t image,
+uint4 read_1Dimageui(read_only image1d_t image,
                      sampler_t sampler,
                      int coord)
 {
@@ -108,7 +108,7 @@ uint4 read_1Dimageui(image1d_t image,
   return read_imageui(image, sampler, sampleCoord);
 }
 
-void write_1Dimagef(image1d_t image,
+void write_1Dimagef(write_only image1d_t image,
                     int coord,
                     float4 color)
 {
@@ -121,7 +121,7 @@ void write_1Dimagef(image1d_t image,
   write_imagef(image, samplecoord, color);
 }
 
-void write_1Dimagei(image1d_t image,
+void write_1Dimagei(write_only image1d_t image,
                     int coord,
                     int4 color)
 {
@@ -134,7 +134,7 @@ void write_1Dimagei(image1d_t image,
   write_imagei(image, samplecoord, color);
 }
 
-void write_1Dimageui(image1d_t image,
+void write_1Dimageui(write_only image1d_t image,
                      int coord,
                      uint4 color)
 {

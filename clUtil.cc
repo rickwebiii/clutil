@@ -184,6 +184,35 @@ clUtilPlatformVersion clUtilGetPlatformVersion()
   return version;
 }
 
+const char* clUtilGetPlatformVersionString()
+{
+  cl_int err;
+  cl_platform_id devicePlatform;
+  static char platformVersion[256];
+
+  err = clGetDeviceInfo(gDevices[gCurrentDevice],
+                        CL_DEVICE_PLATFORM,
+                        sizeof(devicePlatform),
+                        &devicePlatform,
+                        NULL);
+  if(err != CL_SUCCESS)
+  {
+    return "Unknown Platform";
+  }
+
+  err = clGetPlatformInfo(devicePlatform,
+                          CL_PLATFORM_VERSION,
+                          sizeof(platformVersion),
+                          platformVersion,
+                          NULL);
+  if(err != CL_SUCCESS)
+  {
+    return "Unknown Platform";
+  }
+
+  return platformVersion;
+}
+
 cl_uint clUtilGetMaxWriteImages()
 {
   cl_uint imageCount;

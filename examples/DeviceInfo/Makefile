@@ -6,7 +6,7 @@ OBJ=DeviceInfo.o
 INCLUDE=-I../..
 
 LIB=-lOpenCL -L../.. -lclUtil
-CPPFLAGS=-g -Wall -O0 -std=c++0x $(INCLUDE)
+CPPFLAGS=-std=c++0x $(INCLUDE) $(USERFLAGS)
 
 Asynchronous: $(OBJ)
 	g++ -o DeviceInfo $(OBJ) $(LIB)

@@ -10,4 +10,5 @@ int main(int argc, char** argv)
   version = clUtilGetPlatformVersion();
 
   printf("OpenCL %hu.%hu\n", version.major, version.minor);
+  printf("%s\n", clUtilGetPlatformVersionString());
 }
