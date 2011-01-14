@@ -87,13 +87,13 @@ int main(int argc, char** argv)
     unsigned int length = 2000;
     float val = 20.0f;
 
-    clUtil::initialize(kernelFiles, 1);
-    clUtil::alloc(sizeof(array), &buffer);
+    clUtilInitialize(kernelFiles, 1);
+    clUtilAlloc(sizeof(array), &buffer);
 
-    clUtil_enqueueKernel("fill", clUtilGrid(length, 64), buffer, length, val);
-    clUtil::deviceGet(array, sizeof(array), buffer);
+    clUtilEnqueueKernel("fill", clUtilGrid(length, 64), buffer, length, val);
+    clUtilDeviceGet(array, sizeof(array), buffer);
 
-    clUtil::free(buffer);
+    clUtilFree(buffer);
 }
 }}}
 
@@ -146,15 +146,15 @@ A typical OpenCL, CUDA, or clUtil application has a motif similar to the followi
 
 ==Initialization==
 
-With clUtil, step 1 is simplified to a single function call that initializes everything needed to run kernels and manipulate memory on any devices. The user does this by calling clUtil::initialize().
+With clUtil, step 1 is simplified to a single function call that initializes everything needed to run kernels and manipulate memory on any devices. The user does this by calling clUtilInitialize().
 
 ==Memory Management==
 
-Once initialization is complete, the user can allocate and destroy buffers using clUtil::alloc() and clUtil::free() respectively. Users do not need to worry about kernels using buffers completing after free is called; OpenCL's runtime handles this. So long as the kernel is enqueued before free is called, the program should run correctly.
+Once initialization is complete, the user can allocate and destroy buffers using clUtilAlloc() and clUtilFree() respectively. Users do not need to worry about kernels using buffers completing after free is called; OpenCL's runtime handles this. So long as the kernel is enqueued before free is called, the program should run correctly.
 
-Data is copied from host to device using clUtil::devicePut(). Data is copied from device to host using clUtil::deviceGet(). Presently, all data transfers are blocking calls (e.g. they return when the transfer is complete). Device Management
+Data is copied from host to device using clUtilDevicePut(). Data is copied from device to host using clUtilDeviceGet(). Presently, all data transfers are blocking calls (e.g. they return when the transfer is complete). Device Management
 
-All devices on all platforms are flattened into a single list behind the scenes. Users are abstracted away from this list and can change the current device using clUtil::setDeviceNum() and query the current device using clUtil::getDeviceNum(). The total number of devices across all platforms is accessible using clUtil::getNumDevices().
+All devices on all platforms are flattened into a single list behind the scenes. Users are abstracted away from this list and can change the current device using clUtilSetDeviceNum() and query the current device using clUtilGetDeviceNum(). The total number of devices across all platforms is accessible using clUtilGetNumDevices().
 
 ==Error handling==
 
@@ -164,9 +164,9 @@ Errors are signaled using return values as is done in C. When an error occurs, a
   # return the error code
 This provides several different methods of debugging. Firstly, developers can lookup the file and line number in the clUtil library to see what function failed and try to find the offending calling code. Because of the SIGTRAP, the program will exit if SIGTRAP is not overloaded when run normally. However, if run in a debugger, the debugger will catch the SIGTRAP immediately pausing the program. This allows developers to get a stack trace with variable information and possibly continue execution.
 
-Some functions may print additional information. For example, if clUtil::initialize() fails because a source file contained syntax errors, it will print the build log containing said errors, print "clUtil.cc:645::Failed to build program." to stdout, raise a SIGTRAP, and return CL_BUILD_PROGRAM_FAILURE.
+Some functions may print additional information. For example, if clUtilInitialize() fails because a source file contained syntax errors, it will print the build log containing said errors, print "clUtil.cc:645::Failed to build program." to stdout, raise a SIGTRAP, and return CL_BUILD_PROGRAM_FAILURE.
 
-The error handling macros used by clUtil that do the above are clUtilCheckErrorVoid() and clUtilCheckError(). The former should be used by functions that return void while the latter should be used by functions that return a value. Additionally, OpenCL error codes can be turned into plain English strings using clUtil::getErrorCode().
+The error handling macros used by clUtil that do the above are clUtilCheckErrorVoid() and clUtilCheckError(). The former should be used by functions that return void while the latter should be used by functions that return a value. Additionally, OpenCL error codes can be turned into plain English strings using clUtilGetErrorCode().
 
 ==Kernels==
 
@@ -325,7 +325,7 @@ Return:
 {{{
 cl_int clUtilGetDeviceNum()
 }}}
-Returns the cardinal number of the currently selected device or -1 if clUtil::initialize() has not been called.
+Returns the cardinal number of the currently selected device or -1 if clUtilInitialize() has not been called.
 
 Parameters:
     None
@@ -336,7 +336,7 @@ Return:
 {{{
 cl_uint clUtilGetNumDevices()
 }}}
-Returns the sum of all devices on all platforms or 0 if either clUtil::initialize() has not been called or no device is supported by any OpenCL platform. Some devices may be enumerated more than once if they are supported by more than one platform.
+Returns the sum of all devices on all platforms or 0 if either clUtilInitialize() has not been called or no device is supported by any OpenCL platform. Some devices may be enumerated more than once if they are supported by more than one platform.
 
 Parameters:
     None
@@ -425,7 +425,7 @@ Return:
 
 ===clUtilGetErrorCode()===
 {{{
-const char* clUtil::getErrorCode(cl_int err)
+const char* clUtilGetErrorCode(cl_int err)
 }}}
 Returns a C-string containing the English text description of OpenCL error code err.
 
@@ -524,7 +524,7 @@ cl_int clUtilCopyToImageFloat(cl_mem buffer,
                               int ld,
                               cl_mem* image)
 }}}
-Interpreting buffer starting at offset as a column-major single-precision matrix with m rows and n columns and a leading dimension of ld, allocate and copy this matrix into a 32-bit floating point alpha channel image. This image will have a width of m, a height of n, and one color per channel. This function is useful for accessing matrices through the texture cache. Upon return, "image" will point to the cl_mem handle containing the image. This function is an allocation, so you'll have to call clUtil::free() or clReleaseMemObject() to destroy it when you're finished with it.
+Interpreting buffer starting at offset as a column-major single-precision matrix with m rows and n columns and a leading dimension of ld, allocate and copy this matrix into a 32-bit floating point alpha channel image. This image will have a width of m, a height of n, and one color per channel. This function is useful for accessing matrices through the texture cache. Upon return, "image" will point to the cl_mem handle containing the image. This function is an allocation, so you'll have to call clUtilFree() or clReleaseMemObject() to destroy it when you're finished with it.
 
 Parameters:
   # buffer: a cl_mem handle to the buffer containing the source matrix
@@ -545,7 +545,7 @@ cl_int clUtilCopyToImageTransposeFloat(cl_mem buffer,
                                        int ld,
                                        cl_mem* image)
 }}}
-Interpreting buffer starting at offset as a column-major single-precision matrix with m rows and n columns and a leading dimension of ld, allocate and transpose this matrix into a 32-bit floating point alpha channel image. This image will have a width of n, a height of m, and one color per channel. This function is useful for accessing matrices through the texture cache. Upon return, "image" will point to the cl_mem handle containing the image. This function is an allocation, so you'll have to call clUtil::free() or clReleaseMemObject() to destroy it when you're finished with it.
+Interpreting buffer starting at offset as a column-major single-precision matrix with m rows and n columns and a leading dimension of ld, allocate and transpose this matrix into a 32-bit floating point alpha channel image. This image will have a width of n, a height of m, and one color per channel. This function is useful for accessing matrices through the texture cache. Upon return, "image" will point to the cl_mem handle containing the image. This function is an allocation, so you'll have to call clUtilFree() or clReleaseMemObject() to destroy it when you're finished with it.
 
 Parameters:
   # buffer: a cl_mem handle to the buffer containing the source matrix
@@ -566,7 +566,7 @@ cl_int clUtilCopyToImageDouble(cl_mem buffer,
                                int ld,
                                cl_mem* image)
 }}}
-Interpreting buffer starting at offset as a column-major double-precision matrix with m rows and n columns and a leading dimension of ld, allocate and copy this matrix into a 32-bit floating point red-green channel image. This image will have a width of n, a height of m, and two colors per channel. Use as_double() to reinterpret float2s as doubles. This function is useful for accessing matrices through the texture cache. Upon return, "image" will point to the cl_mem handle containing the image. This function is an allocation, so you'll have to call clUtil::free() or clReleaseMemObject() to destroy it when you're finished with it.
+Interpreting buffer starting at offset as a column-major double-precision matrix with m rows and n columns and a leading dimension of ld, allocate and copy this matrix into a 32-bit floating point red-green channel image. This image will have a width of n, a height of m, and two colors per channel. Use as_double() to reinterpret float2s as doubles. This function is useful for accessing matrices through the texture cache. Upon return, "image" will point to the cl_mem handle containing the image. This function is an allocation, so you'll have to call clUtilFree() or clReleaseMemObject() to destroy it when you're finished with it.
 
 Parameters:
   # buffer: a cl_mem handle to the buffer containing the source matrix
@@ -587,7 +587,7 @@ cl_int clUtilCopyToImageTransposeDouble(cl_mem buffer,
                                         int ld,
                                         cl_mem* image)
 }}}
-Interpreting buffer starting at offset as a column-major double-precision matrix with m rows and n columns and a leading dimension of ld, allocate and transpose this matrix into a 32-bit floating point red-green channel image. This image will have a width of m, a height of n, and two colors per channel. Use as_double() in kernels to reinterpret float2s as doubles. This function is useful for accessing matrices through the texture cache. Upon return, "image" will point to the cl_mem handle containing the image. This function is an allocation, so you'll have to call clUtil::free() or clReleaseMemObject() to destroy it when you're finished with it.
+Interpreting buffer starting at offset as a column-major double-precision matrix with m rows and n columns and a leading dimension of ld, allocate and transpose this matrix into a 32-bit floating point red-green channel image. This image will have a width of m, a height of n, and two colors per channel. Use as_double() in kernels to reinterpret float2s as doubles. This function is useful for accessing matrices through the texture cache. Upon return, "image" will point to the cl_mem handle containing the image. This function is an allocation, so you'll have to call clUtilFree() or clReleaseMemObject() to destroy it when you're finished with it.
 
 Parameters:
   # buffer: a cl_mem handle to the buffer containing the source matrix
@@ -608,7 +608,7 @@ cl_int clUtilCopyToImageFloat4(cl_mem buffer,
                                int ld,
                                cl_mem* image)
 }}}
-Interpreting buffer starting at offset as a column-major single-precision matrix with m rows and n columns and a leading dimension of ld, allocate and copy this matrix into a 32-bit floating point red-green-blue-alpha channel image. This image will have a width of m/4 if 4 divides m and m/4 + 1 otherwise, a height of n, and four colors per channel. If m is not a multiple of 4, image will have padding (0.0f) in some of the channels in the last pixel. This function is useful for accessing matrices through the texture cache. Upon return, "image" will point to the cl_mem handle containing the image. This function is an allocation, so you'll have to call clUtil::free() or clReleaseMemObject() to destroy it when you're finished with it.
+Interpreting buffer starting at offset as a column-major single-precision matrix with m rows and n columns and a leading dimension of ld, allocate and copy this matrix into a 32-bit floating point red-green-blue-alpha channel image. This image will have a width of m/4 if 4 divides m and m/4 + 1 otherwise, a height of n, and four colors per channel. If m is not a multiple of 4, image will have padding (0.0f) in some of the channels in the last pixel. This function is useful for accessing matrices through the texture cache. Upon return, "image" will point to the cl_mem handle containing the image. This function is an allocation, so you'll have to call clUtilFfree() or clReleaseMemObject() to destroy it when you're finished with it.
 
 Parameters:
   # buffer: a cl_mem handle to the buffer containing the source matrix
@@ -629,7 +629,7 @@ cl_int clUtilCopyToImageTransposeFloat4(cl_mem buffer,
                                         int ld,
                                         cl_mem* image)
 }}}
-Interpreting buffer starting at offset as a column-major single-precision matrix with m rows and n columns and a leading dimension of ld, allocate and copy this matrix into a 32-bit floating point red-green-blue-alpha channel image. This image will have a width of n/4 if 4 divides m and n/4 + 1 otherwise, a height of m, and four colors per channel. If n is not a multiple of 4, image will have padding (0.0f) in some of the channels in the last pixel. This function is useful for accessing matrices through the texture cache. Upon return, "image" will point to the cl_mem handle containing the image. This function is an allocation, so you'll have to call clUtil::free() or clReleaseMemObject() to destroy it when you're finished with it.
+Interpreting buffer starting at offset as a column-major single-precision matrix with m rows and n columns and a leading dimension of ld, allocate and copy this matrix into a 32-bit floating point red-green-blue-alpha channel image. This image will have a width of n/4 if 4 divides m and n/4 + 1 otherwise, a height of m, and four colors per channel. If n is not a multiple of 4, image will have padding (0.0f) in some of the channels in the last pixel. This function is useful for accessing matrices through the texture cache. Upon return, "image" will point to the cl_mem handle containing the image. This function is an allocation, so you'll have to call clUtilFree() or clReleaseMemObject() to destroy it when you're finished with it.
 
 Parameters:
   # buffer: a cl_mem handle to the buffer containing the source matrix
