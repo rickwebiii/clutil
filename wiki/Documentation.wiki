@@ -186,6 +186,7 @@ AMD Stream SDK 2.3
 
   * Double precision is enabled via #pragma cl_amd_fp64 : enable instead of cl_khr_fp64 : enable.
   * Samplers can be inline declared in OpenCL programs using const sampler_t mySampler = CLK_NORMALIZED_COORDS_TRUE or __constant sampler_t mySampler = CLK_NORMALIZED_COORDS_TRUE. The former is non-standard and the only way to do it in v2.2. The latter is the standard way and is only supported in v2.3 and later.
+  * As of v2.3, 1D images don't work (tested on Intel X5570) because 2D images don't work.
 
 ----
 
@@ -241,11 +242,11 @@ Parameters:
 Return:
     CL_SUCCESS if no error occurred. Otherwise, an error code corresponding to the erroneous underlying OpenCL call is returned after performing the previously described error handling.
 
-===clUtilDevicePut()===
+===clUtilDevicePut() [synchornous]===
 {{{
 cl_int clUtilDevicePut(void* buffer, size_t len, cl_mem gpuBuffer)
 }}}
-Copies data from the host buffer "buffer" to the device buffer "gpuBuffer" and returns when the copy is complete. Note: gpuBuffer must reside on the currently selected device or an error will occur.
+Copies data from the host buffer "buffer" to the device buffer "gpuBuffer" and returns when the copy is complete. Note: gpuBuffer must reside on the currently selected device or an error will occur. This function blocks until the copy completes.
 
 Parameters:
 
@@ -255,17 +256,55 @@ Parameters:
 Return:
     CL_SUCCESS if no error occurred. Otherwise, an error code corresponding to the erroneous underlying OpenCL call is returned after performing the previously described error handling.
 
-===clUtilDeviceGet()===
+===clUtilDeviceGet() [synchronous]===
 {{{
 cl_int clUtilDeviceGet(void* buffer, size_t len, cl_mem gpuBuffer)
 }}}
-Copies data from the device buffer "gpuBuffer" to the host buffer "buffer" and returns when the copy is complete. Note: gpuBuffer must reside on the currently selected device or an error will occur.
+Copies data from the device buffer "gpuBuffer" to the host buffer "buffer" and returns when the copy is complete. Note: gpuBuffer must reside on the currently selected device or an error will occur. This function blocks until the copy completes.
 
 Parameters:
 
   # buffer: a pointer to the zeroth element on the host's buffer
   # len: number of bytes of data to be copied
   # gpuBuffer: a cl_mem handle to the device buffer.
+Return:
+    CL_SUCCESS if no error occurred. Otherwise, an error code corresponding to the erroneous underlying OpenCL call is returned after performing the previously described error handling.
+
+===clUtilDevicePut() [asynchornous]===
+{{{
+cl_int clUtilDevicePut(void* buffer, size_t len, cl_mem gpuBuffer, clUtilCallback&& callback, bool shouldFlush = true)
+}}}
+Asynchronously copies data from the host buffer "buffer" to the device buffer "gpuBuffer." Note: gpuBuffer must reside on the currently selected device or an error will occur. This function returns immediately.
+When the copy complete's, the runtime calls "callback." Callbacks must be thread safe, as they are generally not called by the main thread.
+If flush is true (the default), clFlush() is called on the current device's queue so the copy (and anything else in the queue) begin executing on the device. If flush is false, then clFlush() is not called and the copy may remain queued until the next flush is called. This permits optimization, as developers can have only the last concurrent asynchronous action issue the flush. This function should not block regardless of the value of flush, since clFlush() does not block (e.g. it is not clFinish).
+
+Parameters:
+
+  # buffer: a pointer to the zeroth element on the host's buffer
+  # len: number of bytes of data to be copied
+  # gpuBuffer: a cl_mem handle to the device buffer.
+  # callback: the function called when the copy completes. Must have the interface void callback(void). Must be thread safe.
+  # shouldFlush: if true, clUtilDevicePut() calls clFlush() after issuing the copy to the current devices command queue. If false, it only issues the copy into the command queue; it doesn't call clFlush(). This parameter defaults to true.
+
+Return:
+    CL_SUCCESS if no error occurred. Otherwise, an error code corresponding to the erroneous underlying OpenCL call is returned after performing the previously described error handling.
+
+===clUtilDeviceGet() [asynchronous]===
+{{{
+cl_int clUtilDeviceGet(void* buffer, size_t len, cl_mem gpuBuffer, clUtilCallback&& callback, bool shouldFlush = true)
+}}}
+Asynchronously copies data from the device buffer "gpuBuffer" to the host buffer "buffer." Note: gpuBuffer must reside on the currently selected device or an error will occur. This function returns immediately.
+When the copy complete's, the runtime calls "callback." Callbacks must be thread safe, as they are generally not called by the main thread.
+If flush is true (the default), clFlush() is called on the current device's queue so the copy (and anything else in the queue) begin executing on the device. If flush is false, then clFlush() is not called and the copy may remain queued until the next flush is called. This permits optimization, as developers can have only the last concurrent asynchronous action issue the flush. This function should not block regardless of the value of flush, since clFlush() does not block (e.g. it is not clFinish).
+
+Parameters:
+
+  # buffer: a pointer to the zeroth element on the host's buffer
+  # len: number of bytes of data to be copied
+  # gpuBuffer: a cl_mem handle to the device buffer.
+  # callback: the function called when the copy completes. Must have the interface void callback(void). Must be thread safe.
+  # shouldFlush: if true, clUtilDevicePut() calls clFlush() after issuing the copy to the current devices command queue. If false, it only issues the copy into the command queue; it doesn't call clFlush(). This parameter defaults to true.
+
 Return:
     CL_SUCCESS if no error occurred. Otherwise, an error code corresponding to the erroneous underlying OpenCL call is returned after performing the previously described error handling.
 
