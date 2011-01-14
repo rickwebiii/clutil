@@ -10,7 +10,7 @@ int main(int argc, char** argv)
   cl_mem c;
   char const* kernel = "kernel.cl";
 
-  clUtilInitialize(&kernel, 1);
+  clUtilInitialize(&kernel, 1, NULL, "-I../..");
 
   clUtilCreateImage1D(kImageSize, CL_A, CL_FLOAT, &a);
   clUtilCreateImage1D(kImageSize, CL_A, CL_FLOAT, &b);

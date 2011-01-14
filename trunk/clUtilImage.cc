@@ -161,24 +161,15 @@ cl_int clUtilCreateImage1D(size_t numPixels,
 {
   size_t imageWidth;
   size_t imageHeight;
-  size_t maxWidth;
   cl_int err;
   cl_image_format format;
 
   format.image_channel_order = order;
   format.image_channel_data_type = type;
 
-  err = clGetDeviceInfo(gDevices[gCurrentDevice],
-                        CL_DEVICE_IMAGE2D_MAX_WIDTH,
-                        sizeof(maxWidth),
-                        &maxWidth,
-                        NULL);
-  clUtilCheckError(err);
-
-  imageWidth = maxWidth;
-  imageHeight = numPixels % maxWidth == 0 ? 
-    numPixels / maxWidth :
-    (numPixels / maxWidth + 1);
+  //Create an image buffer with the next highest perfect square # elements
+  imageWidth = (size_t)ceil(sqrt(numPixels));
+  imageHeight = imageWidth;
 
   *image = clCreateImage2D(gContexts[gCurrentDevice],
                            CL_MEM_READ_WRITE,

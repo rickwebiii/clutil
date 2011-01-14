@@ -1,4 +1,4 @@
-#include <../../clUtil.cl>
+#include <clUtil.cl>
 
 __kernel void fillImage(__write_only image1d_t theImage, int n)
 {

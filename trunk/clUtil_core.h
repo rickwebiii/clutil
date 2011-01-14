@@ -17,7 +17,7 @@
 #include <new>
 #include <map>
 #include <string>
-#include <functional>
+#include <math.h>
 
 #define kCLUtilMaxDevices 64
 #define kCLUtilMaxKernelNameLength 128
@@ -104,7 +104,8 @@ namespace clUtil
 };
 
 //typedef void (*clUtilCallback)(cl_event, cl_int);
-typedef std::function<void (void)> clUtilCallback;
+//typedef std::function<void (void)> clUtilCallback;
+typedef void (*clUtilCallback)();
 
 //Run user callback...
 void clUtilRunLambda(cl_event event,
@@ -130,6 +131,7 @@ char* clUtilGetDeviceName();
 char* clUtilGetDeviceVendor();
 char* clUtilGetDeviceDriver();
 clUtilPlatformVersion clUtilGetPlatformVersion();
+const char* clUtilGetPlatformVersionString();
 cl_uint clUtilGetMaxWriteImages();
 void clUtilGetSupportedImageFormats();
 
