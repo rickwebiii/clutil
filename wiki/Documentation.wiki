@@ -117,7 +117,7 @@ clUtil makes no distinction between device platforms. Devices are devices and wi
 The device list is hidden from the user; they change the current device with a function call. Subsequent operations (memory allocations, kernels, etc.) will occur on the specified device. 
 ==Memory Model==
 
-clUtil uses a simple memory model that behaves more like C. Buffers are allocated and freed instead of OpenCL's release/retain model. Since clUtil implements buffers using clCreateBuffer() and clReleaseMemObject(), a release/retain model can still be used, but is not the preferred way to do things. Data is synchronously (e.g. blocking is CL_TRUE) copied between device and host using devicePut() and deviceGet(). We plan to offer asynchronous data transfers in future releases. clUtil uses OpenCL's cl_mem objects, so many vanilla OpenCL functions should work on clUtil memory objects.
+clUtil uses a simple memory model that behaves more like C. Buffers are allocated and freed instead of OpenCL's release/retain model. Since clUtil implements buffers using clCreateBuffer() and clReleaseMemObject(), a release/retain model can still be used, but is not the preferred way to do things. Both synchronous and asynchronous data transfers can be issued with clUtilDeviceGet() and clUtilDevicePut().
 
 clUtil's memory model provides fewer options than vanilla OpenCL. All buffers are allocated on the currently selected device's only context. All buffers are read/write and do not use host pointer capabilities. We may add host pointer capabilities in future releases to accommodate performance improvements on devices that share host and device memory, such as AMD Fusion and Nvida mobile GPUs.
 
