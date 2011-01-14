@@ -449,16 +449,35 @@ Parameters:
 Return:
     A nasty subclassed templated thingy that should only be passed to clUtilEnqueueKernel.
 
-===clUtilEnqueueKernel()===
+===clUtilEnqueueKernel() (synchronous)===
 {{{
 void clUtilEnqueueKernel(const char* kernelName,
                          clUtilGrid(globalDim1, localDim1, globalDim2, localDim2, ...)
                          Args... args)
 }}}
-Enqueues a kernel with function name kernelName on the current device. This function is variadic, so an arbitrary number of arguments can be specified as parameters to the kernel.
+Enqueues a kernel with function name kernelName on the current device and immediately returns. This function is variadic, so an arbitrary number of arguments can be specified as parameters to the kernel. This function does not call clFlush(), so the kernel may not actually start executing until the user calls clFlush(), clFinish(), a blocking copy, or an asychronous copy with shouldFlush equal to true. There is no way to know when the kernel finished except with an immediate subsequent clFinish() call.
 
 Parameters:
   # kernelName: The actual name of the kernel. For example, if in my source files I have __kernel void foo(), then "foo" is the kernel name.
+  # call clUtilGrid() to generate an rvalue containing work size information
+  # args: each argument corresponds to an argument the kernel accepts
+  # ...
+
+Return:
+    None, but will print, trap, return if kernel does not exist, arguments don't match, or kernel fails to enqueue.
+
+===clUtilEnqueueKernel() (asynchronous)===
+{{{
+void clUtilEnqueueKernel(const char* kernelName,
+                         clUtilCallback&& callback,
+                         clUtilGrid(globalDim1, localDim1, globalDim2, localDim2, ...)
+                         Args... args)
+}}}
+Enqueues a kernel with function name kernelName on the current device and immediately returns. This function is variadic, so an arbitrary number of arguments can be specified as parameters to the kernel. This function does not call clFlush(), so the kernel may not actually start executing until the user calls clFlush(), clFinish(), a blocking copy, or an asychronous copy with shouldFlush equal to true. When the kernel finishes, the OpenCL runtime calls callback.
+
+Parameters:
+  # kernelName: The actual name of the kernel. For example, if in my source files I have __kernel void foo(), then "foo" is the kernel name.
+  # callback: function called when kernel completes.
   # call clUtilGrid() to generate an rvalue containing work size information
   # args: each argument corresponds to an argument the kernel accepts
   # ...
