@@ -449,7 +449,7 @@ Parameters:
 Return:
     A nasty subclassed templated thingy that should only be passed to clUtilEnqueueKernel.
 
-===clUtilEnqueueKernel() (synchronous)===
+===clUtilEnqueueKernel() (no callback notification)===
 {{{
 void clUtilEnqueueKernel(const char* kernelName,
                          clUtilGrid(globalDim1, localDim1, globalDim2, localDim2, ...)
@@ -466,7 +466,7 @@ Parameters:
 Return:
     None, but will print, trap, return if kernel does not exist, arguments don't match, or kernel fails to enqueue.
 
-===clUtilEnqueueKernel() (asynchronous)===
+===clUtilEnqueueKernel() (with callback)===
 {{{
 void clUtilEnqueueKernel(const char* kernelName,
                          clUtilCallback&& callback,
