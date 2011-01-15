@@ -75,6 +75,8 @@ const char* clUtilGetErrorCode(cl_int err)
       return "Invalid kernel definition.";
     case CL_BUILD_PROGRAM_FAILURE:
       return "Failed to build program.";
+    case -1001: //This is CL_PLATFORM_NOT_FOUND_KHR
+      return "No platforms found. (Did you put ICD files in /etc/OpenCL?)";
     default:
       return "Unknown error.";
   }

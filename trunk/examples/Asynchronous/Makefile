@@ -3,7 +3,7 @@ include ../../Makefile.inc
 OBJ=Asynchronous.o
 
 #Directory containing OpenCL header files
-INCLUDE=-I../..
+INCLUDE=-I../.. -I$(OpenCLInclude)
 
 LIB=-lOpenCL -L../.. -lclUtil
 CPPFLAGS=-std=c++0x $(INCLUDE) $(USERFLAGS)
