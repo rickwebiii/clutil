@@ -26,7 +26,11 @@
 {\
   if(err != CL_SUCCESS)\
   {\
-    printf("%s:%d::%s\n", __FILE__, __LINE__, clUtilGetErrorCode(err));\
+    printf("%s:%d:%s():\n\t%s\n",\
+           __FILE__,\
+           __LINE__,\
+           __func__,\
+           clUtilGetErrorCode(err));\
     raise(SIGTRAP);\
     return;\
   }\
@@ -36,7 +40,11 @@
 {\
   if(err != CL_SUCCESS)\
   {\
-    printf("%s:%d::%s\n", __FILE__, __LINE__, clUtilGetErrorCode(err));\
+    printf("%s:%d:%s():\n\t%s\n",\
+           __FILE__,\
+           __LINE__,\
+           __func__,\
+           clUtilGetErrorCode(err));\
     raise(SIGTRAP);\
     return err;\
   }\
@@ -117,7 +125,7 @@ cl_int clUtilInitialize(const char** filenames,
                         size_t numFiles, 
                         const char* cachename = NULL,
                         const char* options = NULL);
-cl_int clUtilSetDeviceNum(cl_int device);
+cl_int clUtilSetDeviceNum(cl_uint device);
 cl_int clUtilGetDeviceNum();
 cl_uint clUtilGetNumDevices();
 cl_program clUtilGetProgram();
