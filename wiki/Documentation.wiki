@@ -696,6 +696,8 @@ Parameters:
 Return:
     The current "time" in double precision.
 
+----
+
 =OpenCL Language Extensions=
 clUtil adds several additional utility functions callable by kernels.
 ==1D Image Routines==
