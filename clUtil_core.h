@@ -131,6 +131,7 @@ cl_uint clUtilGetNumDevices();
 cl_program clUtilGetProgram();
 cl_command_queue clUtilGetCommandQueue();
 cl_kernel clUtilGetKernel(std::string& kernelName, cl_int* err);
+cl_int clUtilFinalize();
 
 //Get info crap
 cl_int clUtilGetPointerSize();

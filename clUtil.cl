@@ -9,65 +9,11 @@
 #endif
 #endif
 
-//Declare a bunch of samplers
-#ifdef NVIDIA_CORPORATION
-const sampler_t s0 = CLK_NORMALIZED_COORDS_FALSE | \
-                     CLK_ADDRESS_CLAMP | \
-                     CLK_FILTER_NEAREST;
-const sampler_t s1 = CLK_NORMALIZED_COORDS_FALSE | \
-                     CLK_ADDRESS_CLAMP | \
-                     CLK_FILTER_NEAREST;
-const sampler_t s2 = CLK_NORMALIZED_COORDS_FALSE | \
-                     CLK_ADDRESS_CLAMP | \
-                     CLK_FILTER_NEAREST;
-const sampler_t s3 = CLK_NORMALIZED_COORDS_FALSE | \
-                     CLK_ADDRESS_CLAMP | \
-                     CLK_FILTER_NEAREST;
-const sampler_t s4 = CLK_NORMALIZED_COORDS_FALSE | \
-                     CLK_ADDRESS_CLAMP | \
-                     CLK_FILTER_NEAREST;
-const sampler_t s5 = CLK_NORMALIZED_COORDS_FALSE | \
-                     CLK_ADDRESS_CLAMP | \
-                     CLK_FILTER_NEAREST;
-const sampler_t s6 = CLK_NORMALIZED_COORDS_FALSE | \
-                     CLK_ADDRESS_CLAMP | \
-                     CLK_FILTER_NEAREST;
-const sampler_t s7 = CLK_NORMALIZED_COORDS_FALSE | \
-                     CLK_ADDRESS_CLAMP | \
-                     CLK_FILTER_NEAREST;
-#else
-__constant sampler_t s0 = CLK_NORMALIZED_COORDS_FALSE | \
-                          CLK_ADDRESS_CLAMP | \
-                          CLK_FILTER_NEAREST;
-__constant sampler_t s1 = CLK_NORMALIZED_COORDS_FALSE | \
-                          CLK_ADDRESS_CLAMP | \
-                          CLK_FILTER_NEAREST;
-__constant sampler_t s2 = CLK_NORMALIZED_COORDS_FALSE | \
-                          CLK_ADDRESS_CLAMP | \
-                          CLK_FILTER_NEAREST;
-__constant sampler_t s3 = CLK_NORMALIZED_COORDS_FALSE | \
-                          CLK_ADDRESS_CLAMP | \
-                          CLK_FILTER_NEAREST;
-__constant sampler_t s4 = CLK_NORMALIZED_COORDS_FALSE | \
-                          CLK_ADDRESS_CLAMP | \
-                          CLK_FILTER_NEAREST;
-__constant sampler_t s5 = CLK_NORMALIZED_COORDS_FALSE | \
-                          CLK_ADDRESS_CLAMP | \
-                          CLK_FILTER_NEAREST;
-__constant sampler_t s6 = CLK_NORMALIZED_COORDS_FALSE | \
-                          CLK_ADDRESS_CLAMP | \
-                          CLK_FILTER_NEAREST;
-__constant sampler_t s7 = CLK_NORMALIZED_COORDS_FALSE | \
-                          CLK_ADDRESS_CLAMP | \
-                          CLK_FILTER_NEAREST;
-#endif
-
 #ifndef NVIDIA_CORPORATION
 typedef image2d_t image1d_t;
 #else
 #define image1d_t image2d_t
 #endif
-
 
 float4 read_1Dimagef(read_only image1d_t image,
                      sampler_t sampler,
