@@ -94,6 +94,8 @@ int main(int argc, char** argv)
     clUtilDeviceGet(array, sizeof(array), buffer);
 
     clUtilFree(buffer);
+
+    clUtilFinalize();
 }
 }}}
 
@@ -160,7 +162,7 @@ A typical OpenCL, CUDA, or clUtil application has a motif similar to the followi
 
 ==Initialization==
 
-With clUtil, step 1 is simplified to a single function call that initializes everything needed to run kernels and manipulate memory on any devices. The user does this by calling clUtilInitialize().
+With clUtil, step 1 is simplified to a single function call that initializes everything needed to run kernels and manipulate memory on any devices. The user does this by calling clUtilInitialize(). clUtilFinalize() undoes any allocations that clUtilInitialize() performed, including contexts, command queues, kernels, and programs. 
 
 ==Memory Management==
 
@@ -225,6 +227,18 @@ Parameters:
   # options (optional): options passed to OpenCL compiler
 Return:
     CL_SUCCESS if no error occurred. Otherwise, an error code corresponding to the erroneous underlying OpenCL call is returned after performing the previously described error handling.
+
+===clUtilFinalize()===
+{{{
+cl_int clUtilFinalize()
+}}}
+
+Frees memory used by clUtil and is typically the last thing called by an application. After clUtilFinalize() is called, any subsequent clUtil API calls result in undefined behavior. 
+
+Parameters:
+    None
+Return:
+    clUtilFinalize() should never return anything other than CL_SUCCESS if called after a successful clUtilInitialize(). If it does, please file a bug report.
 
 ==Memory Management==
 
