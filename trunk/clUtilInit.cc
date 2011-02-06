@@ -1,6 +1,7 @@
 #include "clUtil.h"
 
 using namespace clUtil;
+using namespace std;
 
 static char* fileToString(const char* filename, size_t * filesize)
 {
@@ -326,7 +327,7 @@ static cl_int buildPrograms(const char** filenames,
 
   for(size_t curFile = 0; curFile < numFiles; curFile++)
   {
-    delete files[curFile];
+    delete[] files[curFile];
   }
 
   delete[] files;
@@ -427,3 +428,33 @@ cl_int clUtilInitialize(const char** filenames,
   return err;
 }
 
+cl_int clUtilFinalize()
+{
+  cl_int err;
+
+  //Free willy
+  for(unsigned int curDevice = 0; curDevice < gNumDevices; curDevice++)
+  {
+    for(map<string, cl_kernel>::iterator curKernel = 
+          gKernelNameLookup[curDevice].begin();
+        curKernel != gKernelNameLookup[curDevice].end();
+        curKernel++)
+    {
+      err = clReleaseKernel(curKernel->second);
+      clUtilCheckError(err);
+    }
+
+    delete[] gKernels[curDevice];
+    
+    err = clReleaseContext(gContexts[curDevice]);
+    clUtilCheckError(err);
+
+    err = clReleaseProgram(gPrograms[curDevice]);
+    clUtilCheckError(err);
+
+    err = clReleaseCommandQueue(gCommandQueues[curDevice]);
+    clUtilCheckError(err);
+  }
+
+  return CL_SUCCESS;
+}

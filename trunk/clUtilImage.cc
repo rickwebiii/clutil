@@ -218,7 +218,7 @@ cl_int clUtilCopyToImageFloat(cl_mem buffer,
                       m,
                       n,
                       ld,
-                      image);
+                      *image);
   
   return CL_SUCCESS;
 }
@@ -257,7 +257,7 @@ cl_int clUtilCopyToImageTransposeFloat(cl_mem buffer,
                       m,
                       n,
                       ld,
-                      image);
+                      *image);
   
   return CL_SUCCESS;
 }
@@ -296,7 +296,7 @@ cl_int clUtilCopyToImageDouble(cl_mem buffer,
                       m,
                       n,
                       ld,
-                      image);
+                      *image);
 
   return CL_SUCCESS;
 }
@@ -335,7 +335,7 @@ cl_int clUtilCopyToImageTransposeDouble(cl_mem buffer,
                       m,
                       n,
                       ld,
-                      image);
+                      *image);
 
 
 
@@ -376,7 +376,7 @@ cl_int clUtilCopyToImageFloat4(cl_mem buffer,
                       m,
                       n,
                       ld,
-                      image);
+                      *image);
   
   return CL_SUCCESS;
 }
@@ -415,7 +415,7 @@ cl_int clUtilCopyToImageTransposeFloat4(cl_mem buffer,
                       m,
                       n,
                       ld,
-                      image);
+                      *image);
 
   return CL_SUCCESS;
 }
@@ -454,7 +454,7 @@ cl_int clUtilCopyToImageDouble2(cl_mem buffer,
                       m,
                       n,
                       ld,
-                      image);
+                      *image);
 
   return CL_SUCCESS;
 }
@@ -493,7 +493,7 @@ cl_int clUtilCopyToImageTransposeDouble2(cl_mem buffer,
                       m,
                       n,
                       ld,
-                      image);
+                      *image);
   
   return CL_SUCCESS;
 }
