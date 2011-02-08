@@ -14,7 +14,7 @@ int main(int argc, char** argv)
   static volatile bool kernelDone = false;
   static volatile bool readBackDone = false;
 
-  clUtilEnableAsynchronous();
+  clUtilEnableOOOExecution();
 
   err = clUtilInitialize(&kernel, 1);
 
