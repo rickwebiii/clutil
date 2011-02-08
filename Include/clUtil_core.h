@@ -120,18 +120,21 @@ void clUtilRunLambda(cl_event event,
                      cl_int status,
                      void* user_data);
 
-//Init and management crap
+//Init functions
 cl_int clUtilInitialize(const char** filenames, 
                         size_t numFiles, 
                         const char* cachename = NULL,
                         const char* options = NULL);
+cl_int clUtilFinalize();
+void clUtilEnableAsynchronous();
+
+//Info functions
 cl_int clUtilSetDeviceNum(cl_uint device);
 cl_int clUtilGetDeviceNum();
 cl_uint clUtilGetNumDevices();
 cl_program clUtilGetProgram();
 cl_command_queue clUtilGetCommandQueue();
 cl_kernel clUtilGetKernel(std::string& kernelName, cl_int* err);
-cl_int clUtilFinalize();
 
 //Get info crap
 cl_int clUtilGetPointerSize();
