@@ -727,6 +727,7 @@ Return:
 
 =OpenCL Language Extensions=
 clUtil adds several additional utility functions callable by kernels.
+
 ==1D Image Routines==
 ===read_1Dimage{f|i|ui}()===
 {{{
@@ -769,3 +770,43 @@ Parameters:
   # color: color to write to the index in texture.
 Return:
     None.
+
+===radixSort{LG | GL}()===
+{{{
+void radixSortLG(__global unsigned int* key,
+                 __global unsigned int* val,
+                 __global unsigned int* keyTmp,
+                 __global unsigned int* valTmp,
+                 unsigned int len,
+                 __local unsigned int* zerosIndex,
+                 __local unsigned int* onesIndex,
+                 __local unsigned int* zerosScan,
+                 __local unsigned int* onesScan)
+
+void radixSortGL(__global unsigned int* key,
+                 __global unsigned int* val,
+                 __global unsigned int* keyTmp,
+                 __global unsigned int* valTmp,
+                 unsigned int len,
+                 __local unsigned int* zerosIndex,
+                 __local unsigned int* onesIndex,
+                 __local unsigned int* zerosScan,
+                 __local unsigned int* onesScan)
+}}}
+
+These functions cause the calling work group to sort the array of values in val using the keys in key. The threads in the 0th local work dimension work cooperatively to sort the array. The LG variant sorts from least to greatest while the GL version sorts greatest to least. The sorted values are placed in valTmp and the sorted keys are placed in keyTmp. The length of the arrays is given by len. The remaining four parameters are temporary storage used by radix sort and should be assumed modified after the function returns.
+
+Sorts in 32*len/local_work_size(0) time.
+
+*Note: Please make this function better. It's implementation is terrible and its interface is even worse.*
+
+Parameters:
+  # key - a pointer to the first key in the keys array. This array is also used as temporary storage by radixSort
+  # val - a pointer to the first value in the values array. This array is also used as temporary storage by radixSort
+  # keyTmp - a pointer to the first key in the output keys array. Upon completion, will have all the sorted keys.
+  # valTmp - a pointer to the first value in the output values array. Upon completion, will contain the values sorted according to their corresponding key.
+  # len - the length of the key, val, keyTmp, valTmp arrays.
+  # zerosIndex - a pointer to local memory temporary storage. radixSort requires 1 unsigned int.
+  # onesIndex - a pointer to local memory temporary storage. radixSort requires 1 unsigned int.
+  # zerosScan - a pointer to local memory temporary storage. radixSort requires the length of this array equal the number of threads per work group in the 0th dimension.
+  # onesScan - a pointer to local memory temporary storage. radixSort requires the length of this array equal the number of threads per work group in the 0th dimension.
