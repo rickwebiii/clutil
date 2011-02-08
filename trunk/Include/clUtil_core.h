@@ -126,7 +126,7 @@ cl_int clUtilInitialize(const char** filenames,
                         const char* cachename = NULL,
                         const char* options = NULL);
 cl_int clUtilFinalize();
-void clUtilEnableAsynchronous();
+void clUtilEnableOOOExecution();
 
 //Info functions
 cl_int clUtilSetDeviceNum(cl_uint device);

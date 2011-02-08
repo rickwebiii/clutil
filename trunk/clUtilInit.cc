@@ -476,7 +476,7 @@ cl_int clUtilFinalize()
   return CL_SUCCESS;
 }
 
-void clUtilEnableAsynchronous()
+void clUtilEnableOOOExecution()
 {
   commandQueueFlags |= CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
 }

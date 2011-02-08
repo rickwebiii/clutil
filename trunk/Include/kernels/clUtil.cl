@@ -1,3 +1,3 @@
 #pragma once
 #include <clUtilImage1D.cl>
-#include <clUtilSort.h>
+#include <clUtilSort.cl>
