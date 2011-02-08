@@ -1,5 +1,13 @@
 #include <clUtil.cl>
 
+const sampler_t s0 = CLK_NORMALIZED_COORDS_FALSE | 
+                     CLK_ADDRESS_CLAMP |
+                     CLK_FILTER_NEAREST;
+
+const sampler_t s1 = CLK_NORMALIZED_COORDS_FALSE | 
+                     CLK_ADDRESS_CLAMP |
+                     CLK_FILTER_NEAREST;
+
 __kernel void fillImage(__write_only image1d_t theImage, int n)
 {
   float4 color = {0.0f, 0.0f, 0.0f, 0.0f};

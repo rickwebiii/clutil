@@ -14,6 +14,8 @@ int main(int argc, char** argv)
   static volatile bool kernelDone = false;
   static volatile bool readBackDone = false;
 
+  clUtilEnableAsynchronous();
+
   err = clUtilInitialize(&kernel, 1);
 
   clUtilAlloc(sizeof(float) * kBufferSize, &a);

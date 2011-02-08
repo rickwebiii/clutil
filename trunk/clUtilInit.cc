@@ -3,6 +3,8 @@
 using namespace clUtil;
 using namespace std;
 
+static cl_command_queue_properties commandQueueFlags = 0;
+
 static char* fileToString(const char* filename, size_t * filesize)
 {
   int fid = open(filename, O_RDONLY);
@@ -220,6 +222,9 @@ static cl_int initDevices()
   //Create contexts for each device
   for(cl_uint i = 0; i < gNumDevices; i++)
   {
+    cl_command_queue_properties properties;
+    bool canExecuteOOO;
+
     gContexts[i] = clCreateContext(NULL,
                                    1,
                                    &gDevices[i],
@@ -228,9 +233,21 @@ static cl_int initDevices()
                                    &err);
     clUtilCheckError(err);
 
+    err = clGetDeviceInfo(gDevices[i],
+                          CL_DEVICE_QUEUE_PROPERTIES,
+                          sizeof(properties),
+                          &properties,
+                          NULL);
+    clUtilCheckError(err);
+
+    canExecuteOOO = (properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE) != 0 ?
+                    true : 
+                    false;
+
     gCommandQueues[i] = clCreateCommandQueue(gContexts[i],
                                              gDevices[i],
-                                             0,
+                                             canExecuteOOO == true ? 
+                                               commandQueueFlags : 0,
                                              &err);
     clUtilCheckError(err);
   }
@@ -245,7 +262,7 @@ static cl_int buildPrograms(const char** filenames,
   cl_int err;
 
   char** files = new char*[numFiles];
-    
+
   for(size_t curFile = 0; curFile < numFiles; curFile++)
   {
     size_t filesize;
@@ -262,7 +279,7 @@ static cl_int buildPrograms(const char** filenames,
 
   for(size_t curDevice = 0; curDevice < gNumDevices; curDevice++)
   {
-    char deviceFlags[256];
+    char deviceFlags[512];
     char deviceVendor[256];
 
     gPrograms[curDevice] = clCreateProgramWithSource(gContexts[curDevice],
@@ -298,7 +315,7 @@ static cl_int buildPrograms(const char** filenames,
 
     snprintf(deviceFlags, 
              sizeof(deviceFlags) - 1, 
-             "-cl-mad-enable -D%s %s",
+             "-cl-mad-enable -I/usr/include/clutil/kernels -D%s %s",
              deviceVendor,
              options == NULL ? "" : options);
 
@@ -457,4 +474,9 @@ cl_int clUtilFinalize()
   }
 
   return CL_SUCCESS;
+}
+
+void clUtilEnableAsynchronous()
+{
+  commandQueueFlags |= CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
 }

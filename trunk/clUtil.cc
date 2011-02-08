@@ -1,4 +1,4 @@
-#include "clUtil.h"
+#include <clUtil.h>
 
 cl_device_id clUtil::gDevices[kCLUtilMaxDevices];
 cl_context clUtil::gContexts[kCLUtilMaxDevices];
