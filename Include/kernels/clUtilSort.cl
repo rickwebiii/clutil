@@ -75,6 +75,35 @@ void sum(__global unsigned int* array,
   barrier(CLK_LOCAL_MEM_FENCE);
 }
 
+void arrayMax(__global unsigned int* array,
+         __local unsigned int* totalMax,
+         unsigned int len)
+{
+  unsigned int partialMax = 0;
+
+  if(get_global_id(0) == 0)
+  {
+    *totalMax = 0;
+  }
+
+  barrier(CLK_LOCAL_MEM_FENCE);
+
+  for(unsigned int i = get_local_id(0); i < len; i += get_local_size(0))
+  {
+    unsigned int curVal = array[i];
+
+    if(curVal > partialMax)
+    {
+      partialMax = curVal;
+    }
+  }
+
+  //Put the max of the maxes in the return value
+  atomic_max(totalMax, partialMax);
+
+  barrier(CLK_LOCAL_MEM_FENCE);
+}
+
 //Radix sort array from least to greatest
 void radixSortLG(__global unsigned int* key,
                  __global unsigned int* val,
