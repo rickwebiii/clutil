@@ -439,6 +439,31 @@ Parameters:
 Return:
     None
 
+==Accessing internals==
+===clUtilGetCommandQueue()===
+{{{
+cl_command_queue clUtilGetCommandQueue()
+}}}
+Returns the command queue associated with the current device or zero if the current device is invalid.
+
+Parameters:
+    None
+
+Return:
+    The command queue associated with the current device.
+
+===clUtilGetContext()===
+{{{
+cl_context clUtilGetContext()
+}}}
+Returns the context associated with the current device or zero if the current device is invalid.
+
+Parameters:
+    None
+
+Return:
+    The context associated with the current device.
+
 ==Error handling==
 
 ===clUtilCheckErrorVoid(err)===
