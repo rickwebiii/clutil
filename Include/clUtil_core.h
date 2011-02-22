@@ -132,8 +132,11 @@ void clUtilEnableOOOExecution();
 cl_int clUtilSetDeviceNum(cl_uint device);
 cl_int clUtilGetDeviceNum();
 cl_uint clUtilGetNumDevices();
-cl_program clUtilGetProgram();
+
+//For accessing internals
 cl_command_queue clUtilGetCommandQueue();
+cl_context clUtilGetContext();
+cl_program clUtilGetProgram();
 cl_kernel clUtilGetKernel(std::string& kernelName, cl_int* err);
 
 //Get info crap

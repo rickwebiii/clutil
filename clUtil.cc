@@ -388,6 +388,16 @@ cl_command_queue clUtilGetCommandQueue()
   return gCommandQueues[gCurrentDevice];
 }
 
+cl_context clUtilGetContext()
+{
+  if(gCurrentDevice < 0 || gCurrentDevice > gNumDevices)
+  {
+    return 0;
+  }
+
+  return gContexts[gCurrentDevice];
+}
+
 cl_int clUtilGetPointerSize()
 {
   cl_int err;
