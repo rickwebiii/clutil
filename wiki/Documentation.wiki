@@ -809,6 +809,7 @@ Parameters:
 Return:
     None.
 
+==Algorithms==
 ===radixSort{LG | GL}()===
 {{{
 void radixSortLG(__global unsigned int* key,
