@@ -464,6 +464,19 @@ Parameters:
 Return:
     The context associated with the current device.
 
+===clUtilGetDevice()===
+{{{
+cl_device_id clUtilGetDevice()
+}}}
+Returns the cl_device_id associated with the current device number or zero if the current device is invalid.
+
+Parameters:
+    None
+
+Return:
+    The device associated with the current device number or zero if it's invalid.
+
+
 ==Error handling==
 
 ===clUtilCheckErrorVoid(err)===
