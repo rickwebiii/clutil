@@ -138,6 +138,7 @@ cl_command_queue clUtilGetCommandQueue();
 cl_context clUtilGetContext();
 cl_program clUtilGetProgram();
 cl_kernel clUtilGetKernel(std::string& kernelName, cl_int* err);
+cl_device_id clUtilGetDevice();
 
 //Get info crap
 cl_int clUtilGetPointerSize();

@@ -100,6 +100,16 @@ cl_kernel clUtilGetKernel(std::string& kernelName, cl_int* err)
   return item->second;
 }
 
+cl_device_id clUtilGetDevice()
+{
+  if(gCurrentDevice < 0 || gCurrentDevice >= gNumDevices)
+  {
+    return 0;
+  }
+
+  return gDevices[gCurrentDevice];
+}
+
 char* clUtilGetDeviceName()
 {
   static char devName[256];
