@@ -88,7 +88,7 @@ cl_int clUtilGetImage1D(cl_mem image,
   size_t imageHeight;
   size_t origin3D[3];
   size_t region3D[3];
-  size_t pitch;
+  size_t pitch = 0;
   cl_int err;
   void* hostStartAddress;
   void* mappedImageStartAddress;
@@ -168,8 +168,10 @@ cl_int clUtilCreateImage1D(size_t numPixels,
   format.image_channel_data_type = type;
 
   //Create an image buffer with the next highest perfect square # elements
-  imageWidth = (size_t)ceil(sqrt(numPixels));
-  imageHeight = imageWidth;
+  imageWidth = 8192;
+  imageHeight = numPixels % imageWidth == 0 ? 
+    numPixels / imageWidth :
+    numPixels / imageWidth + 1;
 
   *image = clCreateImage2D(gContexts[gCurrentDevice],
                            CL_MEM_READ_WRITE,
