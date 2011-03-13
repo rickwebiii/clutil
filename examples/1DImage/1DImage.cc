@@ -1,6 +1,6 @@
 #include <clUtil.h>
 
-const unsigned int kImageSize = 12345;
+const unsigned int kImageSize = 1234567;
 
 int main(int argc, char** argv)
 {
@@ -11,6 +11,8 @@ int main(int argc, char** argv)
   char const* kernel = "kernel.cl";
 
   clUtilInitialize(&kernel, 1, NULL, "-I../..");
+
+  clUtilSetDeviceNum(1);
 
   clUtilCreateImage1D(kImageSize, CL_A, CL_FLOAT, &a);
   clUtilCreateImage1D(kImageSize, CL_A, CL_FLOAT, &b);
@@ -32,6 +34,8 @@ int main(int argc, char** argv)
                       b,
                       c,
                       kImageSize);
+
+  clFinish(clUtilGetCommandQueue());
 
   clUtilGetImage1D(c, 0, kImageSize, result);
 
