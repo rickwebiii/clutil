@@ -2,13 +2,22 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-void fillArray(unsigned int* array, unsigned int length)
+void fillKeys(unsigned int* array, unsigned int length)
 {
   for(unsigned int i = 0; i < length; i++)
   {
-    array[i] = (unsigned int)(100.0 * drand48());
+    array[i] = i % 10;
   }
 }
+
+void fillVals(unsigned int* array, unsigned int length)
+{
+  for(unsigned int i = 0; i < length; i++)
+  {
+    array[i] = i;
+  }
+}
+
 
 void usage()
 {
@@ -56,8 +65,8 @@ int main(int argc, char** argv)
   //Fill the arrays
   for(unsigned int curRow = 0; curRow < rows; curRow++)
   {
-    fillArray(&keys[curRow * cols], cols);
-    fillArray(&vals[curRow * cols], cols);
+    fillKeys(&keys[curRow * cols], cols);
+    fillVals(&vals[curRow * cols], cols);
   }
 
   clUtilInitialize(&kernel, 1);
@@ -65,6 +74,10 @@ int main(int argc, char** argv)
   clUtilSetDeviceNum(deviceNum);
 
   size = sizeof(unsigned int) * rows * cols;
+
+  printf("Running on device %d %s\n",
+         clUtilGetDeviceNum(),
+         clUtilGetDeviceName());
 
   clUtilAlloc(size, &keysDevice1);
   clUtilAlloc(size, &keysDevice2);
@@ -87,14 +100,20 @@ int main(int argc, char** argv)
 
   for(unsigned int curRow = 0; curRow < rows; curRow++)
   {
-    for(unsigned int curCol = 0; curCol < cols - 1; curCol++)
+    for(unsigned int curCol = 0; curCol < cols; curCol++)
     {
-      if(keys[curRow * cols + curCol] > keys[curRow * cols + curCol + 1])
+      printf("{%u, %u} ", 
+             keys[curRow * cols + curCol],
+             vals[curRow * cols + curCol]);
+      if(curCol < cols - 1 &&
+         keys[curRow * cols + curCol] < keys[curRow * cols + curCol + 1])
       {
         printf("Error, element %u, %u\n", curRow, curCol);
         exit(1);
       }
     }
+
+    printf("\n");
   }
 
   printf("Success!\n");

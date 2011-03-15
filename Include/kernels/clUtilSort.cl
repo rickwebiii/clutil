@@ -25,13 +25,25 @@ unsigned int _log2(unsigned int num)
       return 8;
     case 512:
       return 9;
+    default:
+      return 0;
   }
-
-  return 0;
 }
 
 void scanSum(__local unsigned int* array)
 {
+  if(get_local_id(0) == 0)
+  {
+    for(unsigned int i = 1; i < get_local_size(0); i++)
+    {
+      array[i] += array[i - 1];
+    }
+  }
+
+  barrier(CLK_LOCAL_MEM_FENCE);
+#if 0
+  //Don't know why but this code crashes Radeon cards
+
   unsigned int logThreads = _log2(get_local_size(0));
 
   for(unsigned int i = 0; i < logThreads; i++)
@@ -49,6 +61,7 @@ void scanSum(__local unsigned int* array)
     
     barrier(CLK_LOCAL_MEM_FENCE);
   }
+#endif
 }
 
 void sum(__global unsigned int* array, 
