@@ -1,12 +1,12 @@
 #pragma once
-//#include <stdarg.h>
+#include <stdarg.h>
 
 #include "clUtil_core.h"
 
 #define clUtilCheckKernelArg(kernelName, paramNum, err)\
   if(err != CL_SUCCESS)\
 {\
-  printf("__kernel %s(): %ld parameter: %s",\
+  printf("__kernel %s(): %ld parameter: %s\n",\
          kernelName,\
          paramNum,\
          clUtilGetErrorCode(err));\
