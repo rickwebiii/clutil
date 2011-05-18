@@ -1,10 +1,10 @@
 #include <clUtil.cl>
 
-const sampler_t s0 = CLK_NORMALIZED_COORDS_FALSE | 
+__constant sampler_t s0 = CLK_NORMALIZED_COORDS_FALSE | 
                      CLK_ADDRESS_CLAMP |
                      CLK_FILTER_NEAREST;
 
-const sampler_t s1 = CLK_NORMALIZED_COORDS_FALSE | 
+__constant sampler_t s1 = CLK_NORMALIZED_COORDS_FALSE | 
                      CLK_ADDRESS_CLAMP |
                      CLK_FILTER_NEAREST;
 
