@@ -168,10 +168,25 @@ cl_int clUtilCreateImage1D(size_t numPixels,
   format.image_channel_data_type = type;
 
   //Create an image buffer with the next highest perfect square # elements
+#if 1
   imageWidth = 8192;
   imageHeight = numPixels % imageWidth == 0 ? 
     numPixels / imageWidth :
     numPixels / imageWidth + 1;
+#else
+  for(unsigned int i = 0; i < 14; i++)
+  {
+    unsigned int size = 1 << i;
+
+    if(size * size > numPixels)
+    {
+      imageHeight = size;
+      imageWidth = size;
+      break;
+    }
+  }
+
+#endif
 
   *image = clCreateImage2D(gContexts[gCurrentDevice],
                            CL_MEM_READ_WRITE,

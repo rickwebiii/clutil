@@ -7,7 +7,7 @@ int main(int argc, char** argv)
   double time2;
   float* a;
   cl_mem gpuA;
-  const unsigned int size = 1024*1024*128;
+  const unsigned int size = 1024*1024*64;
 
   clUtilInitialize(&kernel, 1);
 
