@@ -3,10 +3,16 @@
 
 #include "clUtil_core.h"
 
+#ifdef _WIN32
+  #define FORMAT_SPECIFIER_SIZE_T "%Iu"
+#else
+  #define FORMAT_SPECIFIER_SIZE_T "%zu"
+#endif
+
 #define clUtilCheckKernelArg(kernelName, paramNum, err)\
   if(err != CL_SUCCESS)\
 {\
-  printf("__kernel %s(): %ld parameter: %s\n",\
+  printf("__kernel %s(): " FORMAT_SPECIFIER_SIZE_T " parameter: %s\n",\
          kernelName,\
          paramNum,\
          clUtilGetErrorCode(err));\
