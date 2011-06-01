@@ -6,7 +6,7 @@ EXAMPLES=$(wildcard examples/*) #Every subdir in examples
 #Directory containing OpenCL header files
 
 LIB=
-CPPFLAGS=-std=c++0x -I$(OpenCLInclude) $(USERFLAGS) -IInclude
+CPPFLAGS=-std=c++0x $(OpenCLInclude) $(USERFLAGS) -IInclude
 
 libclUtil.a: $(OBJ)
 	$(AR) rcs libclUtil.a $(OBJ) $(LIB)
