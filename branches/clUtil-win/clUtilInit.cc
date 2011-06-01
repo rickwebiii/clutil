@@ -1,5 +1,28 @@
 #include "clUtil.h"
 
+#ifdef _WIN32
+  #ifndef _STAT_H_
+    #define S_IRUSR 0
+    #define S_IWUSR 0
+    #define S_IXUSR 0
+    #define S_IRWXU (S_IRUSR | S_IWUSR | S_IXUSR)
+  #endif
+
+  #define S_IRGRP 0
+  #define S_IWGRP 0
+  #define S_IXGRP 0
+  #define S_IRWXG (S_IRGRP | S_IWGRP | S_IXGRP)
+
+  #define S_IROTH 0
+  #define S_IWOTH 0
+  #define S_IXOTH 0
+  #define S_IRWXO (S_IROTH | S_IWOTH | S_IXOTH)
+
+  #define S_ISUID 0
+  #define S_ISGID 0
+  #define S_ISVTX 0
+#endif
+
 using namespace clUtil;
 using namespace std;
 
