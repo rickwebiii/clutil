@@ -122,7 +122,7 @@ namespace clUtil
 typedef void (*clUtilCallback)();
 
 //Run user callback...
-void clUtilRunLambda(cl_event event,
+void CL_CALLBACK clUtilRunLambda(cl_event event,
                      cl_int status,
                      void* user_data);
 
