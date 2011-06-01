@@ -19,6 +19,12 @@
 #include <string>
 #include <math.h>
 
+#ifdef _WIN32
+  #ifndef SIGTRAP
+    #define SIGTRAP SIGINT
+  #endif
+#endif
+
 #define kCLUtilMaxDevices 64
 #define kCLUtilMaxKernelNameLength 128
 
