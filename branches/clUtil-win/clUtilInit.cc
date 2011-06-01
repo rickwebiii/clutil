@@ -1,7 +1,7 @@
 #include "clUtil.h"
 
 #ifdef _WIN32
-  #ifndef _STAT_H_
+  #if !defined(_STAT_H_) && !defined(_INC_STAT)
     #define S_IRUSR 0
     #define S_IWUSR 0
     #define S_IXUSR 0
