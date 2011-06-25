@@ -24,7 +24,7 @@ void gridSetGlobalLocal(size_t* global,
                         size_t* local, 
                         unsigned int curDim);
 
-template<typename TGlobal, typename TLocal, typename...Args> 
+template<typename TGlobal, typename TLocal, typename... Args> 
 void gridSetGlobalLocal(size_t* global, 
                         size_t* local, 
                         unsigned int curDim, 
