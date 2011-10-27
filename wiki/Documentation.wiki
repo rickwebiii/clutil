@@ -1,3 +1,5 @@
+*NOTE: clUtil is undergoing major revisions and parts of this documentation may now be inaccurate*
+
 <wiki:toc max_depth="3" />
 
 =Introduction=
