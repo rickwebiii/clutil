@@ -1,4 +1,7 @@
-#include "clUtil.h"
+#include "clUtilDevice.h"
+#include "clUtilCommon.h"
+#include "clUtilException.h"
+#include "clUtil_kernel.h"
 
 using namespace clUtil;
 
@@ -42,7 +45,7 @@ cl_int clUtilPutImage1D(cl_mem image,
   origin3D = {0, 0, 0};
   region3D = {imageWidth, imageHeight, 1};
 
-  mappedImage = clEnqueueMapImage(gCommandQueues[gCurrentDevice],
+  mappedImage = clEnqueueMapImage(Device::GetCurrentDevice().getCommandQueue(),
                                   image,
                                   CL_TRUE,
                                   CL_MAP_WRITE,
@@ -64,7 +67,7 @@ cl_int clUtilPutImage1D(cl_mem image,
          hostStartAddress, 
          region * pixelSize);
 
-  err = clEnqueueUnmapMemObject(gCommandQueues[gCurrentDevice],
+  err = clEnqueueUnmapMemObject(Device::GetCurrentDevice().getCommandQueue(),
                                 image,
                                 mappedImage,
                                 0,
@@ -72,7 +75,7 @@ cl_int clUtilPutImage1D(cl_mem image,
                                 NULL);
   clUtilCheckError(err);
 
-  err = clEnqueueBarrier(gCommandQueues[gCurrentDevice]);
+  err = clEnqueueBarrier(Device::GetCurrentDevice().getCommandQueue());
   clUtilCheckError(err);
 
   return CL_SUCCESS;
@@ -118,7 +121,7 @@ cl_int clUtilGetImage1D(cl_mem image,
   origin3D = {0, 0, 0};
   region3D = {imageWidth, imageHeight, 1};
 
-  mappedImage = clEnqueueMapImage(gCommandQueues[gCurrentDevice],
+  mappedImage = clEnqueueMapImage(Device::GetCurrentDevice().getCommandQueue(),
                                   image,
                                   CL_TRUE,
                                   CL_MAP_READ,
@@ -140,7 +143,7 @@ cl_int clUtilGetImage1D(cl_mem image,
          mappedImageStartAddress,
          region * pixelSize);
 
-  err = clEnqueueUnmapMemObject(gCommandQueues[gCurrentDevice],
+  err = clEnqueueUnmapMemObject(Device::GetCurrentDevice().getCommandQueue(),
                                 image,
                                 mappedImage,
                                 0,
@@ -148,7 +151,7 @@ cl_int clUtilGetImage1D(cl_mem image,
                                 NULL);
   clUtilCheckError(err);
 
-  err = clEnqueueBarrier(gCommandQueues[gCurrentDevice]);
+  err = clEnqueueBarrier(Device::GetCurrentDevice().getCommandQueue());
   clUtilCheckError(err);
 
   return CL_SUCCESS;
@@ -188,7 +191,7 @@ cl_int clUtilCreateImage1D(size_t numPixels,
 
 #endif
 
-  *image = clCreateImage2D(gContexts[gCurrentDevice],
+  *image = clCreateImage2D(Device::GetCurrentDevice().getContext(),
                            CL_MEM_READ_WRITE,
                            &format,
                            imageWidth,
@@ -218,7 +221,7 @@ cl_int clUtilCopyToImageFloat(cl_mem buffer,
   format.image_channel_order = CL_A;
   format.image_channel_data_type = CL_FLOAT;
 
-  *image = clCreateImage2D(gContexts[gCurrentDevice],
+  *image = clCreateImage2D(Device::GetCurrentDevice().getContext(),
                            CL_MEM_READ_WRITE,
                            &format,
                            imageWidth,
@@ -257,7 +260,7 @@ cl_int clUtilCopyToImageTransposeFloat(cl_mem buffer,
   format.image_channel_order = CL_A;
   format.image_channel_data_type = CL_FLOAT;
 
-  *image = clCreateImage2D(gContexts[gCurrentDevice],
+  *image = clCreateImage2D(Device::GetCurrentDevice().getContext(),
                            CL_MEM_READ_WRITE,
                            &format,
                            imageWidth,
@@ -296,7 +299,7 @@ cl_int clUtilCopyToImageDouble(cl_mem buffer,
   format.image_channel_order = CL_RG;
   format.image_channel_data_type = CL_FLOAT;
 
-  *image = clCreateImage2D(gContexts[gCurrentDevice],
+  *image = clCreateImage2D(Device::GetCurrentDevice().getContext(),
                            CL_MEM_READ_WRITE,
                            &format,
                            imageWidth,
@@ -335,7 +338,7 @@ cl_int clUtilCopyToImageTransposeDouble(cl_mem buffer,
   format.image_channel_order = CL_RG;
   format.image_channel_data_type = CL_FLOAT;
 
-  *image = clCreateImage2D(gContexts[gCurrentDevice],
+  *image = clCreateImage2D(Device::GetCurrentDevice().getContext(),
                            CL_MEM_READ_WRITE,
                            &format,
                            imageWidth,
@@ -376,7 +379,7 @@ cl_int clUtilCopyToImageFloat4(cl_mem buffer,
   format.image_channel_order = CL_RGBA;
   format.image_channel_data_type = CL_FLOAT;
 
-  *image = clCreateImage2D(gContexts[gCurrentDevice],
+  *image = clCreateImage2D(Device::GetCurrentDevice().getContext(),
                            CL_MEM_READ_WRITE,
                            &format,
                            imageWidth,
@@ -415,7 +418,7 @@ cl_int clUtilCopyToImageTransposeFloat4(cl_mem buffer,
   format.image_channel_order = CL_RGBA;
   format.image_channel_data_type = CL_FLOAT;
 
-  *image = clCreateImage2D(gContexts[gCurrentDevice],
+  *image = clCreateImage2D(Device::GetCurrentDevice().getContext(),
                            CL_MEM_READ_WRITE,
                            &format,
                            imageWidth,
@@ -454,7 +457,7 @@ cl_int clUtilCopyToImageDouble2(cl_mem buffer,
   format.image_channel_order = CL_RGBA;
   format.image_channel_data_type = CL_FLOAT;
 
-  *image = clCreateImage2D(gContexts[gCurrentDevice],
+  *image = clCreateImage2D(Device::GetCurrentDevice().getContext(),
                            CL_MEM_READ_WRITE,
                            &format,
                            imageWidth,
@@ -493,7 +496,7 @@ cl_int clUtilCopyToImageTransposeDouble2(cl_mem buffer,
   format.image_channel_order = CL_RGBA;
   format.image_channel_data_type = CL_FLOAT;
 
-  *image = clCreateImage2D(gContexts[gCurrentDevice],
+  *image = clCreateImage2D(Device::GetCurrentDevice().getContext(),
                            CL_MEM_READ_WRITE,
                            &format,
                            imageWidth,

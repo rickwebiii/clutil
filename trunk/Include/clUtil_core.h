@@ -1,54 +1,12 @@
 #pragma once
-#ifdef __APPLE__
-#include <OpenCL/cl.h>
-#include <mach/mach_time.h>
-#include <mach/mach.h>
-#include <CoreServices/CoreServices.h>
-#else
-#include <CL/cl.h>
-#include <sys/time.h>
-#endif
-#include <stdio.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <string.h>
-#include <signal.h>
-#include <new>
-#include <map>
-#include <string>
-#include <math.h>
+#include "clUtilException.h"
+#include "clUtilDevice.h"
+#include "clUtilCommon.h"
+#include "clUtilUtility.h"
 
 #define kCLUtilMaxDevices 64
 #define kCLUtilMaxKernelNameLength 128
 
-#define clUtilCheckErrorVoid(err)\
-{\
-  if(err != CL_SUCCESS)\
-  {\
-    printf("%s:%d:%s():\n\t%s\n",\
-           __FILE__,\
-           __LINE__,\
-           __func__,\
-           clUtilGetErrorCode(err));\
-    raise(SIGTRAP);\
-    return;\
-  }\
-}
-
-#define clUtilCheckError(err)\
-{\
-  if(err != CL_SUCCESS)\
-  {\
-    printf("%s:%d:%s():\n\t%s\n",\
-           __FILE__,\
-           __LINE__,\
-           __func__,\
-           clUtilGetErrorCode(err));\
-    raise(SIGTRAP);\
-    return err;\
-  }\
-}
 
 typedef struct _clUtilPlatformVersion
 {
@@ -99,18 +57,6 @@ class clMemPointer
     clMemPointer();
 };
 
-namespace clUtil
-{
-  extern cl_device_id gDevices[kCLUtilMaxDevices];
-  extern cl_context gContexts[kCLUtilMaxDevices];
-  extern cl_program gPrograms[kCLUtilMaxDevices];
-  extern cl_command_queue gCommandQueues[kCLUtilMaxDevices];
-  extern cl_uint gNumDevices;
-  extern unsigned int gCurrentDevice;
-  extern cl_kernel* gKernels[kCLUtilMaxDevices];
-  extern std::map<std::string, cl_kernel> gKernelNameLookup[kCLUtilMaxDevices];
-};
-
 //typedef void (*clUtilCallback)(cl_event, cl_int);
 //typedef std::function<void (void)> clUtilCallback;
 typedef void (*clUtilCallback)();
@@ -121,6 +67,7 @@ void clUtilRunLambda(cl_event event,
                      void* user_data);
 
 //Init functions
+cl_int clUtilInitDevices();
 cl_int clUtilInitialize(const char** filenames, 
                         size_t numFiles, 
                         const char* cachename = NULL,
@@ -150,9 +97,6 @@ clUtilPlatformVersion clUtilGetPlatformVersion();
 const char* clUtilGetPlatformVersionString();
 cl_uint clUtilGetMaxWriteImages();
 void clUtilGetSupportedImageFormats();
-
-//Turns error code into string
-const char* clUtilGetErrorCode(cl_int err);
 
 //---Memory crap---
 //Allocation

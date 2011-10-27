@@ -1,7 +1,7 @@
 include ../../Makefile.inc
 
-OBJ=DeviceInfo.o
-BIN=DeviceInfo
+OBJ=BandwidthTest.o
+BIN=BandwidthTest
 
 #Directory containing OpenCL header files
 INCLUDE=-I../../Include -I$(OpenCLInclude)

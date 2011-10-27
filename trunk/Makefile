@@ -1,6 +1,7 @@
 include Makefile.inc
 
-OBJ=clUtil.o clUtilImage.o clUtilKernel.o clUtilInit.o
+OBJ=clUtil.o clUtilImage.o clUtilKernel.o clUtilInit.o clUtilDevice.o
+OBJ+=clUtilPlatform.o clUtilUtility.o clUtilDeviceHelpers.o
 EXAMPLES=$(wildcard examples/*) #Every subdir in examples
 
 #Directory containing OpenCL header files
@@ -24,6 +25,10 @@ install: libclUtil.a
 	mkdir -p /usr/include/clutil
 	cp -Rf Include/* /usr/include/clutil
 	cp -f libclUtil.a /usr/lib
+
+uninstall:
+	rm -Rf /usr/include/clutil
+	rm /usr/lib/libclUtil.a
 
 clean:
 	-rm *.o libclUtil.a
