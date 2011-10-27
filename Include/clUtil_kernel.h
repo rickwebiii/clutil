@@ -1,7 +1,7 @@
 #pragma once
 #include <stdarg.h>
 
-#include "clUtil_core.h"
+#include "clUtil.h"
 
 #define clUtilCheckKernelArg(kernelName, paramNum, err)\
   if(err != CL_SUCCESS)\
@@ -115,7 +115,7 @@ void clUtilEnqueueKernel(const char* kernelName,
   cl_event event;
 
   kernel = clUtilGetKernel(kernelNameStr, &err);
-  clUtilCheckErrorVoid(err);
+  clUtilCheckError(err);
 
   clUtilSetArgs(kernel,
                 kernelName,
@@ -132,13 +132,13 @@ void clUtilEnqueueKernel(const char* kernelName,
                                0,
                                NULL,
                                &event);
-  clUtilCheckErrorVoid(err);
+  clUtilCheckError(err);
 
   err = clSetEventCallback(event,
                            CL_COMPLETE, 
                            clUtilRunLambda, 
                            &callback);
-  clUtilCheckErrorVoid(err);
+  clUtilCheckError(err);
 }
 
 //No callback version
@@ -152,7 +152,7 @@ void clUtilEnqueueKernel(const char* kernelName,
   std::string kernelNameStr(kernelName);
 
   kernel = clUtilGetKernel(kernelNameStr, &err);
-  clUtilCheckErrorVoid(err);
+  clUtilCheckError(err);
 
   clUtilSetArgs(kernel,
                 kernelName,
@@ -169,5 +169,5 @@ void clUtilEnqueueKernel(const char* kernelName,
                                0,
                                NULL,
                                NULL);
-  clUtilCheckErrorVoid(err);
+  clUtilCheckError(err);
 }

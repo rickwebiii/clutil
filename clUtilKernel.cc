@@ -1,5 +1,4 @@
-#include "clUtil_core.h"
-#include "clUtil_kernel.h"
+#include "clUtil.h"
 
 void clUtilSetArgs(cl_kernel kernel,
                    const char* kernelName,
@@ -19,7 +18,7 @@ void clUtilRunLambda(cl_event event,
   (*callback)();
 
   err = clReleaseEvent(event);
-  clUtilCheckErrorVoid(err);
+  clUtilCheckError(err);
 
 }
 
