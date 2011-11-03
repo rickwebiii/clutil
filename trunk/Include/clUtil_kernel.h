@@ -1,7 +1,9 @@
 #pragma once
 #include <stdarg.h>
 
-#include "clUtil.h"
+#include "clUtilCommon.h"
+#include "clUtilDevice.h"
+#include "clUtilMemory.h"
 
 #define clUtilCheckKernelArg(kernelName, paramNum, err)\
   if(err != CL_SUCCESS)\
@@ -77,6 +79,18 @@ template<typename... Args> clUtil::_Grid<Args...> clUtilGrid(Args... args)
   return clUtil::_Grid<Args...>(args...);
 }
 
+template<typename T> void setArg_(cl_kernel kernel, size_t argIndex, T curArg)
+{
+  cl_int err;
+
+  err = clSetKernelArg(kernel, argIndex, sizeof(curArg), &curArg);
+  clUtilCheckError(err);
+}
+
+void setArg_(cl_kernel kernel, size_t argIndex, clUtil::Memory& curArg);
+void setArg_(cl_kernel kernel, size_t argIndex, clUtil::Image& curArg);
+void setArg_(cl_kernel kernel, size_t argIndex, clUtil::Buffer& curArg);
+
 void clUtilSetArgs(cl_kernel kernel,
                    const char* kernelName,
                    clUtil::Grid& workGrid,
@@ -90,10 +104,7 @@ void clUtilSetArgs(cl_kernel kernel,
                    T curArg,
                    Args... args)
 {
-  cl_int err;
-
-  err = clSetKernelArg(kernel, argIndex, sizeof(T), &curArg);
-  clUtilCheckKernelArg(kernelName, argIndex, err);
+  setArg_(kernel, argIndex, curArg);
 
   clUtilSetArgs(kernel,
                 kernelName,
@@ -102,20 +113,14 @@ void clUtilSetArgs(cl_kernel kernel,
                 args...);
 }
 
-//Asynchronous callback version
 template<typename... Args> 
 void clUtilEnqueueKernel(const char* kernelName,
-                         clUtilCallback&& callback,
                          clUtil::Grid&& workGrid,
                          Args... args)
 {
   cl_int err;
-  cl_kernel kernel;
-  std::string kernelNameStr(kernelName);
-  cl_event event;
-
-  kernel = clUtilGetKernel(kernelNameStr, &err);
-  clUtilCheckError(err);
+  clUtil::Device& currentDevice = clUtil::Device::GetCurrentDevice();
+  cl_kernel kernel = currentDevice.getKernel(std::string(kernelName));
 
   clUtilSetArgs(kernel,
                 kernelName,
@@ -123,44 +128,7 @@ void clUtilEnqueueKernel(const char* kernelName,
                 0,
                 args...);
   
-  err = clEnqueueNDRangeKernel(clUtilGetCommandQueue(),
-                               kernel,
-                               workGrid.getDim(),
-                               NULL,
-                               workGrid.getGlobal(),
-                               workGrid.getLocal(),
-                               0,
-                               NULL,
-                               &event);
-  clUtilCheckError(err);
-
-  err = clSetEventCallback(event,
-                           CL_COMPLETE, 
-                           clUtilRunLambda, 
-                           &callback);
-  clUtilCheckError(err);
-}
-
-//No callback version
-template<typename... Args> 
-void clUtilEnqueueKernel(const char* kernelName,
-                         clUtil::Grid&& workGrid,
-                         Args... args)
-{
-  cl_int err;
-  cl_kernel kernel;
-  std::string kernelNameStr(kernelName);
-
-  kernel = clUtilGetKernel(kernelNameStr, &err);
-  clUtilCheckError(err);
-
-  clUtilSetArgs(kernel,
-                kernelName,
-                workGrid,
-                0,
-                args...);
-  
-  err = clEnqueueNDRangeKernel(clUtilGetCommandQueue(),
+  err = clEnqueueNDRangeKernel(currentDevice.getCommandQueue(),
                                kernel,
                                workGrid.getDim(),
                                NULL,

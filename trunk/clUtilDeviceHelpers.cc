@@ -150,6 +150,7 @@ cl_int Device::buildProgram(const char** filenames,
   ostringstream deviceFlags;
 
   deviceFlags << options << " -DDEVICE_NUM=" << mDeviceNumber;
+  deviceFlags << " -I/usr/include/clutil/kernels";
 
   err = clBuildProgram(mProgram,
                        1,

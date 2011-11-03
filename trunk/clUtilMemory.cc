@@ -2,6 +2,8 @@
 
 using namespace clUtil;
 
+const void* kCLUtilAllocPinnedBuffer = (void*)0x1;
+
 void Image::initialize()
 {
   cl_int err;
@@ -154,7 +156,7 @@ void Image::get(void* pointer, size_t len)
     void* mappedImage = clEnqueueMapImage(mDevice.getCommandQueue(),
                                           mMemHandle,
                                           CL_TRUE,
-                                          CL_MAP_WRITE,
+                                          CL_MAP_READ,
                                           origin,
                                           region,
                                           &pitch,
@@ -198,3 +200,4 @@ void Image::get(void* pointer, size_t len)
                           "happen; please report this as a bug.");
   }
 }
+
