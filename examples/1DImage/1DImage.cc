@@ -1,22 +1,29 @@
 #include <clUtil.h>
+#include <memory>
+
+using namespace clUtil;
+using namespace std;
 
 const unsigned int kImageSize = 1234567;
 
+struct float4
+{
+  float x;
+  float y;
+  float z;
+  float w;
+};
+
 int main(int argc, char** argv)
 {
-  float result[kImageSize];
-  cl_mem a;
-  cl_mem b;
-  cl_mem c;
+  unique_ptr<float4> result(new float4[kImageSize]);
   char const* kernel = "kernel.cl";
 
-  clUtilInitialize(&kernel, 1, NULL, "-I../..");
+  Device::InitializeDevices(&kernel, 1);
 
-  clUtilSetDeviceNum(1);
-
-  clUtilCreateImage1D(kImageSize, CL_A, CL_FLOAT, &a);
-  clUtilCreateImage1D(kImageSize, CL_A, CL_FLOAT, &b);
-  clUtilCreateImage1D(kImageSize, CL_A, CL_FLOAT, &c);
+  Image a(kImageSize, CL_RGBA, CL_FLOAT);
+  Image b(kImageSize, CL_RGBA, CL_FLOAT);
+  Image c(kImageSize, CL_RGBA, CL_FLOAT);
 
   clUtilEnqueueKernel("fillImage",
                       clUtilGrid(kImageSize, 64),
@@ -35,19 +42,15 @@ int main(int argc, char** argv)
                       c,
                       kImageSize);
 
-  clFinish(clUtilGetCommandQueue());
-
-  clUtilGetImage1D(c, 0, kImageSize, result);
+  c.get(result.get());
 
   for(size_t i = 0; i < kImageSize; i++)
   {
-    if(result[i] != 2.0f * i)
+    if(result.get()[i].w != 2.0f * i)
     {
-      printf("Error: index %ld value: %f\n", i, result[i]);
+      printf("Error: index %ld value: %f\n", i, result.get()[i].w);
     }
   }
 
   printf("Success!\n");
-
-  clUtilFinalize();
 }
