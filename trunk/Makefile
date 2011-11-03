@@ -1,7 +1,7 @@
 include Makefile.inc
 
 OBJ=clUtil.o clUtilImage.o clUtilKernel.o clUtilInit.o clUtilDevice.o
-OBJ+=clUtilPlatform.o clUtilUtility.o clUtilDeviceHelpers.o
+OBJ+=clUtilPlatform.o clUtilUtility.o clUtilDeviceHelpers.o clUtilMemory.o
 EXAMPLES=$(wildcard examples/*) #Every subdir in examples
 
 #Directory containing OpenCL header files

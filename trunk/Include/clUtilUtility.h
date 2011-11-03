@@ -12,7 +12,7 @@ namespace clUtil
                              std::string& param);
     cl_int fetchDeviceInfo(cl_device_id deviceID,
                            cl_device_info paramName,
-                           std::string param);
+                           std::string& param);
     template <typename T> cl_int fetchDeviceInfo(cl_device_id deviceID,
                                                  cl_device_info paramName, 
                                                  T& param)

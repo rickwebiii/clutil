@@ -7,6 +7,7 @@ using namespace std;
 size_t Device::CurrentDevice = 0;
 bool Device::DevicesInitialized = false;
 bool Device::DevicesFetched = false;
+vector<Device> Device::Devices;
 
 void DeviceInfo::initialize(cl_device_id deviceID)
 {

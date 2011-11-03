@@ -25,7 +25,7 @@ namespace clUtil
 
     cl_int fetchDeviceInfo(cl_device_id deviceID,
                            cl_device_info paramName,
-                           std::string param)
+                           std::string& param)
     {
       size_t propertySize;
       cl_int err;
