@@ -5,6 +5,8 @@
 
 namespace clUtil
 {
+  extern const void* kCLUtilAllocPinnedBuffer;
+
   class Memory
   {
     private:
@@ -32,9 +34,11 @@ namespace clUtil
       {
         clReleaseMemObject(mMemHandle);
       }
+
+      cl_mem getMemHandle() const { return mMemHandle; }
   };  
 
-  class Image : Memory
+  class Image : public Memory
   {
     private:
       size_t mDimensions;
@@ -100,6 +104,42 @@ namespace clUtil
 
       void put(void* pointer, size_t len = 0);
       void get(void* pointer, size_t len = 0);
+
+  };
+
+  class Buffer : public Memory
+  {
+    private:
+      cl_mem mParentBuffer;
+    public:
+
+      Buffer(size_t len, 
+             void* hostPtr = NULL,
+             Device& device = Device::GetCurrentDevice()) : 
+        Memory(device),
+        mParentBuffer(0)
+      {
+        cl_int err;
+        cl_mem_flags flags = CL_MEM_READ_WRITE;
+
+        if(hostPtr == kCLUtilAllocPinnedBuffer)
+        {
+          flags |= CL_MEM_ALLOC_HOST_PTR;
+          hostPtr = NULL;
+        }
+        else if(hostPtr != NULL)
+        {
+          flags |= CL_MEM_USE_HOST_PTR;
+        }
+
+        clCreateBuffer(mDevice.getContext(),
+                       flags,
+                       len,
+                       hostPtr,
+                       &err);
+        clUtilCheckError(err);
+      }
+
 
   };
 }

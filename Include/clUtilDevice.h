@@ -103,16 +103,17 @@ namespace clUtil
       cl_device_id getDeviceID() const {return mDeviceID;}
       cl_context getContext() const {return mContext;}
       cl_command_queue getCommandQueue() const {return mCommandQueue;}
-      cl_kernel getKernel(std::string& kernelName);
+      cl_kernel getKernel(std::string&& kernelName) const;
       
       static std::vector<Device> Devices;
 
       static void FetchDevices();
       static void InitializeDevices(const char** sourceFiles, 
                                     size_t numFiles,
-                                    const char* cachename,
-                                    const char* options);
-      static Device& GetCurrentDevice() {return Devices[CurrentDevice];}
+                                    const char* cachename = NULL,
+                                    const char* options = "");
+      static Device& GetCurrentDevice() { return Devices[CurrentDevice]; }
+      static size_t GetCurrentDeviceNum() { return CurrentDevice; }
       static void SetCurrentDevice(size_t deviceNum);
   };
 }

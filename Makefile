@@ -1,6 +1,6 @@
 include Makefile.inc
 
-OBJ=clUtil.o clUtilImage.o clUtilKernel.o clUtilInit.o clUtilDevice.o
+OBJ=clUtil.o clUtilKernel.o clUtilInit.o clUtilDevice.o
 OBJ+=clUtilPlatform.o clUtilUtility.o clUtilDeviceHelpers.o clUtilMemory.o
 EXAMPLES=$(wildcard examples/*) #Every subdir in examples
 

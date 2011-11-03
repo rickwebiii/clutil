@@ -359,10 +359,10 @@ void Device::initialize(const char** filenames,
   }
 
   this->buildProgram(filenames, numFiles, options);
-
+  this->getKernels();
 }
 
-cl_kernel Device::getKernel(std::string& kernelName)
+cl_kernel Device::getKernel(std::string&& kernelName) const
 {
   auto kernel = mKernels.find(kernelName);
 
