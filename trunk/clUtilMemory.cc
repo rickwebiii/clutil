@@ -2,8 +2,6 @@
 
 using namespace clUtil;
 
-const void* kCLUtilAllocPinnedBuffer = (void*)0x1;
-
 void Image::initialize()
 {
   cl_int err;
@@ -201,3 +199,44 @@ void Image::get(void* pointer, size_t len)
   }
 }
 
+void Buffer::put(void* pointer, size_t len)
+{
+  cl_int err;
+
+  if(len == 0)
+  {
+    len = mLength;
+  }
+
+  err = clEnqueueWriteBuffer(mDevice.getCommandQueue(),
+                             mMemHandle,
+                             CL_TRUE,
+                             0,
+                             len,
+                             pointer,
+                             0,
+                             NULL,
+                             NULL);
+  clUtilCheckError(err);
+}
+
+void Buffer::get(void* pointer, size_t len)
+{
+  cl_int err;
+
+  if(len == 0)
+  {
+    len = mLength;
+  }
+
+  err = clEnqueueReadBuffer(mDevice.getCommandQueue(),
+                            mMemHandle,
+                            CL_TRUE,
+                            0,
+                            len,
+                            pointer,
+                            0,
+                            NULL,
+                            NULL);
+  clUtilCheckError(err);
+}
