@@ -85,6 +85,7 @@ namespace clUtil
       static size_t CurrentDevice;
       static bool DevicesInitialized;
       static bool DevicesFetched;
+      static std::vector<Device> Devices;
       
       std::string fileToString(const char* filename);
       cl_int loadBinary(const char* cachename);
@@ -104,9 +105,8 @@ namespace clUtil
       cl_context getContext() const {return mContext;}
       cl_command_queue getCommandQueue() const {return mCommandQueue;}
       cl_kernel getKernel(std::string&& kernelName) const;
-      
-      static std::vector<Device> Devices;
 
+      static const std::vector<Device>& GetDevices() {return Devices; }
       static void FetchDevices();
       static void InitializeDevices(const char** sourceFiles, 
                                     size_t numFiles,
@@ -114,6 +114,14 @@ namespace clUtil
                                     const char* options = "");
       static Device& GetCurrentDevice() { return Devices[CurrentDevice]; }
       static size_t GetCurrentDeviceNum() { return CurrentDevice; }
-      static void SetCurrentDevice(size_t deviceNum);
+      static void SetCurrentDevice(size_t deviceNum) 
+      {
+        if(deviceNum > Devices.size())
+        {
+          throw clUtilException("SetCurrentDevice():Invalid device.");
+        }
+
+        CurrentDevice = deviceNum;
+      };
   };
 }

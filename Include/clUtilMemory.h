@@ -3,17 +3,12 @@
 #include "clUtilDevice.h"
 #include "clUtilException.h"
 
+#define kCLUtilAllocPinnedBuffer ((void*)0x1)
+
 namespace clUtil
 {
-  extern const void* kCLUtilAllocPinnedBuffer;
-
   class Memory
   {
-    private:
-      Memory operator=(const Memory& b)
-      {
-        return Memory(b);
-      }
     protected:
       cl_mem mMemHandle;
       Device& mDevice;
@@ -36,6 +31,10 @@ namespace clUtil
       }
 
       cl_mem getMemHandle() const { return mMemHandle; }
+
+      virtual void get(void* pointer, size_t len = 0) = 0;
+      virtual void put(void* pointer, size_t len = 0) = 0;
+      virtual bool isImage() = 0;
   };  
 
   class Image : public Memory
@@ -102,22 +101,24 @@ namespace clUtil
         initialize();
       }
 
-      void put(void* pointer, size_t len = 0);
-      void get(void* pointer, size_t len = 0);
-
+      virtual void put(void* pointer, size_t len = 0);
+      virtual void get(void* pointer, size_t len = 0);
+      virtual bool isImage() { return true; }
   };
 
   class Buffer : public Memory
   {
     private:
       cl_mem mParentBuffer;
+      size_t mLength;
     public:
 
       Buffer(size_t len, 
              void* hostPtr = NULL,
              Device& device = Device::GetCurrentDevice()) : 
         Memory(device),
-        mParentBuffer(0)
+        mParentBuffer(0),
+        mLength(len)
       {
         cl_int err;
         cl_mem_flags flags = CL_MEM_READ_WRITE;
@@ -132,15 +133,17 @@ namespace clUtil
           flags |= CL_MEM_USE_HOST_PTR;
         }
 
-        clCreateBuffer(mDevice.getContext(),
-                       flags,
-                       len,
-                       hostPtr,
-                       &err);
+        mMemHandle = clCreateBuffer(mDevice.getContext(),
+                                    flags,
+                                    len,
+                                    hostPtr,
+                                    &err);
         clUtilCheckError(err);
       }
 
-
+      virtual void put(void* pointer, size_t len = 0);
+      virtual void get(void* pointer, size_t len = 0);
+      virtual bool isImage(){ return false; }
   };
 }
 

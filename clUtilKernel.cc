@@ -1,6 +1,15 @@
 #include "clUtil.h"
 
-void setArg_(cl_kernel kernel, size_t argIndex, clUtil::Memory& curArg)
+void setArg_(cl_kernel kernel, size_t argIndex, clUtil::Memory* curArg)
+{
+  cl_int err;
+  cl_mem memoryHandle = curArg->getMemHandle();
+
+  err = clSetKernelArg(kernel, argIndex, sizeof(memoryHandle), &memoryHandle);
+  clUtilCheckError(err);
+}
+
+void setArg_(cl_kernel kernel, size_t argIndex, clUtil::Image&& curArg)
 {
   cl_int err;
   cl_mem memoryHandle = curArg.getMemHandle();
@@ -9,16 +18,7 @@ void setArg_(cl_kernel kernel, size_t argIndex, clUtil::Memory& curArg)
   clUtilCheckError(err);
 }
 
-void setArg_(cl_kernel kernel, size_t argIndex, clUtil::Image& curArg)
-{
-  cl_int err;
-  cl_mem memoryHandle = curArg.getMemHandle();
-
-  err = clSetKernelArg(kernel, argIndex, sizeof(memoryHandle), &memoryHandle);
-  clUtilCheckError(err);
-}
-
-void setArg_(cl_kernel kernel, size_t argIndex, clUtil::Buffer& curArg)
+void setArg_(cl_kernel kernel, size_t argIndex, clUtil::Buffer&& curArg)
 {
   cl_int err;
   cl_mem memoryHandle = curArg.getMemHandle();
