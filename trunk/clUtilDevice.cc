@@ -298,6 +298,8 @@ void Device::FetchDevices()
   {
     Device::Devices[curDevice].mDeviceNumber = curDevice;
   }
+
+  Device::DevicesFetched = true;
 }
 
 void Device::InitializeDevices(const char** filenames, 

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+
 void fillKeys(unsigned int* array, unsigned int length)
 {
   for(unsigned int i = 0; i < length; i++)
@@ -88,7 +89,7 @@ int main(int argc, char** argv)
   clUtilDevicePut(vals, size, valsDevice1);
 
   clUtilEnqueueKernel("sort",
-                      clUtilGrid(64, 64, rows, 1),
+                      clUtilGrid(1, 1, rows, 1),
                       keysDevice1,
                       keysDevice2,
                       valsDevice1,
@@ -105,18 +106,21 @@ int main(int argc, char** argv)
       printf("{%u, %u} ", 
              keys[curRow * cols + curCol],
              vals[curRow * cols + curCol]);
+#if VERIFY
       if(curCol < cols - 1 &&
          keys[curRow * cols + curCol] < keys[curRow * cols + curCol + 1])
       {
         printf("Error, element %u, %u\n", curRow, curCol);
         exit(1);
       }
+#endif
     }
 
     printf("\n");
   }
 
   printf("Success!\n");
+
 
   return 0;
 }

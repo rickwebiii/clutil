@@ -1,4 +1,6 @@
-#pragma once
+#ifndef CLUTIL_CL
+#define CLUTIL_CL
 #include <clUtilImage1D.cl>
 #include <clUtilSort.cl>
-#include <clUtilImage.cl>
+#endif
+
