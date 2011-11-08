@@ -16,10 +16,20 @@ __kernel void sort(__global unsigned int* keys1,
   vals1 = &vals1[size * get_global_id(1)];
   vals2 = &vals2[size * get_global_id(1)];
 
-  radixSortGL(keys1, 
+  radixSortLG(keys1, 
               vals1, 
               keys2, 
               vals2,
+              size,
+              &sortTmp1,
+              &sortTmp2,
+              sortTmp3,
+              sortTmp4);
+  
+  radixSortGL(keys2, 
+              vals2, 
+              keys1, 
+              vals1,
               size,
               &sortTmp1,
               &sortTmp2,

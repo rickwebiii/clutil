@@ -1,10 +1,15 @@
-#pragma once
+#ifndef CLUTIL_IMAGE1D_CL
+#define CLUTIL_IMAGE1D_CL
 
+#if 0
 #ifndef NVIDIA_CORPORATION
 typedef image2d_t image1d_t;
 #else
 #define image1d_t image2d_t
 #endif
+#endif
+
+#define image1d_t image2d_t
 
 float4 read_1Dimagef(read_only image1d_t image,
                      sampler_t sampler,
@@ -83,4 +88,6 @@ void write_1Dimageui(write_only image1d_t image,
 
   write_imageui(image, samplecoord, color);
 }
+
+#endif
 

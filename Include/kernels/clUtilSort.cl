@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CLUTIL_SORT
+#define CLUTIL_SORT
 #pragma OPENCL EXTENSION cl_khr_global_int32_base_atomics : enable
 
 unsigned int _log2(unsigned int num)
@@ -326,4 +327,6 @@ void radixSortGL(__global unsigned int* key,
     barrier(CLK_LOCAL_MEM_FENCE);
   }
 }
+
+#endif
 
