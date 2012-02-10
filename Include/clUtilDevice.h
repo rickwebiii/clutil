@@ -100,11 +100,12 @@ namespace clUtil
       void getKernels();
     public:
       Device(cl_device_id deviceID);
-      DeviceInfo& getDeviceInfo();
+      const DeviceInfo& getDeviceInfo() const {return mDeviceInfo;}
       cl_device_id getDeviceID() const {return mDeviceID;}
       cl_context getContext() const {return mContext;}
       cl_command_queue getCommandQueue() const {return mCommandQueue;}
       cl_kernel getKernel(std::string&& kernelName) const;
+      size_t getDeviceNumber() const {return mDeviceNumber;}
 
       static const std::vector<Device>& GetDevices() {return Devices; }
       static void FetchDevices();
