@@ -5,3 +5,4 @@
 #include "clUtilDevice.h"
 #include "clUtilPlatform.h"
 #include "clUtilMemory.h"
+#include "clUtilParallelFor.h"

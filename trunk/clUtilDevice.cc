@@ -217,17 +217,7 @@ Device::Device(cl_device_id deviceID) :
   mDeviceInfo(),
   mInfoInitialized(false)
 {
-}
-
-DeviceInfo& Device::getDeviceInfo()
-{
-  if(mInfoInitialized == false)
-  {
     mDeviceInfo.initialize(mDeviceID);
-    mInfoInitialized = true;
-  }
-
-  return mDeviceInfo;
 }
 
 void Device::FetchDevices()

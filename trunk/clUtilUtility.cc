@@ -46,7 +46,8 @@ namespace clUtil
                             NULL);
       clUtilCheckError(err);
 
-      param = std::string(propertyString.get(), propertySize);
+      param = std::string(propertyString.get(), 
+                          strnlen(propertyString.get(), propertySize));
 
       return CL_SUCCESS;
     }
