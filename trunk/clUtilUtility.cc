@@ -75,5 +75,13 @@ namespace clUtil
 
       return CL_SUCCESS;
     }
+
+    double getTime()
+    {
+      struct timeval time;
+
+      gettimeofday(&time, NULL);
+      return (double)time.tv_sec + (double)time.tv_usec / 1e6;
+    }
   }
 }

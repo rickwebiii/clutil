@@ -6,7 +6,7 @@ BIN=DeviceInfo
 #Directory containing OpenCL header files
 INCLUDE=-I../../Include -I$(OpenCLInclude)
 
-LIB=-lOpenCL -L../.. -lclUtil
+LIB=-L../.. -lclUtil -lOpenCL
 CPPFLAGS=-std=c++0x $(INCLUDE) $(USERFLAGS)
 
 $(BIN): $(OBJ)

@@ -4,6 +4,7 @@
 #include <math.h>
 #include "clUtilDeviceGroup.h"
 #include "clUtilDevice.h"
+#include "clUtilUtility.h"
 
 namespace clUtil
 {
@@ -21,6 +22,20 @@ namespace clUtil
     }
   };
 
+  struct CompletedTask
+  {
+    double Time;
+    size_t SampleNumber;
+    size_t StartIndex;
+    size_t EndIndex;
+  };
+
+  struct PendingTask
+  {
+    size_t StartIndex;
+    size_t EndIndex;
+  };
+
   class ParallelForPerformanceModel
   {
     friend void ParallelFor(size_t start, 
@@ -30,11 +45,16 @@ namespace clUtil
                             unsigned int numSamples);
 
     private:
-      std::unique_ptr<unsigned int[]> mCurrentSample;
+      std::vector<Utility::UnsafeQueue<PendingTask>> mPendingSampleQueues;
       size_t mNumSamples;
+      size_t mStart;
+      size_t mEnd;
 
-      ParallelForPerformanceModel(size_t numSamples);
+      ParallelForPerformanceModel(size_t numSamples,
+                                  size_t start,
+                                  size_t end);
 
+      PendingTask getWork(size_t deviceGroup);
     public:
   };
 
