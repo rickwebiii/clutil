@@ -18,6 +18,8 @@ ParallelForPerformanceModel::ParallelForPerformanceModel(size_t numSamples,
                                                          size_t end) :
   mPendingSampleQueues(DeviceGroupInfo::Get().numGroups(), 
                        UnsafeQueue<PendingTask>(kMaxQueueLengthPow2)),
+  mModel(DeviceGroupInfo::Get().numGroups(), vector<Sample>(numSamples)),
+  mRemainingWork(numSamples - 1),
   mNumSamples(numSamples),
   mStart(start),
   mEnd(end)
@@ -92,6 +94,8 @@ PendingTask ParallelForPerformanceModel::getWork(size_t deviceGroup)
     return work;
   }
 }
+
+
 
 void clUtil::ParallelFor(size_t start, 
                          size_t stride, 
@@ -174,9 +178,16 @@ void clUtil::ParallelFor(size_t start,
 
         if(eventStatus == CL_COMPLETE)
         {
+          size_t curDeviceGroup = DeviceGroupInfo::Get()[curDevice];
+
           curDeviceStatus.Time2 = getTime();
+          model.updateModel(curDeviceStatus.StartIndex,
+                            curDeviceStatus.EndIndex,
+                            curDeviceGroup,
+                            curDeviceStatus.Time2 - curDeviceStatus.Time1);
+
           curDeviceStatus.IsBusy = false;
-          
+
           clReleaseEvent(curDeviceStatus.WaitEvent);
           curDeviceStatus.WaitEvent = NULL;
         }
