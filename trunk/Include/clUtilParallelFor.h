@@ -21,6 +21,7 @@ namespace clUtil
   {
     size_t StartIndex;
     size_t EndIndex;
+    size_t SampleNumber;
   };
 
   class ParallelForPerformanceModel
@@ -29,14 +30,18 @@ namespace clUtil
     {
       size_t Start;
       size_t End;
-      float Left;
-      float Center;
-      float Right;
+      double Left;
+      double Center;
+      double Right;
+      bool IsValid;
 
       Sample() :
+        Start(0),
+        End(0),
         Left(NAN),
         Center(NAN),
-        Right(NAN)
+        Right(NAN),
+        IsValid(false)
       {
       }
     };
@@ -66,7 +71,17 @@ namespace clUtil
                                   size_t end);
 
       PendingTask getWork(size_t deviceGroup);
-      void updateModel(size_t start, size_t end, size_t devGroup, double time);
+      void updateModel(size_t start, 
+                       size_t end, 
+                       size_t sampleNumber,
+                       size_t devGroup, 
+                       double time);
+
+      double interpolate(double t0,
+                         double t1,
+                         size_t x0,
+                         size_t x1,
+                         size_t location); //More general interpolation function
 
     public:
   };

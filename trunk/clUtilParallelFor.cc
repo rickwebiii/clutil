@@ -50,6 +50,7 @@ ParallelForPerformanceModel::ParallelForPerformanceModel(size_t numSamples,
         iterationOffset = mEnd - sampleIterationCount;
       }
 
+      newTask.SampleNumber = curSample;
       newTask.StartIndex = iterationOffset;
       
       //Last device group on the last sample only goes til last iteration.
@@ -95,7 +96,110 @@ PendingTask ParallelForPerformanceModel::getWork(size_t deviceGroup)
   }
 }
 
+double ParallelForPerformanceModel::interpolate(double t0, 
+                                                double t1,
+                                                size_t x0,
+                                                size_t x1,
+                                                size_t location)
+{
+  double slope = (t1 - t0) / (double)(x1 - x0);
 
+  return slope * (double)(location - x0) + t0;
+}
+
+void ParallelForPerformanceModel::updateModel(size_t start, 
+                                              size_t end, 
+                                              size_t sampleNumber,
+                                              size_t devGroup,
+                                              double time)
+{
+  Sample& curSample = mModel[devGroup][sampleNumber];
+  vector<Sample>& deviceModel = mModel[devGroup];
+  double averageTime = time / (double)(end - start);
+
+  if(curSample.IsValid == false) //Creating new sample
+  {
+    curSample.Start = start;
+    curSample.End = end;
+    curSample.Center = averageTime;
+    curSample.IsValid = true;
+
+    //Interpolate using previous sample if it exists
+    if(sampleNumber > 0 && deviceModel[sampleNumber - 1].IsValid == true)
+    {
+      Sample& previousSample = deviceModel[sampleNumber - 1];
+
+      curSample.Left = interpolate(previousSample.Right,
+                                   curSample.Center,
+                                   previousSample.End,
+                                   (end + start) / 2,
+                                   curSample.Start);
+
+      previousSample.Right = interpolate(previousSample.Right,
+                                         curSample.Center,
+                                         previousSample.End,
+                                         (end + start) / 2,
+                                         previousSample.End);
+    }
+    else //Don't if it doesn't
+    {
+      curSample.Left = curSample.Center;
+    }
+
+    //Interpolate using next sample if it exists
+    if(sampleNumber < deviceModel.size() - 1 &&
+       deviceModel[sampleNumber + 1].IsValid == true)
+    {
+      Sample& nextSample = deviceModel[sampleNumber + 1];
+
+      curSample.Right = interpolate(curSample.Center,
+                                    nextSample.Left,
+                                    (end + start) / 2,
+                                    nextSample.Start,
+                                    curSample.End);
+
+      nextSample.Left = interpolate(curSample.Center,
+                                    nextSample.Left,
+                                    (end + start) / 2,
+                                    nextSample.Start,
+                                    nextSample.Start);
+
+    }
+    else //Don't if it doesn't
+    {
+      curSample.Right = curSample.Center;
+    }
+  }
+  else //Updating existing sample
+  {
+    if(start > curSample.End) //Work appears to left of sample
+    {
+      Sample& nextSample = deviceModel[sampleNumber + 1];
+
+      curSample.Right = interpolate(averageTime,
+                                    nextSample.Left,
+                                    (end + start) / 2,
+                                    nextSample.Start,
+                                    end);
+      
+      curSample.End = end;
+    }
+    else if(end < curSample.Start) //Work appears to right of sample
+    {
+      Sample& previousSample = deviceModel[sampleNumber - 1];
+
+      curSample.Left = interpolate(previousSample.Right,
+                                   averageTime,
+                                   previousSample.End,
+                                   (end + start) / 2,
+                                   end);
+
+      curSample.Start = start;
+    }
+    //If it appears somewhere in middle (possible if another device finishes
+    //before this one), don't do anything
+  }
+}
 
 void clUtil::ParallelFor(size_t start, 
                          size_t stride, 
@@ -109,6 +213,7 @@ void clUtil::ParallelFor(size_t start,
     double Time2;
     size_t StartIndex;
     size_t EndIndex;
+    size_t SampleNumber;
     cl_event WaitEvent;
     bool IsBusy;
 
@@ -117,6 +222,7 @@ void clUtil::ParallelFor(size_t start,
       Time2(0.0), 
       StartIndex(0), 
       EndIndex(0), 
+      SampleNumber(0),
       WaitEvent(NULL),
       IsBusy(false)
     {
@@ -150,6 +256,7 @@ void clUtil::ParallelFor(size_t start,
 
         curDeviceStatus.StartIndex = work.StartIndex;
         curDeviceStatus.EndIndex = work.EndIndex;
+        curDeviceStatus.SampleNumber = work.SampleNumber;
         curDeviceStatus.Time1 = getTime();
         curDeviceStatus.IsBusy = true;
 
@@ -183,6 +290,7 @@ void clUtil::ParallelFor(size_t start,
           curDeviceStatus.Time2 = getTime();
           model.updateModel(curDeviceStatus.StartIndex,
                             curDeviceStatus.EndIndex,
+                            curDeviceStatus.SampleNumber,
                             curDeviceGroup,
                             curDeviceStatus.Time2 - curDeviceStatus.Time1);
 
