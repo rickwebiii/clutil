@@ -71,7 +71,6 @@ void Image::put(void* pointer, size_t len)
   {
     size_t origin[3] = {0, 0, 0};
     size_t region[3] = {mWidth, mHeight, 1};
-    size_t pitch;
     size_t imageElementSize;
     
     len = len == 0 ? m1DWidth : len;
@@ -83,28 +82,44 @@ void Image::put(void* pointer, size_t len)
                          NULL);
     clUtilCheckError(err);
 
-    void* mappedImage = clEnqueueMapImage(mDevice.getCommandQueue(),
-                                          mMemHandle,
-                                          CL_TRUE,
-                                          CL_MAP_WRITE,
-                                          origin,
-                                          region,
-                                          &pitch,
-                                          NULL,
-                                          0,
-                                          NULL,
-                                          NULL,
-                                          &err);
+    //Copy all but the last row to the device
+    if(mHeight > 1)
+    {
+      region[1] = mHeight - 1;
+
+      err = clEnqueueWriteImage(mDevice.getCommandQueue(),
+                                mMemHandle,
+                                CL_TRUE,
+                                origin,
+                                region,
+                                0,
+                                0,
+                                pointer,
+                                0,
+                                NULL,
+                                NULL);
+      clUtilCheckError(err);
+    }
+
+    //Copy the last row to the device
+    origin[1] = mHeight - 1;
+
+    region[0] = m1DWidth % mWidth == 0 ? mWidth : m1DWidth % mWidth;
+    region[1] = 1;
+
+    err = clEnqueueWriteImage(mDevice.getCommandQueue(),
+                              mMemHandle,
+                              CL_TRUE,
+                              origin,
+                              region,
+                              0,
+                              0,
+                              &((char*)pointer)[imageElementSize * 
+                                                (mHeight - 1) * mWidth],
+                              0,
+                              NULL,
+                              NULL);
     clUtilCheckError(err);
-
-    memcpy(mappedImage, pointer, imageElementSize * len);
-
-    err = clEnqueueUnmapMemObject(mDevice.getCommandQueue(),
-                                  mMemHandle,
-                                  mappedImage,
-                                  0,
-                                  NULL,
-                                  NULL);
   }
   else if(mDimensions == 2 || mDimensions == 3)
   {
@@ -139,7 +154,6 @@ void Image::get(void* pointer, size_t len)
   {
     size_t origin[3] = {0, 0, 0};
     size_t region[3] = {mWidth, mHeight, 1};
-    size_t pitch;
     size_t imageElementSize;
     
     len = len == 0 ? m1DWidth : len;
@@ -151,28 +165,44 @@ void Image::get(void* pointer, size_t len)
                          NULL);
     clUtilCheckError(err);
 
-    void* mappedImage = clEnqueueMapImage(mDevice.getCommandQueue(),
-                                          mMemHandle,
-                                          CL_TRUE,
-                                          CL_MAP_READ,
-                                          origin,
-                                          region,
-                                          &pitch,
-                                          NULL,
-                                          0,
-                                          NULL,
-                                          NULL,
-                                          &err);
+    //Copy all but the last row to the device
+    if(mHeight > 1)
+    {
+      region[1] = mHeight - 1;
+
+      err = clEnqueueReadImage(mDevice.getCommandQueue(),
+                               mMemHandle,
+                               CL_TRUE,
+                               origin,
+                               region,
+                               0,
+                               0,
+                               pointer,
+                               0,
+                               NULL,
+                               NULL);
+      clUtilCheckError(err);
+    }
+
+    //Copy the last row to the device
+    origin[1] = mHeight - 1;
+
+    region[0] = m1DWidth % mWidth == 0 ? mWidth : m1DWidth % mWidth;
+    region[1] = 1;
+
+    err = clEnqueueReadImage(mDevice.getCommandQueue(),
+                             mMemHandle,
+                             CL_TRUE,
+                             origin,
+                             region,
+                             0,
+                             0,
+                             &((char*)pointer)[imageElementSize * 
+                                               (mHeight - 1) * mWidth],
+                             0,
+                             NULL,
+                             NULL);
     clUtilCheckError(err);
-
-    memcpy(pointer, mappedImage, imageElementSize * len);
-
-    err = clEnqueueUnmapMemObject(mDevice.getCommandQueue(),
-                                  mMemHandle,
-                                  mappedImage,
-                                  0,
-                                  NULL,
-                                  NULL);
   }
   else if(mDimensions == 2 || mDimensions == 3)
   {
