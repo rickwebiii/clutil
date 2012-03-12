@@ -9,7 +9,7 @@ void setArg_(cl_kernel kernel, size_t argIndex, clUtil::Memory* curArg)
   clUtilCheckError(err);
 }
 
-void setArg_(cl_kernel kernel, size_t argIndex, clUtil::Image&& curArg)
+void setArg_(cl_kernel kernel, size_t argIndex, clUtil::Image& curArg)
 {
   cl_int err;
   cl_mem memoryHandle = curArg.getMemHandle();
@@ -18,7 +18,7 @@ void setArg_(cl_kernel kernel, size_t argIndex, clUtil::Image&& curArg)
   clUtilCheckError(err);
 }
 
-void setArg_(cl_kernel kernel, size_t argIndex, clUtil::Buffer&& curArg)
+void setArg_(cl_kernel kernel, size_t argIndex, clUtil::Buffer& curArg)
 {
   cl_int err;
   cl_mem memoryHandle = curArg.getMemHandle();

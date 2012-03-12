@@ -1,10 +1,11 @@
 #include <clUtil.h>
 #include <memory>
+#include <iostream>
 
 using namespace clUtil;
 using namespace std;
 
-const unsigned int kImageSize = 1234567;
+const unsigned int kImageSize = 12;
 
 struct float4
 {
@@ -19,30 +20,38 @@ int main(int argc, char** argv)
   unique_ptr<float4> result(new float4[kImageSize]);
   char const* kernel = "kernel.cl";
 
-  Device::InitializeDevices(&kernel, 1);
+  try
+  {
+    Device::InitializeDevices(&kernel, 1);
 
-  Image a(kImageSize, CL_RGBA, CL_FLOAT);
-  Image b(kImageSize, CL_RGBA, CL_FLOAT);
-  Image c(kImageSize, CL_RGBA, CL_FLOAT);
+    Image a(kImageSize, CL_RGBA, CL_FLOAT);
+    Image b(kImageSize, CL_RGBA, CL_FLOAT);
+    Image c(kImageSize, CL_RGBA, CL_FLOAT);
 
-  clUtilEnqueueKernel("fillImage",
-                      clUtilGrid(kImageSize, 64),
-                      a,
-                      kImageSize);
-  
-  clUtilEnqueueKernel("fillImage",
-                      clUtilGrid(kImageSize, 64),
-                      b,
-                      kImageSize);
+    clUtilEnqueueKernel("fillImage",
+                        clUtilGrid(kImageSize, 64),
+                        a,
+                        kImageSize);
 
-  clUtilEnqueueKernel("sumImages",
-                      clUtilGrid(kImageSize, 64),
-                      a,
-                      b,
-                      c,
-                      kImageSize);
+    clUtilEnqueueKernel("fillImage",
+                        clUtilGrid(kImageSize, 64),
+                        b,
+                        kImageSize);
 
-  c.get(result.get());
+    clUtilEnqueueKernel("sumImages",
+                        clUtilGrid(kImageSize, 64),
+                        a,
+                        b,
+                        c,
+                        kImageSize);
+
+    c.get(result.get());
+  }
+  catch(clUtilException& err)
+  {
+    cout << err.what() << endl;
+    exit(1);
+  }
 
   for(size_t i = 0; i < kImageSize; i++)
   {
