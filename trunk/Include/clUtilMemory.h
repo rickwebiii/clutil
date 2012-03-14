@@ -101,6 +101,23 @@ namespace clUtil
         initialize();
       }
 
+      Image(const Image& b) : 
+        Memory(b),
+        mDimensions(b.mDimensions),
+        m1DWidth(b.m1DWidth),
+        mWidth(b.mWidth),
+        mHeight(b.mHeight),
+        mDepth(b.mDepth),
+        mChannelOrder(b.mChannelOrder),
+        mChannelType(b.mChannelType)
+      {
+      }
+
+      Image operator=(const Image& b) const
+      {
+        return Image(b);
+      }
+
       virtual void put(const void* const pointer, const size_t len = 0) const;
       virtual void get(void* const pointer, const size_t len = 0) const;
       virtual bool isImage() const { return true; }
@@ -139,6 +156,18 @@ namespace clUtil
                                     hostPtr,
                                     &err);
         clUtilCheckError(err);
+      }
+
+      Buffer(const Buffer& b) : 
+        Memory(b),
+        mParentBuffer(b.mParentBuffer),
+        mLength(b.mLength)
+      {
+      }
+
+      Buffer operator=(const Buffer& b) const
+      {
+        return Buffer(b);
       }
 
       virtual void put(const void* const pointer, const size_t len = 0) const;
