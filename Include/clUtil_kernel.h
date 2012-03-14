@@ -79,15 +79,25 @@ template<typename... Args> clUtil::_Grid<Args...> clUtilGrid(Args... args)
   return clUtil::_Grid<Args...>(args...);
 }
 
-//This function is a hack needed because variadic partial specialization doesn't
-//seem to work quite right as of g++-4.5.2
-void setArg_(cl_kernel kernel, size_t argIndex, clUtil::Memory* curArg);
-void setArg_(cl_kernel kernel, size_t argIndex, clUtil::Image& curArg);
-void setArg_(cl_kernel kernel, size_t argIndex, clUtil::Image&& curArg);
-void setArg_(cl_kernel kernel, size_t argIndex, clUtil::Buffer& curArg);
-void setArg_(cl_kernel kernel, size_t argIndex, clUtil::Buffer&& curArg);
+void setArg_(const cl_kernel kernel, 
+             const size_t argIndex, 
+             const clUtil::Memory* curArg);
+void setArg_(const cl_kernel kernel, 
+             const size_t argIndex, 
+             const clUtil::Image& curArg);
+void setArg_(const cl_kernel kernel, 
+             const size_t argIndex, 
+             const clUtil::Image&& curArg);
+void setArg_(const cl_kernel kernel, 
+             const size_t argIndex, 
+             const clUtil::Buffer& curArg);
+void setArg_(const cl_kernel kernel, 
+             const size_t argIndex, 
+             const clUtil::Buffer&& curArg);
 
-template<typename T> void setArg_(cl_kernel kernel, size_t argIndex, T curArg)
+template<typename T> void setArg_(const cl_kernel kernel, 
+                                  const size_t argIndex, 
+                                  const T& curArg)
 {
   cl_int err;
 

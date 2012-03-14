@@ -11,9 +11,9 @@ namespace clUtil
   {
     protected:
       cl_mem mMemHandle;
-      Device& mDevice;
+      const Device& mDevice;
     public:
-      Memory(Device& device = Device::GetCurrentDevice()) :
+      Memory(const Device& device = Device::GetCurrentDevice()) :
         mDevice(device)
       {
       }
@@ -32,9 +32,9 @@ namespace clUtil
 
       cl_mem getMemHandle() const { return mMemHandle; }
 
-      virtual void get(void* pointer, size_t len = 0) = 0;
-      virtual void put(void* pointer, size_t len = 0) = 0;
-      virtual bool isImage() = 0;
+      virtual void get(void* const pointer, const size_t len = 0) const = 0;
+      virtual void put(const void* const pointer, const size_t len = 0) const = 0;
+      virtual bool isImage() const = 0;
   };  
 
   class Image : public Memory
@@ -66,11 +66,11 @@ namespace clUtil
         initialize();
       }
 
-      Image(size_t width,
-            size_t height,
-            cl_channel_order channelOrder,
-            cl_channel_type channelType,
-            Device& device = Device::GetCurrentDevice()) :
+      Image(const size_t width,
+            const size_t height,
+            const cl_channel_order channelOrder,
+            const cl_channel_type channelType,
+            const Device& device = Device::GetCurrentDevice()) :
         Memory(device),
         mDimensions(2),
         m1DWidth(0),
@@ -83,12 +83,12 @@ namespace clUtil
         initialize();
       }
 
-      Image(size_t width,
-            size_t height,
-            size_t depth,
-            cl_channel_order channelOrder,
-            cl_channel_type channelType,
-            Device& device = Device::GetCurrentDevice()) :
+      Image(const size_t width,
+            const size_t height,
+            const size_t depth,
+            const cl_channel_order channelOrder,
+            const cl_channel_type channelType,
+            const Device& device = Device::GetCurrentDevice()) :
         Memory(device),
         mDimensions(3),
         m1DWidth(0),
@@ -101,9 +101,9 @@ namespace clUtil
         initialize();
       }
 
-      virtual void put(void* pointer, size_t len = 0);
-      virtual void get(void* pointer, size_t len = 0);
-      virtual bool isImage() { return true; }
+      virtual void put(const void* const pointer, const size_t len = 0) const;
+      virtual void get(void* const pointer, const size_t len = 0) const;
+      virtual bool isImage() const { return true; }
   };
 
   class Buffer : public Memory
@@ -113,9 +113,9 @@ namespace clUtil
       size_t mLength;
     public:
 
-      Buffer(size_t len, 
+      Buffer(const size_t len, 
              void* hostPtr = NULL,
-             Device& device = Device::GetCurrentDevice()) : 
+             const Device& device = Device::GetCurrentDevice()) : 
         Memory(device),
         mParentBuffer(0),
         mLength(len)
@@ -141,9 +141,9 @@ namespace clUtil
         clUtilCheckError(err);
       }
 
-      virtual void put(void* pointer, size_t len = 0);
-      virtual void get(void* pointer, size_t len = 0);
-      virtual bool isImage(){ return false; }
+      virtual void put(const void* const pointer, const size_t len = 0) const;
+      virtual void get(void* const pointer, const size_t len = 0) const;
+      virtual bool isImage() const { return false; }
   };
 }
 
