@@ -63,7 +63,7 @@ void Image::initialize()
   }
 }
 
-void Image::put(void* pointer, size_t len)
+void Image::put(void const* pointer, const size_t len) const
 {
   cl_int err;
 
@@ -72,8 +72,9 @@ void Image::put(void* pointer, size_t len)
     size_t origin[3] = {0, 0, 0};
     size_t region[3] = {mWidth, mHeight, 1};
     size_t imageElementSize;
-    
-    len = len == 0 ? m1DWidth : len;
+    //size_t actualLength; //TODO allow fetching arbitrary regions
+
+    //actualLength = len == 0 ? m1DWidth : len;
 
     err = clGetImageInfo(mMemHandle,
                          CL_IMAGE_ELEMENT_SIZE,
@@ -146,7 +147,7 @@ void Image::put(void* pointer, size_t len)
   }
 }
 
-void Image::get(void* pointer, size_t len)
+void Image::get(void* const pointer, const size_t len) const
 {
   cl_int err;
 
@@ -154,9 +155,10 @@ void Image::get(void* pointer, size_t len)
   {
     size_t origin[3] = {0, 0, 0};
     size_t region[3] = {mWidth, mHeight, 1};
-    size_t imageElementSize;
-    
-    len = len == 0 ? m1DWidth : len;
+    size_t imageElementSize; 
+    //size_t actualLength;
+   
+    //actualLength = len == 0 ? m1DWidth : len;
 
     err = clGetImageInfo(mMemHandle,
                          CL_IMAGE_ELEMENT_SIZE,
@@ -229,20 +231,16 @@ void Image::get(void* pointer, size_t len)
   }
 }
 
-void Buffer::put(void* pointer, size_t len)
+void Buffer::put(const void* const pointer, const size_t len) const
 {
   cl_int err;
-
-  if(len == 0)
-  {
-    len = mLength;
-  }
+  size_t length = len == 0 ? mLength : len;
 
   err = clEnqueueWriteBuffer(mDevice.getCommandQueue(),
                              mMemHandle,
                              CL_TRUE,
                              0,
-                             len,
+                             length,
                              pointer,
                              0,
                              NULL,
@@ -250,20 +248,16 @@ void Buffer::put(void* pointer, size_t len)
   clUtilCheckError(err);
 }
 
-void Buffer::get(void* pointer, size_t len)
+void Buffer::get(void* const pointer, const size_t len) const 
 {
   cl_int err;
-
-  if(len == 0)
-  {
-    len = mLength;
-  }
+  size_t length = len == 0 ? mLength : len;
 
   err = clEnqueueReadBuffer(mDevice.getCommandQueue(),
                             mMemHandle,
                             CL_TRUE,
                             0,
-                            len,
+                            length,
                             pointer,
                             0,
                             NULL,
