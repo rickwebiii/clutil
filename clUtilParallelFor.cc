@@ -68,6 +68,17 @@ ParallelForPerformanceModel::ParallelForPerformanceModel(size_t numSamples,
       iterationOffset = newTask.EndIndex + 1;
 
       mPendingSampleQueues[curDeviceGroup].push(newTask);
+ 
+      //Mark remaining work vector
+      if(curDeviceGroup == 0 && curSample > 0)  
+      {
+        mRemainingWork[curSample - 1].End = newTask.StartIndex - 1;
+      }
+
+      if(curDeviceGroup == numDeviceGroups - 1 && curSample < numSamples - 1)
+      {
+        mRemainingWork[curSample].Start = newTask.EndIndex + 1;
+      }
 
 #if 0
       cout << "DeviceGroup: " << curDeviceGroup
@@ -92,6 +103,25 @@ PendingTask ParallelForPerformanceModel::getWork(size_t deviceGroup)
   }
   else //If empty, use model to get work
   {
+    vector<Sample>& curDeviceModel = mModel[deviceGroup];
+    //size_t bestSample = 0;
+    //bool leftOfSample = false;
+
+    for(size_t curSample = 0; curSample < curDeviceModel.size(); curSample++)
+    {
+      //Check to the left of the sample
+      if(curSample > 0 && 
+         mRemainingWork[curSample - 1].Start <= 
+         mRemainingWork[curSample - 1].End)
+      {
+        
+      }
+      if(curSample < curDeviceModel.size() - 1) //Check to the right of sample
+      {
+      }
+
+    }
+
     return work;
   }
 }
@@ -172,7 +202,7 @@ void ParallelForPerformanceModel::updateModel(size_t start,
   }
   else //Updating existing sample
   {
-    if(start > curSample.End) //Work appears to left of sample
+    if(start > curSample.End) //Work appears to right of sample
     {
       Sample& nextSample = deviceModel[sampleNumber + 1];
 
@@ -184,7 +214,7 @@ void ParallelForPerformanceModel::updateModel(size_t start,
       
       curSample.End = end;
     }
-    else if(end < curSample.Start) //Work appears to right of sample
+    else if(end < curSample.Start) //Work appears to left of sample
     {
       Sample& previousSample = deviceModel[sampleNumber - 1];
 

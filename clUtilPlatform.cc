@@ -55,18 +55,18 @@ vector<Platform> Platform::GetPlatforms()
               &majorVersion, 
               &minorVersion) != 2)
     {
-      printf("Warning: platform %zu (%s) has malformed platform version string."
+      printf("Warning: platform %u (%s) has malformed platform version string."
              " As such, clUtil will not use it.\n", 
-             curPlatformID, 
+             (unsigned int)curPlatformID, 
              curPlatform.mPlatformInfo.Name.c_str());
       continue;
     }
     
     if(majorVersion < 1 || (majorVersion == 1 && minorVersion < 1))
     {
-      printf("Warning: platform %zu (%s) has version < 1.1."
+      printf("Warning: platform %u (%s) has version < 1.1."
              " As such, clUtil will not use it.\n", 
-             curPlatformID, 
+             (unsigned int)curPlatformID, 
              curPlatform.mPlatformInfo.Name.c_str());
       continue;
     }
