@@ -70,7 +70,7 @@ namespace clUtil
 
       _Grid();
   };
-};
+}
 
 //Wrapper function to create a grid object of the correct type so you don't
 //have to fuck with template arguments.
@@ -81,11 +81,11 @@ template<typename... Args> clUtil::_Grid<Args...> clUtilGrid(Args... args)
 
 //This function is a hack needed because variadic partial specialization doesn't
 //seem to work quite right as of g++-4.5.2
-
-//void setArg_(cl_kernel kernel, size_t argIndex, clUtil::Memory&& curArg);
 void setArg_(cl_kernel kernel, size_t argIndex, clUtil::Memory* curArg);
 void setArg_(cl_kernel kernel, size_t argIndex, clUtil::Image& curArg);
+void setArg_(cl_kernel kernel, size_t argIndex, clUtil::Image&& curArg);
 void setArg_(cl_kernel kernel, size_t argIndex, clUtil::Buffer& curArg);
+void setArg_(cl_kernel kernel, size_t argIndex, clUtil::Buffer&& curArg);
 
 template<typename T> void setArg_(cl_kernel kernel, size_t argIndex, T curArg)
 {
@@ -124,7 +124,8 @@ void clUtilEnqueueKernel(const char* kernelName,
 {
   cl_int err;
   clUtil::Device& currentDevice = clUtil::Device::GetCurrentDevice();
-  cl_kernel kernel = currentDevice.getKernel(std::string(kernelName));
+  cl_kernel kernel = 
+    currentDevice.getKernel(std::move(std::string(kernelName)));
 
   clUtilSetArgs(kernel,
                 kernelName,
