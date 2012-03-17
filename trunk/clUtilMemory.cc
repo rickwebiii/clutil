@@ -90,7 +90,7 @@ void Image::put(void const* pointer, const size_t len) const
 
       err = clEnqueueWriteImage(mDevice.getCommandQueue(),
                                 mMemHandle,
-                                CL_TRUE,
+                                CL_FALSE,
                                 origin,
                                 region,
                                 0,
@@ -110,7 +110,7 @@ void Image::put(void const* pointer, const size_t len) const
 
     err = clEnqueueWriteImage(mDevice.getCommandQueue(),
                               mMemHandle,
-                              CL_TRUE,
+                              CL_FALSE,
                               origin,
                               region,
                               0,
@@ -129,7 +129,7 @@ void Image::put(void const* pointer, const size_t len) const
 
     err = clEnqueueWriteImage(mDevice.getCommandQueue(),
                               mMemHandle,
-                              CL_TRUE,
+                              CL_FALSE,
                               origin,
                               region,
                               0,
@@ -174,7 +174,7 @@ void Image::get(void* const pointer, const size_t len) const
 
       err = clEnqueueReadImage(mDevice.getCommandQueue(),
                                mMemHandle,
-                               CL_TRUE,
+                               CL_FALSE,
                                origin,
                                region,
                                0,
@@ -194,7 +194,7 @@ void Image::get(void* const pointer, const size_t len) const
 
     err = clEnqueueReadImage(mDevice.getCommandQueue(),
                              mMemHandle,
-                             CL_TRUE,
+                             CL_FALSE,
                              origin,
                              region,
                              0,
@@ -213,7 +213,7 @@ void Image::get(void* const pointer, const size_t len) const
 
     err = clEnqueueReadImage(mDevice.getCommandQueue(),
                              mMemHandle,
-                             CL_TRUE,
+                             CL_FALSE,
                              origin,
                              region,
                              0,
@@ -238,7 +238,7 @@ void Buffer::put(const void* const pointer, const size_t len) const
 
   err = clEnqueueWriteBuffer(mDevice.getCommandQueue(),
                              mMemHandle,
-                             CL_TRUE,
+                             CL_FALSE,
                              0,
                              length,
                              pointer,
@@ -255,7 +255,7 @@ void Buffer::get(void* const pointer, const size_t len) const
 
   err = clEnqueueReadBuffer(mDevice.getCommandQueue(),
                             mMemHandle,
-                            CL_TRUE,
+                            CL_FALSE,
                             0,
                             length,
                             pointer,

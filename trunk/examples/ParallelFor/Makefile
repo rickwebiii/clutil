@@ -9,7 +9,7 @@ INCLUDE=-I../../Include -I$(OpenCLInclude)
 LIB=-L../.. -lclUtil -lOpenCL
 CPPFLAGS=-std=c++0x $(INCLUDE) $(USERFLAGS)
 
-$(BIN): $(OBJ)
+$(BIN): $(OBJ) ../../libclUtil.a
 	g++ -o $(BIN) $(OBJ) $(LIB)
 
 .cc.o:

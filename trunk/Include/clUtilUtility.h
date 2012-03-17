@@ -55,7 +55,7 @@ namespace clUtil
           }
         }
 
-        void push(T item)
+        void push(const T item)
         {
           mCyclicQueue[mBack & mMask] = item;
           mBack++;
@@ -74,7 +74,7 @@ namespace clUtil
           return true;
         }
 
-        size_t length()
+        size_t length() const
         {
           return mBack - mFront;
         }

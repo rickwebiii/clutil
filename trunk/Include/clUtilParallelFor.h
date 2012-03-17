@@ -2,6 +2,7 @@
 #include <map>
 #include <memory>
 #include <math.h>
+#include <functional>
 #include "clUtilDeviceGroup.h"
 #include "clUtilDevice.h"
 #include "clUtilUtility.h"
@@ -52,11 +53,11 @@ namespace clUtil
       size_t End;
     };
 
-    friend void ParallelFor(size_t start, 
-                            size_t stride, 
-                            size_t end, 
-                            void (*loopBody)(size_t start, size_t end),
-                            unsigned int numSamples);
+    friend void ParallelFor(const size_t start, 
+                            const size_t stride, 
+                            const size_t end, 
+                            std::function<void (size_t, size_t)> loopBody,
+                            const size_t numSamples);
 
     private:
       std::vector<Utility::UnsafeQueue<PendingTask>> mPendingSampleQueues;
@@ -65,30 +66,43 @@ namespace clUtil
       size_t mNumSamples;
       size_t mStart;
       size_t mEnd;
+      size_t mUnassignedIterations;
 
-      ParallelForPerformanceModel(size_t numSamples,
-                                  size_t start,
-                                  size_t end);
+      ParallelForPerformanceModel(const size_t numSamples,
+                                  const size_t start,
+                                  const size_t end);
 
-      PendingTask getWork(size_t deviceGroup);
-      void updateModel(size_t start, 
-                       size_t end, 
-                       size_t sampleNumber,
-                       size_t devGroup, 
-                       double time);
+      PendingTask getWork(const size_t deviceGroup);
+ 
+      void updateModel(const size_t start, 
+                       const size_t end, 
+                       const size_t sampleNumber,
+                       const size_t devGroup, 
+                       const double time);
 
-      double interpolate(double t0,
-                         double t1,
-                         size_t x0,
-                         size_t x1,
-                         size_t location); //More general interpolation function
+      double interpolate(const double t0,
+                         const double t1,
+                         const size_t x0,
+                         const size_t x1,
+                         const size_t location) const;
+      
+      double normSpeedup(const size_t deviceGroup, 
+                         const size_t sample0,
+                         const size_t sample1,
+                         const size_t start, 
+                         const size_t end) const;
+
+      bool workRemains(size_t deviceGroup) const;
+
+      void printRemainingWork() const;
 
     public:
   };
 
-  void ParallelFor(size_t start,
-                   size_t stride,
-                   size_t end,
-                   void (*loopBody)(size_t start, size_t end),
-                   unsigned int numSamples = 10);
+  void ParallelFor(const size_t start,
+                   const size_t stride,
+                   const size_t end,
+                   std::function<void (size_t, size_t)> loopBody,
+                   //void (*loopBody)(size_t start, size_t end),
+                   const size_t numSamples = 10);
 }

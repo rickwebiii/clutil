@@ -1,4 +1,5 @@
 #include "clUtilParallelFor.h"
+#include <math.h>
 
 #define STRINGIFY(arg) #arg
 #define __WHERE__ __FILE__ ":" STRINGIFY(__LINE__)
@@ -12,6 +13,8 @@ DeviceGroupInfo DeviceGroupInfo::deviceGroupInfoSingleton;
 
 static const double kModelFraction = 0.1;
 static const size_t kMaxQueueLengthPow2 = 8; //2^8 = 256
+static const double kDefaultSpeedup = 10;
+static const size_t kDefaultChunkSize = 1024;
 
 ParallelForPerformanceModel::ParallelForPerformanceModel(size_t numSamples,
                                                          size_t start,
@@ -22,7 +25,8 @@ ParallelForPerformanceModel::ParallelForPerformanceModel(size_t numSamples,
   mRemainingWork(numSamples - 1),
   mNumSamples(numSamples),
   mStart(start),
-  mEnd(end)
+  mEnd(end),
+  mUnassignedIterations(end - start + 1)
 {
   size_t numDeviceGroups = DeviceGroupInfo::Get().numGroups();
 
@@ -57,7 +61,7 @@ ParallelForPerformanceModel::ParallelForPerformanceModel(size_t numSamples,
       //Others take their iterations as usual
       if(curSample == numSamples - 1 && curDeviceGroup == numDeviceGroups - 1)
       {
-        newTask.EndIndex = end - 1;
+        newTask.EndIndex = end;
       }
       else
       {
@@ -68,7 +72,15 @@ ParallelForPerformanceModel::ParallelForPerformanceModel(size_t numSamples,
       iterationOffset = newTask.EndIndex + 1;
 
       mPendingSampleQueues[curDeviceGroup].push(newTask);
- 
+
+      //Iterations sitting in queues are assigned to a device group
+      mUnassignedIterations -= newTask.EndIndex - newTask.StartIndex + 1;
+
+      if(newTask.EndIndex < newTask.StartIndex)
+      {
+        cout << "Uh oh." << endl;
+      }
+
       //Mark remaining work vector
       if(curDeviceGroup == 0 && curSample > 0)  
       {
@@ -90,7 +102,17 @@ ParallelForPerformanceModel::ParallelForPerformanceModel(size_t numSamples,
   }
 }
 
-PendingTask ParallelForPerformanceModel::getWork(size_t deviceGroup)
+bool ParallelForPerformanceModel::workRemains(size_t deviceGroup) const
+{
+  //If the sample queue for the device is empty and there is no more work to do,
+  //we're done
+  return mPendingSampleQueues[deviceGroup].length() > 0 || 
+         mUnassignedIterations > 0 ?
+           true :
+           false;
+}
+
+PendingTask ParallelForPerformanceModel::getWork(const size_t deviceGroup)
 {
   PendingTask work;
 
@@ -104,44 +126,187 @@ PendingTask ParallelForPerformanceModel::getWork(size_t deviceGroup)
   else //If empty, use model to get work
   {
     vector<Sample>& curDeviceModel = mModel[deviceGroup];
-    //size_t bestSample = 0;
-    //bool leftOfSample = false;
+    double bestSpeedup = 0.0;
+    size_t bestSample = 0;
+    bool leftOfSample = false;
+    size_t bestChunkSize = 0;
 
     for(size_t curSample = 0; curSample < curDeviceModel.size(); curSample++)
     {
-      //Check to the left of the sample
       if(curSample > 0 && 
          mRemainingWork[curSample - 1].Start <= 
-         mRemainingWork[curSample - 1].End)
+         mRemainingWork[curSample - 1].End) //Check to the left of the sample
       {
-        
-      }
-      if(curSample < curDeviceModel.size() - 1) //Check to the right of sample
-      {
+        size_t chunkSize = mRemainingWork[curSample - 1].End -
+                           mRemainingWork[curSample - 1].Start;
+
+        chunkSize = chunkSize > kDefaultChunkSize ? 
+                    kDefaultChunkSize : 
+                    chunkSize;
+
+        IndexRange& curWork = mRemainingWork[curSample - 1];
+
+        double curSpeedup = normSpeedup(deviceGroup,
+                                        curSample - 1,
+                                        curSample,
+                                        curWork.End - chunkSize,
+                                        curWork.End);
+        if(curSpeedup > bestSpeedup)
+        {
+          bestSpeedup = curSpeedup;
+          bestSample = curSample;
+          leftOfSample = true;
+          bestChunkSize = chunkSize;
+        }
       }
 
+      if(curSample < curDeviceModel.size() - 1 &&
+         mRemainingWork[curSample].Start <=
+         mRemainingWork[curSample].End) //Check to the right of sample
+      {
+        size_t chunkSize = mRemainingWork[curSample].End -
+                           mRemainingWork[curSample].Start;
+
+        chunkSize = chunkSize > kDefaultChunkSize ? 
+                    kDefaultChunkSize : 
+                    chunkSize;
+
+        IndexRange& curWork = mRemainingWork[curSample];
+
+        double curSpeedup = normSpeedup(deviceGroup,
+                                        curSample,
+                                        curSample + 1,
+                                        curWork.Start,
+                                        curWork.Start + chunkSize);
+        if(curSpeedup > bestSpeedup)
+        {
+          bestSpeedup = curSpeedup;
+          bestSample = curSample;
+          leftOfSample = false;
+          bestChunkSize = chunkSize;
+        }
+      }
+    }
+
+    if(leftOfSample == true)
+    {
+      work.StartIndex = mRemainingWork[bestSample - 1].End - bestChunkSize;
+      work.EndIndex = mRemainingWork[bestSample - 1].End;
+      work.SampleNumber = bestSample;
+
+      mRemainingWork[bestSample - 1].End -= bestChunkSize + 1;
+    }
+    else
+    {
+      work.StartIndex = mRemainingWork[bestSample].Start;
+      work.EndIndex = mRemainingWork[bestSample].Start + bestChunkSize;
+      work.SampleNumber = bestSample;
+
+      mRemainingWork[bestSample].Start += bestChunkSize + 1;
+    }
+
+    mUnassignedIterations -= work.EndIndex - work.StartIndex + 1;
+
+    if(work.EndIndex < work.StartIndex)
+    {
+      cout << "Well shit." << endl;
     }
 
     return work;
   }
 }
 
-double ParallelForPerformanceModel::interpolate(double t0, 
-                                                double t1,
-                                                size_t x0,
-                                                size_t x1,
-                                                size_t location)
+double ParallelForPerformanceModel::normSpeedup(const size_t thisDeviceGroup, 
+                                                const size_t sample0,
+                                                const size_t sample1,
+                                                const size_t start,
+                                                const size_t end) const
+{
+  const vector<Sample>& thisDeviceModel = mModel[thisDeviceGroup];
+
+  double normSpeedup = 0.0;
+  double t0;
+  double t1;
+  double thisChunkTime;
+  double thatChunkTime;
+
+  //Compute the estimated execution time for this device
+  t0 = interpolate(thisDeviceModel[sample0].Right,
+                   thisDeviceModel[sample1].Left,
+                   thisDeviceModel[sample0].End,
+                   thisDeviceModel[sample1].Start,
+                   start);
+  
+  t1 = interpolate(thisDeviceModel[sample0].Right,
+                   thisDeviceModel[sample1].Left,
+                   thisDeviceModel[sample0].End,
+                   thisDeviceModel[sample1].Start,
+                   start);
+
+  //Use trapezoidal integration to get estimated chunk execution time
+  thisChunkTime = 0.5 * (t0 + t1) * (double)(end - start);
+
+  //Compute a two norm of the speedup over all other device groups
+  for(size_t thatDeviceGroup = 0; 
+      thatDeviceGroup < mModel.size(); 
+      thatDeviceGroup++)
+  {
+    if(thisDeviceGroup == thatDeviceGroup)
+    {
+      continue;
+    }
+
+    const vector<Sample>& thatDeviceModel = mModel[thatDeviceGroup];
+
+    //If samples are valid, compute the speedup of this device over that
+    if(thatDeviceModel[sample1].IsValid == true &&
+       thatDeviceModel[sample0].IsValid == true)
+    {
+      //Fetch start and end timing points from the other device's model
+      t0 = interpolate(thatDeviceModel[sample0].Right,
+                       thatDeviceModel[sample1].Left,
+                       thatDeviceModel[sample0].End,
+                       thatDeviceModel[sample1].Start,
+                       start);
+
+      t1 = interpolate(thatDeviceModel[sample0].Right,
+                       thatDeviceModel[sample1].Left,
+                       thatDeviceModel[sample0].End,
+                       thatDeviceModel[sample1].Start,
+                       end);
+
+      //Do trapezoidal integration to get estimated execution time
+      thatChunkTime = 0.5 * (t0 + t1) * (double)(end - start);
+      
+      double speedup = thatChunkTime / thisChunkTime;
+
+      normSpeedup += speedup * speedup;
+    }
+    else //If samples aren't valid, use the default speedup value
+    {
+      normSpeedup += kDefaultSpeedup * kDefaultSpeedup;
+    }
+  }
+
+  return sqrt(normSpeedup);
+}
+
+double ParallelForPerformanceModel::interpolate(const double t0, 
+                                                const double t1,
+                                                const size_t x0,
+                                                const size_t x1,
+                                                const size_t location) const
 {
   double slope = (t1 - t0) / (double)(x1 - x0);
 
   return slope * (double)(location - x0) + t0;
 }
 
-void ParallelForPerformanceModel::updateModel(size_t start, 
-                                              size_t end, 
-                                              size_t sampleNumber,
-                                              size_t devGroup,
-                                              double time)
+void ParallelForPerformanceModel::updateModel(const size_t start, 
+                                              const size_t end, 
+                                              const size_t sampleNumber,
+                                              const size_t devGroup,
+                                              const double time)
 {
   Sample& curSample = mModel[devGroup][sampleNumber];
   vector<Sample>& deviceModel = mModel[devGroup];
@@ -231,11 +396,22 @@ void ParallelForPerformanceModel::updateModel(size_t start,
   }
 }
 
-void clUtil::ParallelFor(size_t start, 
-                         size_t stride, 
-                         size_t end, 
-                         void (*loopBody)(size_t start, size_t end),
-                         unsigned int numSamples)
+void ParallelForPerformanceModel::printRemainingWork() const
+{
+  cout << "Remaining:" << endl;
+
+  for(size_t i = 0; i < mRemainingWork.size(); i++)
+  {
+    cout << "\t" << mRemainingWork[i].Start 
+      << " to " << mRemainingWork[i].End << endl;
+  }
+}
+
+void clUtil::ParallelFor(const size_t start, 
+                         const size_t stride, 
+                         const size_t end, 
+                         function<void (size_t, size_t)> loopBody,
+                         const size_t numSamples)
 {
   struct DeviceStatus
   {
@@ -261,7 +437,10 @@ void clUtil::ParallelFor(size_t start,
 
   size_t oldDeviceNum = Device::GetCurrentDeviceNum();
   ParallelForPerformanceModel model(numSamples, start, end);
-  size_t iterationsRemaining = end - start;
+  size_t iterationsRemaining = end - start + 1;
+
+  //model.printRemainingWork();
+
   vector<DeviceStatus> deviceStatuses(Device::GetDevices().size());
 
   //Parallel for scheduling loop
@@ -272,16 +451,24 @@ void clUtil::ParallelFor(size_t start,
         curDevice++)
     {
       DeviceStatus& curDeviceStatus = deviceStatuses[curDevice];
+      size_t deviceGroup = DeviceGroupInfo::Get()[curDevice];
+
+      //cout << "\tremaining " << iterationsRemaining << endl;
 
       //If this device isn't busy, get some work from the model and run it
-      if(curDeviceStatus.IsBusy == false)
+      if(curDeviceStatus.IsBusy == false && 
+         model.workRemains(deviceGroup) == true)
       {
-        size_t deviceGroup = DeviceGroupInfo::Get()[curDevice];
-
         PendingTask work;
 
         work = model.getWork(deviceGroup);
 
+#if 0
+        cout << "device " << curDevice
+             << " start " << work.StartIndex 
+             << " end " << work.EndIndex << endl;
+        model.printRemainingWork();
+#endif
         Device::SetCurrentDevice(curDevice);
 
         curDeviceStatus.StartIndex = work.StartIndex;
@@ -328,6 +515,10 @@ void clUtil::ParallelFor(size_t start,
 
           clReleaseEvent(curDeviceStatus.WaitEvent);
           curDeviceStatus.WaitEvent = NULL;
+
+          iterationsRemaining -= curDeviceStatus.EndIndex - 
+                                 curDeviceStatus.StartIndex + 
+                                 1;
         }
       }
     }
