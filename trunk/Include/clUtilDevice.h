@@ -75,18 +75,21 @@ namespace clUtil
     private:
       cl_device_id mDeviceID;
       cl_context mContext;
-      cl_command_queue mCommandQueue;
       cl_program mProgram;
       std::map<std::string, cl_kernel> mKernels;
       DeviceInfo mDeviceInfo;
       bool mInfoInitialized;
       size_t mDeviceNumber;     
+      std::vector<std::vector<cl_event>> mProfileEvents;
+      std::vector<cl_command_queue> mCommandQueues;
+      size_t mCurrentCommandQueue;
 
       static size_t CurrentDevice;
       static bool DevicesInitialized;
       static bool DevicesFetched;
       static std::vector<Device> Devices;
-      
+      static const size_t NumCommandQueues;
+
       std::string fileToString(const char* filename);
       cl_int loadBinary(const char* cachename);
       cl_int buildProgram(const char** filenames, 
@@ -98,15 +101,36 @@ namespace clUtil
                       const char* options);
       void dumpBinary(const char* filename);
       void getKernels();
+
     public:
       Device(cl_device_id deviceID);
       const DeviceInfo& getDeviceInfo() const {return mDeviceInfo;}
       cl_device_id getDeviceID() const {return mDeviceID;}
       cl_context getContext() const {return mContext;}
-      cl_command_queue getCommandQueue() const {return mCommandQueue;}
+      void flush();
+      void finish();
+      void addProfilingEvent(cl_event event);
+
+      cl_command_queue getCommandQueue() const 
+      {
+        return mCommandQueues[mCurrentCommandQueue];
+      }
+
+      void setCommandQueue(size_t id)
+      {
+        if(id > mCommandQueues.size())
+        {
+          throw clUtilException("Invalid command queue ID");
+        }
+
+        mCurrentCommandQueue = id;
+      }
+
       cl_kernel getKernel(std::string&& kernelName) const;
       size_t getDeviceNumber() const {return mDeviceNumber;}
 
+      static void Flush();
+      static void Finish();
       static const std::vector<Device>& GetDevices() {return Devices; }
       static void FetchDevices();
       static void InitializeDevices(const char** sourceFiles, 
@@ -115,6 +139,7 @@ namespace clUtil
                                     const char* options = "");
       static Device& GetCurrentDevice() { return Devices[CurrentDevice]; }
       static size_t GetCurrentDeviceNum() { return CurrentDevice; }
+      static void DumpProfilingData();
       static void SetCurrentDevice(size_t deviceNum) 
       {
         if(deviceNum > Devices.size())

@@ -167,13 +167,15 @@ void clUtilEnqueueKernel(const char* kernelName,
                                events.size() > 0 ? &eventArray[0] : NULL,
                                &outputEvent);
   clUtilCheckError(err);
-  
+ 
+  currentDevice.addProfilingEvent(outputEvent);
+
   //Update the last event for each Memory object passed to this kernel
   for(auto i = memories.begin(); i < memories.end(); i++)
   {
     (*i)->setLastAccess(outputEvent);
   }
 
-  err = clRelease(outputEvent);
+  err = clReleaseEvent(outputEvent);
   clUtilCheckError(err);
 }

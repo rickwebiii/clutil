@@ -104,6 +104,8 @@ void Image::put(void const* pointer, const size_t len)
       clUtilCheckError(err);
 
       setLastAccess(nextEvent);
+    
+      mDevice.addProfilingEvent(nextEvent);
 
       err = clReleaseEvent(nextEvent);
       clUtilCheckError(err);
@@ -130,6 +132,8 @@ void Image::put(void const* pointer, const size_t len)
     clUtilCheckError(err);
 
     setLastAccess(nextEvent);   
+    
+    mDevice.addProfilingEvent(nextEvent);
 
     err = clReleaseEvent(nextEvent);
     clUtilCheckError(err);
@@ -153,6 +157,8 @@ void Image::put(void const* pointer, const size_t len)
     clUtilCheckError(err);
 
     setLastAccess(nextEvent);
+    
+    mDevice.addProfilingEvent(nextEvent);
 
     err = clReleaseEvent(nextEvent);
     clUtilCheckError(err);
@@ -204,6 +210,8 @@ void Image::get(void* const pointer, const size_t len)
       clUtilCheckError(err);
 
       setLastAccess(nextEvent);
+    
+      mDevice.addProfilingEvent(nextEvent);
 
       err = clReleaseEvent(nextEvent);
       clUtilCheckError(err);
@@ -230,6 +238,8 @@ void Image::get(void* const pointer, const size_t len)
     clUtilCheckError(err);
 
     setLastAccess(nextEvent);   
+    
+    mDevice.addProfilingEvent(nextEvent);
 
     err = clReleaseEvent(nextEvent);
     clUtilCheckError(err);
@@ -253,6 +263,8 @@ void Image::get(void* const pointer, const size_t len)
     clUtilCheckError(err);
 
     setLastAccess(nextEvent);   
+  
+    mDevice.addProfilingEvent(nextEvent);
 
     err = clReleaseEvent(nextEvent);
     clUtilCheckError(err);
@@ -283,6 +295,8 @@ void Buffer::put(const void* const pointer, const size_t len)
 
   setLastAccess(nextEvent);
 
+  mDevice.addProfilingEvent(nextEvent);
+
   err = clReleaseEvent(nextEvent);
   clUtilCheckError(err);
 }
@@ -305,6 +319,8 @@ void Buffer::get(void* const pointer, const size_t len)
   clUtilCheckError(err);
 
   setLastAccess(nextEvent);
+
+  mDevice.addProfilingEvent(nextEvent);
 
   err = clReleaseEvent(nextEvent);
   clUtilCheckError(err);

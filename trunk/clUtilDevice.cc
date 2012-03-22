@@ -8,6 +8,7 @@ size_t Device::CurrentDevice = 0;
 bool Device::DevicesInitialized = false;
 bool Device::DevicesFetched = false;
 vector<Device> Device::Devices;
+const size_t Device::NumCommandQueues = 2;
 
 void DeviceInfo::initialize(cl_device_id deviceID)
 {
@@ -214,10 +215,16 @@ void DeviceInfo::initialize(cl_device_id deviceID)
 
 Device::Device(cl_device_id deviceID) : 
   mDeviceID(deviceID),
-  mDeviceInfo(),
-  mInfoInitialized(false)
+  mContext(NULL),
+  mProgram(NULL),
+  mKernels(),
+  mInfoInitialized(false),
+  mDeviceNumber(0),
+  mProfileEvents(Device::NumCommandQueues),
+  mCommandQueues(),
+  mCurrentCommandQueue(0)
 {
-    mDeviceInfo.initialize(mDeviceID);
+  mDeviceInfo.initialize(mDeviceID);
 }
 
 void Device::FetchDevices()
@@ -330,8 +337,16 @@ void Device::initialize(const char** filenames,
   mContext = clCreateContext(NULL, 1, &mDeviceID, NULL, NULL, &err);
   clUtilCheckError(err);
 
-  mCommandQueue = clCreateCommandQueue(mContext, mDeviceID, 0, &err);
-  clUtilCheckError(err);
+  for(size_t curQueue = 0; curQueue < Device::NumCommandQueues; curQueue++)
+  {
+    cl_command_queue queue = clCreateCommandQueue(mContext, 
+                                                  mDeviceID, 
+                                                  CL_QUEUE_PROFILING_ENABLE, 
+                                                  &err);
+    clUtilCheckError(err);
+
+    mCommandQueues.push_back(queue);
+  }
 
   if(cachename != NULL)
   {
@@ -364,4 +379,168 @@ cl_kernel Device::getKernel(std::string&& kernelName) const
   }
 
   return kernel->second;
+}
+
+void Device::addProfilingEvent(cl_event event)
+{
+  size_t commandQueueID = mCommandQueues.size();
+  cl_int err;
+  cl_command_queue queue;
+
+  err = clGetEventInfo(event,
+                       CL_EVENT_COMMAND_QUEUE,
+                       sizeof(queue),
+                       &queue,
+                       NULL);
+  clUtilCheckError(err);
+
+  for(size_t curQueue = 0; curQueue < mCommandQueues.size(); curQueue++)
+  {
+    if(queue == mCommandQueues[curQueue])
+    {
+      commandQueueID = curQueue;
+      break;
+    }
+  }
+
+  if(commandQueueID == mCommandQueues.size())
+  {
+    throw clUtilException("Bad command queue for profiling event");
+  }
+
+  err = clRetainEvent(event);
+  clUtilCheckError(err);
+
+  mProfileEvents[commandQueueID].push_back(event);
+}
+
+void Device::DumpProfilingData()
+{
+  ofstream outputFile("clUtilProfile.out");
+
+  outputFile << "<Profile>" << endl;
+
+  for(size_t curDeviceID = 0; curDeviceID < Devices.size(); curDeviceID++)
+  {
+    Device& curDevice = Devices[curDeviceID];
+
+    outputFile << "\t<Device id='" << curDeviceID
+               << "' name='" << curDevice.mDeviceInfo.Name
+               << "'>" << endl;
+
+    for(size_t curQueueID = 0; 
+        curQueueID < curDevice.mProfileEvents.size(); 
+        curQueueID++)
+    {
+      outputFile << "\t\t<Queue id='" << curQueueID << "'>" << endl;
+
+      vector<cl_event>& profileSet = curDevice.mProfileEvents[curQueueID];
+
+      for(size_t curEventNum = 0; 
+          curEventNum < profileSet.size(); 
+          curEventNum++)
+      {
+        cl_event curEvent = profileSet[curEventNum];
+        cl_ulong startTime;
+        cl_ulong stopTime;
+        cl_int err;
+        const char* eventType;
+        cl_command_type commandType;
+
+        err = clGetEventProfilingInfo(curEvent,
+                                      CL_PROFILING_COMMAND_START,
+                                      sizeof(startTime),
+                                      &startTime,
+                                      NULL);
+        clUtilCheckError(err);
+
+        err = clGetEventProfilingInfo(curEvent,
+                                      CL_PROFILING_COMMAND_END,
+                                      sizeof(stopTime),
+                                      &stopTime,
+                                      NULL);
+        clUtilCheckError(err);
+
+        err = clGetEventInfo(curEvent,
+                             CL_EVENT_COMMAND_TYPE,
+                             sizeof(commandType),
+                             &commandType,
+                             NULL);
+        clUtilCheckError(err);
+
+        switch(commandType)
+        {
+          case CL_COMMAND_NDRANGE_KERNEL:
+          case CL_COMMAND_NATIVE_KERNEL:
+            eventType = "kernel";
+            break;
+          case CL_COMMAND_READ_BUFFER:
+          case CL_COMMAND_WRITE_BUFFER:
+            eventType = "buffer read/write";
+            break;
+          case CL_COMMAND_READ_IMAGE:
+          case CL_COMMAND_WRITE_IMAGE:
+            eventType = "image read/write";
+            break;
+          default:
+            eventType = "other";
+            break;
+        }
+
+        outputFile << "\t\t\t<Task type='" << eventType
+                   << "' startTime='" << startTime
+                   << "' stopTime='" << stopTime
+                   << "'/>" << endl;
+
+        err = clReleaseEvent(curEvent);
+        clUtilCheckError(err);
+      }
+      
+      outputFile << "\t</Queue>" << endl;
+
+      profileSet.clear();
+    }
+
+    outputFile << "\t</Device>" << endl;
+  }
+
+  outputFile << "</Profile>" << endl;
+}
+
+void Device::flush()
+{
+  for(size_t curQueue = 0; curQueue < mCommandQueues.size(); curQueue++)
+  {
+    cl_int err;
+
+    err = clFlush(mCommandQueues[curQueue]);
+    clUtilCheckError(err);
+  }
+}
+
+void Device::finish()
+{
+  for(size_t curQueue = 0; curQueue < mCommandQueues.size(); curQueue++)
+  {
+    cl_int err;
+
+    err = clFinish(mCommandQueues[curQueue]);
+    clUtilCheckError(err);
+  }
+}
+
+void Device::Flush()
+{
+  for(auto device = Devices.begin(); device < Devices.end(); device++)
+  {
+    device->flush();
+  }
+}
+
+void Device::Finish()
+{
+  for(auto device = Devices.begin(); device < Devices.end(); device++)
+  {
+    device->finish();
+  }
 }
