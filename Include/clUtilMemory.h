@@ -11,11 +11,11 @@ namespace clUtil
   {
     protected:
       cl_mem mMemHandle;
-      const Device& mDevice;
+      Device& mDevice;
       cl_event mLastAccess;
     public:
       Memory(const Device& device = Device::GetCurrentDevice()) :
-        mDevice(device),
+        mDevice(const_cast<Device&>(device)),
         mLastAccess(NULL)
       {
       }
