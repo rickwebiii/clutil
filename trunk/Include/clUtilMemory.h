@@ -12,15 +12,18 @@ namespace clUtil
     protected:
       cl_mem mMemHandle;
       const Device& mDevice;
+      cl_event mLastAccess;
     public:
       Memory(const Device& device = Device::GetCurrentDevice()) :
-        mDevice(device)
+        mDevice(device),
+        mLastAccess(NULL)
       {
       }
 
       Memory(const Memory& b) :
         mMemHandle(b.mMemHandle),
-        mDevice(b.mDevice)
+        mDevice(b.mDevice),
+        mLastAccess(b.mLastAccess)
       {
         clRetainMemObject(mMemHandle);
       }
@@ -31,9 +34,25 @@ namespace clUtil
       }
 
       cl_mem getMemHandle() const { return mMemHandle; }
+      cl_event getLastAccess() const { return mLastAccess; }
+      void setLastAccess(cl_event event) 
+      { 
+        cl_int err;
 
-      virtual void get(void* const pointer, const size_t len = 0) const = 0;
-      virtual void put(const void* const pointer, const size_t len = 0) const = 0;
+        if(mLastAccess != NULL)
+        {
+          err = clReleaseEvent(mLastAccess);
+          clUtilCheckError(err);
+        }
+
+        mLastAccess = event; 
+      
+        err = clRetainEvent(mLastAccess);
+        clUtilCheckError(err);
+      }
+
+      virtual void get(void* const pointer, const size_t len = 0) = 0;
+      virtual void put(const void* const pointer, const size_t len = 0) = 0;
       virtual bool isImage() const = 0;
   };  
 
@@ -118,8 +137,8 @@ namespace clUtil
         return Image(b);
       }
 
-      virtual void put(const void* const pointer, const size_t len = 0) const;
-      virtual void get(void* const pointer, const size_t len = 0) const;
+      virtual void put(const void* const pointer, const size_t len = 0);
+      virtual void get(void* const pointer, const size_t len = 0);
       virtual bool isImage() const { return true; }
   };
 
@@ -170,8 +189,8 @@ namespace clUtil
         return Buffer(b);
       }
 
-      virtual void put(const void* const pointer, const size_t len = 0) const;
-      virtual void get(void* const pointer, const size_t len = 0) const;
+      virtual void put(const void* const pointer, const size_t len = 0);
+      virtual void get(void* const pointer, const size_t len = 0);
       virtual bool isImage() const { return false; }
   };
 }

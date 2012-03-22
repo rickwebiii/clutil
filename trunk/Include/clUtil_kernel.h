@@ -81,23 +81,21 @@ template<typename... Args> clUtil::_Grid<Args...> clUtilGrid(Args... args)
 
 void setArg_(const cl_kernel kernel, 
              const size_t argIndex, 
-             const clUtil::Memory* curArg);
+             clUtil::Memory* curArg,
+             std::vector<clUtil::Memory*>& sources);
 void setArg_(const cl_kernel kernel, 
              const size_t argIndex, 
-             const clUtil::Image& curArg);
+             clUtil::Image& curArg,
+             std::vector<clUtil::Memory*>& sources);
 void setArg_(const cl_kernel kernel, 
              const size_t argIndex, 
-             const clUtil::Image&& curArg);
-void setArg_(const cl_kernel kernel, 
-             const size_t argIndex, 
-             const clUtil::Buffer& curArg);
-void setArg_(const cl_kernel kernel, 
-             const size_t argIndex, 
-             const clUtil::Buffer&& curArg);
+             clUtil::Buffer& curArg,
+             std::vector<clUtil::Memory*>& sources);
 
 template<typename T> void setArg_(const cl_kernel kernel, 
                                   const size_t argIndex, 
-                                  const T& curArg)
+                                  const T& curArg,
+                                  std::vector<clUtil::Memory*>& sources)
 {
   cl_int err;
 
@@ -105,52 +103,77 @@ template<typename T> void setArg_(const cl_kernel kernel,
   clUtilCheckError(err);
 }
 
-void clUtilSetArgs(cl_kernel kernel,
-                   const char* kernelName,
-                   clUtil::Grid& workGrid,
+void clUtilSetArgs(cl_kernel kernel, 
+                   const char* kernelName, 
+                   std::vector<clUtil::Memory*>& eventSources,
                    size_t argIndex);
 
 template<typename T, typename... Args> 
 void clUtilSetArgs(cl_kernel kernel,
                    const char* kernelName,
-                   clUtil::Grid& workGrid,
+                   std::vector<clUtil::Memory*>& eventSources,
                    size_t argIndex,
-                   T curArg,
-                   Args... args)
+                   T& curArg,
+                   Args&... args)
 {
-  setArg_(kernel, argIndex, curArg);
+  setArg_(kernel, argIndex, curArg, eventSources);
 
-  clUtilSetArgs(kernel,
-                kernelName,
-                workGrid,
-                argIndex + 1,
-                args...);
+  clUtilSetArgs(kernel, kernelName, eventSources, argIndex + 1, args...);
 }
 
 template<typename... Args> 
 void clUtilEnqueueKernel(const char* kernelName,
                          clUtil::Grid&& workGrid,
-                         Args... args)
+                         Args&... args)
 {
   cl_int err;
   clUtil::Device& currentDevice = clUtil::Device::GetCurrentDevice();
   cl_kernel kernel = 
     currentDevice.getKernel(std::move(std::string(kernelName)));
+  std::vector<clUtil::Memory*> memories;
 
-  clUtilSetArgs(kernel,
-                kernelName,
-                workGrid,
-                0,
-                args...);
+  clUtilSetArgs(kernel, kernelName, memories, 0, args...);
   
+  std::map<cl_event, char> events;
+  
+  //Store unique events associated with memory objects
+  for(auto i = memories.begin(); i < memories.end(); i++)
+  {
+    if((*i)->getLastAccess() != NULL)
+    {
+      events[(*i)->getLastAccess()] = '\0';
+    }
+  }
+
+  std::unique_ptr<cl_event[]> eventArray(new cl_event[events.size()]);
+  size_t curEvent = 0;
+
+  //Put all the events into a C array so it can be passed off to OpenCL
+  for(auto i = events.begin(); i != events.end(); i++)
+  {
+    eventArray[curEvent] = (*i).first;
+    curEvent++;
+  }
+
+  cl_event outputEvent;
+
   err = clEnqueueNDRangeKernel(currentDevice.getCommandQueue(),
                                kernel,
                                workGrid.getDim(),
                                NULL,
                                workGrid.getGlobal(),
                                workGrid.getLocal(),
-                               0,
-                               NULL,
-                               NULL);
+                               events.size(),
+                               events.size() > 0 ? &eventArray[0] : NULL,
+                               &outputEvent);
+  clUtilCheckError(err);
+  
+  //Update the last event for each Memory object passed to this kernel
+  for(auto i = memories.begin(); i < memories.end(); i++)
+  {
+    (*i)->setLastAccess(outputEvent);
+  }
+
+  err = clRelease(outputEvent);
   clUtilCheckError(err);
 }
