@@ -2,62 +2,49 @@
 
 void setArg_(const cl_kernel kernel, 
              const size_t argIndex, 
-             const clUtil::Memory* curArg)
+             clUtil::Memory* curArg,
+             std::vector<clUtil::Memory*>& sources)
 {
   cl_int err;
   cl_mem memoryHandle = curArg->getMemHandle();
 
   err = clSetKernelArg(kernel, argIndex, sizeof(memoryHandle), &memoryHandle);
   clUtilCheckError(err);
+
+  sources.push_back(curArg);
 }
 
 void setArg_(const cl_kernel kernel, 
              const size_t argIndex, 
-             const clUtil::Image& curArg)
+             clUtil::Image& curArg,
+             std::vector<clUtil::Memory*>& sources)
 {
   cl_int err;
   cl_mem memoryHandle = curArg.getMemHandle();
 
   err = clSetKernelArg(kernel, argIndex, sizeof(memoryHandle), &memoryHandle);
   clUtilCheckError(err);
+  
+  sources.push_back(&curArg);
 }
 
 void setArg_(const cl_kernel kernel, 
              const size_t argIndex, 
-             const clUtil::Image&& curArg)
+             clUtil::Buffer& curArg,
+             std::vector<clUtil::Memory*>& sources)
 {
   cl_int err;
   cl_mem memoryHandle = curArg.getMemHandle();
 
   err = clSetKernelArg(kernel, argIndex, sizeof(memoryHandle), &memoryHandle);
   clUtilCheckError(err);
-}
 
-void setArg_(const cl_kernel kernel, 
-             const size_t argIndex, 
-             const clUtil::Buffer& curArg)
-{
-  cl_int err;
-  cl_mem memoryHandle = curArg.getMemHandle();
-
-  err = clSetKernelArg(kernel, argIndex, sizeof(memoryHandle), &memoryHandle);
-  clUtilCheckError(err);
-}
-
-void setArg_(const cl_kernel kernel, 
-             const size_t argIndex, 
-             const clUtil::Buffer&& curArg)
-{
-  cl_int err;
-  cl_mem memoryHandle = curArg.getMemHandle();
-
-  err = clSetKernelArg(kernel, argIndex, sizeof(memoryHandle), &memoryHandle);
-  clUtilCheckError(err);
+  sources.push_back(&curArg);
 }
 
 void clUtilSetArgs(cl_kernel kernel,
                    const char* kernelName,
-                   clUtil::Grid& workGrid,
+                   std::vector<clUtil::Memory*>& eventSources,
                    size_t argIndex)
 {
 }

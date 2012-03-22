@@ -5,7 +5,7 @@
 using namespace clUtil;
 using namespace std;
 
-const unsigned int kImageSize = 12;
+const unsigned int kImageSize = 1234;
 
 struct float4
 {

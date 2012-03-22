@@ -63,9 +63,10 @@ void Image::initialize()
   }
 }
 
-void Image::put(void const* pointer, const size_t len) const
+void Image::put(void const* pointer, const size_t len)
 {
   cl_int err;
+  cl_event nextEvent = NULL;
 
   if(mDimensions == 1) //1D image
   {
@@ -96,9 +97,15 @@ void Image::put(void const* pointer, const size_t len) const
                                 0,
                                 0,
                                 pointer,
-                                0,
-                                NULL,
-                                NULL);
+                                mLastAccess != NULL ? 1 : 0,
+                                mLastAccess != NULL ? &mLastAccess : NULL,
+                                &nextEvent);
+
+      clUtilCheckError(err);
+
+      setLastAccess(nextEvent);
+
+      err = clReleaseEvent(nextEvent);
       clUtilCheckError(err);
     }
 
@@ -116,10 +123,15 @@ void Image::put(void const* pointer, const size_t len) const
                               0,
                               0,
                               &((char*)pointer)[imageElementSize * 
-                                                (mHeight - 1) * mWidth],
-                              0,
-                              NULL,
-                              NULL);
+                              (mHeight - 1) * mWidth],
+                              mLastAccess != NULL ? 1 : 0,
+                              mLastAccess != NULL ? &mLastAccess : NULL,
+                              &nextEvent);
+    clUtilCheckError(err);
+
+    setLastAccess(nextEvent);   
+
+    err = clReleaseEvent(nextEvent);
     clUtilCheckError(err);
   }
   else if(mDimensions == 2 || mDimensions == 3)
@@ -135,9 +147,14 @@ void Image::put(void const* pointer, const size_t len) const
                               0,
                               0,
                               pointer,
-                              0,
-                              NULL,
-                              NULL);
+                              mLastAccess != NULL ? 1 : 0,
+                              mLastAccess != NULL ? &mLastAccess : NULL,
+                              &nextEvent);
+    clUtilCheckError(err);
+
+    setLastAccess(nextEvent);
+
+    err = clReleaseEvent(nextEvent);
     clUtilCheckError(err);
   }
   else
@@ -147,9 +164,10 @@ void Image::put(void const* pointer, const size_t len) const
   }
 }
 
-void Image::get(void* const pointer, const size_t len) const
+void Image::get(void* const pointer, const size_t len)
 {
   cl_int err;
+  cl_event nextEvent;
 
   if(mDimensions == 1) //1D image
   {
@@ -157,7 +175,7 @@ void Image::get(void* const pointer, const size_t len) const
     size_t region[3] = {mWidth, mHeight, 1};
     size_t imageElementSize; 
     //size_t actualLength;
-   
+
     //actualLength = len == 0 ? m1DWidth : len;
 
     err = clGetImageInfo(mMemHandle,
@@ -180,9 +198,14 @@ void Image::get(void* const pointer, const size_t len) const
                                0,
                                0,
                                pointer,
-                               0,
-                               NULL,
-                               NULL);
+                               mLastAccess != NULL ? 1 : 0,
+                               mLastAccess != NULL ? &mLastAccess : NULL,
+                               &nextEvent);
+      clUtilCheckError(err);
+
+      setLastAccess(nextEvent);
+
+      err = clReleaseEvent(nextEvent);
       clUtilCheckError(err);
     }
 
@@ -200,10 +223,15 @@ void Image::get(void* const pointer, const size_t len) const
                              0,
                              0,
                              &((char*)pointer)[imageElementSize * 
-                                               (mHeight - 1) * mWidth],
-                             0,
-                             NULL,
-                             NULL);
+                             (mHeight - 1) * mWidth],
+                             mLastAccess != NULL ? 1 : 0,
+                             mLastAccess != NULL ? &mLastAccess : NULL,
+                             &nextEvent);
+    clUtilCheckError(err);
+
+    setLastAccess(nextEvent);   
+
+    err = clReleaseEvent(nextEvent);
     clUtilCheckError(err);
   }
   else if(mDimensions == 2 || mDimensions == 3)
@@ -219,9 +247,14 @@ void Image::get(void* const pointer, const size_t len) const
                              0,
                              0,
                              pointer,
-                             0,
-                             NULL,
-                             NULL);
+                             mLastAccess != NULL ? 1 : 0,
+                             mLastAccess != NULL ? &mLastAccess : NULL,
+                             &nextEvent);
+    clUtilCheckError(err);
+
+    setLastAccess(nextEvent);   
+
+    err = clReleaseEvent(nextEvent);
     clUtilCheckError(err);
   }
   else
@@ -231,10 +264,11 @@ void Image::get(void* const pointer, const size_t len) const
   }
 }
 
-void Buffer::put(const void* const pointer, const size_t len) const
+void Buffer::put(const void* const pointer, const size_t len)
 {
   cl_int err;
   size_t length = len == 0 ? mLength : len;
+  cl_event nextEvent;
 
   err = clEnqueueWriteBuffer(mDevice.getCommandQueue(),
                              mMemHandle,
@@ -242,16 +276,22 @@ void Buffer::put(const void* const pointer, const size_t len) const
                              0,
                              length,
                              pointer,
-                             0,
-                             NULL,
-                             NULL);
+                             mLastAccess != NULL ? 1 : 0,
+                             mLastAccess != NULL ? &mLastAccess : NULL,
+                             &nextEvent);
+  clUtilCheckError(err);
+
+  setLastAccess(nextEvent);
+
+  err = clReleaseEvent(nextEvent);
   clUtilCheckError(err);
 }
 
-void Buffer::get(void* const pointer, const size_t len) const 
+void Buffer::get(void* const pointer, const size_t len)
 {
   cl_int err;
   size_t length = len == 0 ? mLength : len;
+  cl_event nextEvent;
 
   err = clEnqueueReadBuffer(mDevice.getCommandQueue(),
                             mMemHandle,
@@ -259,8 +299,13 @@ void Buffer::get(void* const pointer, const size_t len) const
                             0,
                             length,
                             pointer,
-                            0,
-                            NULL,
-                            NULL);
+                            mLastAccess != NULL ? 1 : 0,
+                            mLastAccess != NULL ? &mLastAccess : NULL,
+                            &nextEvent);
+  clUtilCheckError(err);
+
+  setLastAccess(nextEvent);
+
+  err = clReleaseEvent(nextEvent);
   clUtilCheckError(err);
 }
