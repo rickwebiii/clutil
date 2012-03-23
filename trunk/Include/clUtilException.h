@@ -11,6 +11,7 @@
            << __FILE__\
            << ":"\
            << __LINE__\
+           << ":"\
            << clUtilGetErrorCode(err);\
     \
     throw clUtilException(stream.str());\

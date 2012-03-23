@@ -10,6 +10,16 @@ bool Device::DevicesFetched = false;
 vector<Device> Device::Devices;
 const size_t Device::NumCommandQueues = 2;
 
+static const unsigned int kQueueGraphicHeight = 50;
+static const unsigned int kTextAreaWidth = 100;
+static const unsigned int kGraphicAreaWidth = 900;
+static const unsigned int kTextYOffset = 25;
+static const unsigned int kTextXOffset = 10;
+static const char* kKernelColor = "#FF0000";
+static const char* kBufferColor = "#00FF00";
+static const char* kImageColor = "#0000FF";
+static const char* kOtherColor = "#FFFFFF";
+
 void DeviceInfo::initialize(cl_device_id deviceID)
 {
   Utility::fetchDeviceInfo(deviceID, 
@@ -324,6 +334,34 @@ void Device::InitializeDevices(const char** filenames,
 
     Device::DevicesInitialized = true;
   }
+
+  //Put the starting event into each queue so we know when the profiling 
+  //starts
+  for(size_t curDeviceID = 0; curDeviceID < Devices.size(); curDeviceID++)
+  {
+    Device& curDevice = Devices[curDeviceID];
+   
+    for(size_t curQueueID = 0; 
+        curQueueID < curDevice.mCommandQueues.size();
+        curQueueID++)
+    { 
+      cl_int err;
+      cl_event event;
+
+      cl_command_queue queue = curDevice.mCommandQueues[curQueueID];
+
+      err = clEnqueueMarker(queue, &event);
+      clUtilCheckError(err);
+
+      err = clFlush(queue);
+      clUtilCheckError(err);
+
+      curDevice.addProfilingEvent(event);
+
+      err = clReleaseEvent(event);
+      clUtilCheckError(err);
+    }
+  }
 }
 
 void Device::initialize(const char** filenames,
@@ -416,95 +454,199 @@ void Device::addProfilingEvent(cl_event event)
 
 void Device::DumpProfilingData()
 {
-  ofstream outputFile("clUtilProfile.out");
 
-  outputFile << "<Profile>" << endl;
+  //Put the ending event into each queue so we know when the profiling 
+  //stops
+  for(size_t curDeviceID = 0; curDeviceID < Devices.size(); curDeviceID++)
+  {
+    Device& curDevice = Devices[curDeviceID];
+   
+    for(size_t curQueueID = 0; 
+        curQueueID < curDevice.mCommandQueues.size();
+        curQueueID++)
+    { 
+      cl_int err;
+      cl_event event;
+
+      cl_command_queue queue = curDevice.mCommandQueues[curQueueID];
+
+      err = clEnqueueMarker(queue, &event);
+      clUtilCheckError(err);
+
+      err = clFlush(queue);
+      clUtilCheckError(err);
+
+      curDevice.addProfilingEvent(event);
+
+      err = clReleaseEvent(event);
+      clUtilCheckError(err);
+    }
+  }
+
+  Finish();
+
+  ofstream outputFile("clUtilProfile.svg");
+
+  outputFile << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+             << "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\""
+             << " \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n";
+  outputFile << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\"" 
+             << " xmlns:xlink=\"http://www.w3.org/1999/xlink\""
+             << " width=\""
+             << kTextAreaWidth + kGraphicAreaWidth 
+             << "\" height=\""
+             << kQueueGraphicHeight * Devices.size() * NumCommandQueues 
+             << "\">\n";
+ 
+  outputFile << "<rect width='"
+             << kTextAreaWidth + kGraphicAreaWidth
+             << "' height='"
+             << kQueueGraphicHeight * Devices.size() * NumCommandQueues
+             << "' style='fill:#FFFFFF'/>\n";
 
   for(size_t curDeviceID = 0; curDeviceID < Devices.size(); curDeviceID++)
   {
     Device& curDevice = Devices[curDeviceID];
 
-    outputFile << "\t<Device id='" << curDeviceID
-               << "' name='" << curDevice.mDeviceInfo.Name
-               << "'>" << endl;
-
     for(size_t curQueueID = 0; 
         curQueueID < curDevice.mProfileEvents.size(); 
         curQueueID++)
     {
-      outputFile << "\t\t<Queue id='" << curQueueID << "'>" << endl;
+      cl_int err;
+
+      outputFile << "\t<text x='"
+                 << kTextXOffset
+                 << "' y='" 
+                 << (curDeviceID * NumCommandQueues + curQueueID) 
+                    * kQueueGraphicHeight + kTextYOffset
+                 << "'>";
+  
+      outputFile << curDevice.mDeviceInfo.Name << " queue " << curQueueID;
+      outputFile << "</text>" << endl;
 
       vector<cl_event>& profileSet = curDevice.mProfileEvents[curQueueID];
 
-      for(size_t curEventNum = 0; 
-          curEventNum < profileSet.size(); 
+      cl_ulong queueStartTime;
+      cl_ulong queueEndTime;
+      bool shouldRenderEvents = true;
+
+      //Get the queue's start time and release that event
+      err = clGetEventProfilingInfo(profileSet[0],
+                                    CL_PROFILING_COMMAND_START,
+                                    sizeof(queueStartTime),
+                                    &queueStartTime,
+                                    NULL);
+      
+      if(err == CL_PROFILING_INFO_NOT_AVAILABLE)
+      {
+        shouldRenderEvents = false;
+      }
+      else
+      {
+        clUtilCheckError(err);
+      }
+
+      err = clReleaseEvent(profileSet[0]);
+      clUtilCheckError(err);
+
+      //Get the queue's stopping time and relase that event
+      err = clGetEventProfilingInfo(profileSet[profileSet.size() - 1],
+                                    CL_PROFILING_COMMAND_END,
+                                    sizeof(queueEndTime),
+                                    &queueEndTime,
+                                    NULL);
+
+      if(err == CL_PROFILING_INFO_NOT_AVAILABLE)
+      {
+        shouldRenderEvents = false;
+      }
+      else
+      {
+        clUtilCheckError(err);
+      }
+      
+      err = clReleaseEvent(profileSet[profileSet.size() - 1]);
+      clUtilCheckError(err);
+
+      cl_ulong queueElapsedTime = queueEndTime - queueStartTime;
+
+      for(size_t curEventNum = 1; 
+          curEventNum < profileSet.size() - 1; 
           curEventNum++)
       {
         cl_event curEvent = profileSet[curEventNum];
-        cl_ulong startTime;
-        cl_ulong stopTime;
-        cl_int err;
-        const char* eventType;
-        cl_command_type commandType;
-
-        err = clGetEventProfilingInfo(curEvent,
-                                      CL_PROFILING_COMMAND_START,
-                                      sizeof(startTime),
-                                      &startTime,
-                                      NULL);
-        clUtilCheckError(err);
-
-        err = clGetEventProfilingInfo(curEvent,
-                                      CL_PROFILING_COMMAND_END,
-                                      sizeof(stopTime),
-                                      &stopTime,
-                                      NULL);
-        clUtilCheckError(err);
-
-        err = clGetEventInfo(curEvent,
-                             CL_EVENT_COMMAND_TYPE,
-                             sizeof(commandType),
-                             &commandType,
-                             NULL);
-        clUtilCheckError(err);
-
-        switch(commandType)
+        
+        if(shouldRenderEvents == true)
         {
-          case CL_COMMAND_NDRANGE_KERNEL:
-          case CL_COMMAND_NATIVE_KERNEL:
-            eventType = "kernel";
-            break;
-          case CL_COMMAND_READ_BUFFER:
-          case CL_COMMAND_WRITE_BUFFER:
-            eventType = "buffer read/write";
-            break;
-          case CL_COMMAND_READ_IMAGE:
-          case CL_COMMAND_WRITE_IMAGE:
-            eventType = "image read/write";
-            break;
-          default:
-            eventType = "other";
-            break;
-        }
+          cl_ulong startTime;
+          cl_ulong stopTime;
+          const char* eventColor;
+          cl_command_type commandType;
 
-        outputFile << "\t\t\t<Task type='" << eventType
-                   << "' startTime='" << startTime
-                   << "' stopTime='" << stopTime
-                   << "'/>" << endl;
+          err = clGetEventProfilingInfo(curEvent,
+                                        CL_PROFILING_COMMAND_START,
+                                        sizeof(startTime),
+                                        &startTime,
+                                        NULL);
+          clUtilCheckError(err);
+
+          err = clGetEventProfilingInfo(curEvent,
+                                        CL_PROFILING_COMMAND_END,
+                                        sizeof(stopTime),
+                                        &stopTime,
+                                        NULL);
+          clUtilCheckError(err);
+
+          err = clGetEventInfo(curEvent,
+                               CL_EVENT_COMMAND_TYPE,
+                               sizeof(commandType),
+                               &commandType,
+                               NULL);
+          clUtilCheckError(err);
+
+          switch(commandType)
+          {
+            case CL_COMMAND_NDRANGE_KERNEL:
+            case CL_COMMAND_NATIVE_KERNEL:
+              eventColor = kKernelColor;
+              break;
+            case CL_COMMAND_READ_BUFFER:
+            case CL_COMMAND_WRITE_BUFFER:
+              eventColor = kBufferColor;
+              break;
+            case CL_COMMAND_READ_IMAGE:
+            case CL_COMMAND_WRITE_IMAGE:
+              eventColor = kImageColor;
+              break;
+            default:
+              eventColor = kOtherColor;
+              break;
+          }
+
+          outputFile << "\t\t<rect x='"
+                     << kTextAreaWidth + (double)(startTime - queueStartTime) / 
+                        (double)queueElapsedTime * kGraphicAreaWidth
+                     << "' y='"
+                     << (curDeviceID * NumCommandQueues + curQueueID) *
+                        kQueueGraphicHeight
+                     << "' width='"
+                     << (double)(stopTime - startTime) / 
+                        (double)queueElapsedTime * kGraphicAreaWidth
+                     << "' height='"
+                     << kQueueGraphicHeight
+                     << "' style='fill:" << eventColor
+                     << "'/>" << endl;
+        }
 
         err = clReleaseEvent(curEvent);
         clUtilCheckError(err);
       }
-      
-      outputFile << "\t</Queue>" << endl;
 
       profileSet.clear();
     }
-
-    outputFile << "\t</Device>" << endl;
   }
 
-  outputFile << "</Profile>" << endl;
+  outputFile << "</svg>" << endl;
 }
 
 void Device::flush()
@@ -543,4 +685,4 @@ void Device::Finish()
   {
     device->finish();
   }
-}
+} 

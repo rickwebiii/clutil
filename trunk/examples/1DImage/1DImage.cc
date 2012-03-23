@@ -5,7 +5,7 @@
 using namespace clUtil;
 using namespace std;
 
-const unsigned int kImageSize = 1234567;
+const unsigned int kImageSize = 1234;
 
 struct float4
 {
@@ -47,6 +47,8 @@ int main(int argc, char** argv)
 
     c.get(result.get());
     Device::Finish();
+
+    Device::DumpProfilingData();
   }
   catch(clUtilException& err)
   {
@@ -61,8 +63,6 @@ int main(int argc, char** argv)
       printf("Error: index %ld value: %f\n", i, result.get()[i].w);
     }
   }
-
-  Device::DumpProfilingData();
 
   printf("Success!\n");
 }

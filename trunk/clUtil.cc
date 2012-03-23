@@ -76,6 +76,8 @@ const char* clUtilGetErrorCode(cl_int err)
       return "Failed to build program.";
     case CL_MAP_FAILURE:
       return "Failed to map buffer/image";
+    case CL_PROFILING_INFO_NOT_AVAILABLE:
+      return "Profiling info not available.";
     case -1001: //This is CL_PLATFORM_NOT_FOUND_KHR
       return "No platforms found. (Did you put ICD files in /etc/OpenCL?)";
     default:
