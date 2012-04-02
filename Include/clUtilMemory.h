@@ -191,6 +191,8 @@ namespace clUtil
 
       virtual void put(const void* const pointer, const size_t len = 0);
       virtual void get(void* const pointer, const size_t len = 0);
+      void put(const Buffer& b);
+      void get(const Buffer& b);
       virtual bool isImage() const { return false; }
   };
 }

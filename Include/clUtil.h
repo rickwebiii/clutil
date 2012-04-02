@@ -6,3 +6,4 @@
 #include "clUtilPlatform.h"
 #include "clUtilMemory.h"
 #include "clUtilParallelFor.h"
+#include "clUtilScheduler.h"

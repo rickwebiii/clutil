@@ -1,15 +1,16 @@
 #include <clUtil.h>
 
+using namespace clUtil;
+
 int main(int argc, char** argv)
 {
   char const* kernel = "kernel.cl";
   double time1;
   double time2;
   float* a;
-  cl_mem gpuA;
-  const unsigned int size = 1024*1024*64;
+  const unsigned int size = 1024*1024*20;
 
-  clUtilInitialize(&kernel, 1);
+  Device::InitializeDevices(&kernel, 1);
 
   a = new float[size];
   
@@ -18,13 +19,17 @@ int main(int argc, char** argv)
     a[i] = 0.0f;
   }
 
-  clUtilAlloc(sizeof(a[0]) * size, &gpuA);
+  Buffer aGPU(sizeof(a[0]) * size);
+
+  aGPU.put(a);
 
   time1 = clUtilGetTime();
 
-  clUtilDevicePut(a, sizeof(a[0]) * size, gpuA);
+  aGPU.put(a);
+  
+  Device::Finish();
   
   time2 = clUtilGetTime();
 
-  printf("%lE B/s\n", sizeof(a[0]) * size / (time2 - time1));
+  printf("%E B/s\n", 1 * sizeof(a[0]) * size / (time2 - time1));
 }

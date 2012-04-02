@@ -9,10 +9,11 @@ bool Device::DevicesInitialized = false;
 bool Device::DevicesFetched = false;
 vector<Device> Device::Devices;
 const size_t Device::NumCommandQueues = 2;
+bool Device::ProfilingStarted = false;
 
 static const unsigned int kQueueGraphicHeight = 50;
-static const unsigned int kTextAreaWidth = 100;
-static const unsigned int kGraphicAreaWidth = 900;
+static const unsigned int kTextAreaWidth = 150;
+static const unsigned int kGraphicAreaWidth = 1250;
 static const unsigned int kTextYOffset = 25;
 static const unsigned int kTextXOffset = 10;
 static const char* kKernelColor = "#FF0000";
@@ -334,6 +335,11 @@ void Device::InitializeDevices(const char** filenames,
 
     Device::DevicesInitialized = true;
   }
+}
+
+void Device::StartProfiling()
+{
+  ProfilingStarted = true;
 
   //Put the starting event into each queue so we know when the profiling 
   //starts
@@ -363,6 +369,7 @@ void Device::InitializeDevices(const char** filenames,
     }
   }
 }
+
 
 void Device::initialize(const char** filenames,
                         size_t numFiles,
@@ -421,39 +428,46 @@ cl_kernel Device::getKernel(std::string&& kernelName) const
 
 void Device::addProfilingEvent(cl_event event)
 {
-  size_t commandQueueID = mCommandQueues.size();
-  cl_int err;
-  cl_command_queue queue;
-
-  err = clGetEventInfo(event,
-                       CL_EVENT_COMMAND_QUEUE,
-                       sizeof(queue),
-                       &queue,
-                       NULL);
-  clUtilCheckError(err);
-
-  for(size_t curQueue = 0; curQueue < mCommandQueues.size(); curQueue++)
+  if(ProfilingStarted == true)
   {
-    if(queue == mCommandQueues[curQueue])
+    size_t commandQueueID = mCommandQueues.size();
+    cl_int err;
+    cl_command_queue queue;
+
+    err = clGetEventInfo(event,
+                         CL_EVENT_COMMAND_QUEUE,
+                         sizeof(queue),
+                         &queue,
+                         NULL);
+    clUtilCheckError(err);
+
+    for(size_t curQueue = 0; curQueue < mCommandQueues.size(); curQueue++)
     {
-      commandQueueID = curQueue;
-      break;
+      if(queue == mCommandQueues[curQueue])
+      {
+        commandQueueID = curQueue;
+        break;
+      }
     }
+
+    if(commandQueueID == mCommandQueues.size())
+    {
+      throw clUtilException("Bad command queue for profiling event");
+    }
+
+    err = clRetainEvent(event);
+    clUtilCheckError(err);
+
+    mProfileEvents[commandQueueID].push_back(event);
   }
-
-  if(commandQueueID == mCommandQueues.size())
-  {
-    throw clUtilException("Bad command queue for profiling event");
-  }
-
-  err = clRetainEvent(event);
-  clUtilCheckError(err);
-
-  mProfileEvents[commandQueueID].push_back(event);
 }
 
 void Device::DumpProfilingData()
 {
+  if(ProfilingStarted == false)
+  {
+    throw clUtilException("Can't dump profiling data: not started");
+  }
 
   //Put the ending event into each queue so we know when the profiling 
   //stops
@@ -634,7 +648,7 @@ void Device::DumpProfilingData()
                         (double)queueElapsedTime * kGraphicAreaWidth
                      << "' height='"
                      << kQueueGraphicHeight
-                     << "' style='fill:" << eventColor
+                     << "' style='stroke:#FFFFFF;fill:" << eventColor
                      << "'/>" << endl;
         }
 

@@ -89,6 +89,7 @@ namespace clUtil
       static bool DevicesFetched;
       static std::vector<Device> Devices;
       static const size_t NumCommandQueues;
+      static bool ProfilingStarted;
 
       std::string fileToString(const char* filename);
       cl_int loadBinary(const char* cachename);
@@ -110,6 +111,9 @@ namespace clUtil
       void flush();
       void finish();
       void addProfilingEvent(cl_event event);
+
+      size_t getNumCommandQueues() const { return mCommandQueues.size(); }
+      size_t getCommandQueueID() const { return mCurrentCommandQueue; }
 
       cl_command_queue getCommandQueue() const 
       {
@@ -149,5 +153,7 @@ namespace clUtil
 
         CurrentDevice = deviceNum;
       };
+
+      static void StartProfiling();
   };
 }

@@ -325,3 +325,7 @@ void Buffer::get(void* const pointer, const size_t len)
   err = clReleaseEvent(nextEvent);
   clUtilCheckError(err);
 }
+
+void Buffer::put(const Buffer& b)
+{
+}

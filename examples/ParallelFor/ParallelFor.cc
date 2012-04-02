@@ -5,7 +5,7 @@
 using namespace clUtil;
 using namespace std;
 
-const size_t kBigArraySize = 12345678;
+const size_t kBigArraySize = 12345;
 
 int main(int argc, char** argv)
 {
@@ -25,6 +25,7 @@ int main(int argc, char** argv)
 
   ParallelFor(0, 1, kBigArraySize, [&](size_t startIdx, size_t endIdx)
   { 
+#if 1
     unsigned int indexCount = endIdx - startIdx + 1;
 
     Buffer aDevice(sizeof(a[0]) * indexCount);
@@ -42,7 +43,10 @@ int main(int argc, char** argv)
                         indexCount);
 
     cDevice.get(&c[startIdx]);
+#endif
   });
+
+  Device::DumpProfilingData();
 
   for(unsigned int i = 0; i < kBigArraySize; i++)
   {
