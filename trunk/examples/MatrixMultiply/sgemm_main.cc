@@ -40,7 +40,7 @@ static void usage()
 
 int main(int argc, char** argv)
 {
-  const char* kernels[] = {"sgemm.cl", "xgemmRef.cl", "utility.cl"};
+  const char* kernels[] = {"sgemm.cl", "utility.cl"};
 
   if(argc < 4)
   {
@@ -65,7 +65,7 @@ int main(int argc, char** argv)
   try
   {
 
-    Device::InitializeDevices(kernels, 3, NULL, "-D__DEVICE__");
+    Device::InitializeDevices(kernels, 2, NULL, "-D__DEVICE__");
 
     cout << "Generating matrices..." << endl;
 
