@@ -28,4 +28,4 @@ sgemm.cl: gen_sgemm.py
 	python gen_sgemm.py > sgemm.cl
 
 clean:
-	-rm *.o gemm
+	-rm *.o sgemm dgemm dgemm.cl sgemm.cl clUtilProfile.svg
