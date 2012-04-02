@@ -1,0 +1,325 @@
+#define IDX(row, col, ld) ((row) + (col) * (ld))
+
+__kernel void sgemmNN_reference(int m,
+                                int n,
+                                int k,
+                                float alpha,
+                                __global float* a,
+                                int lda,
+                                __global float* b,
+                                int ldb,
+                                float beta,
+                                __global float* c,
+                                int ldc)
+{
+  int row = get_global_id(0);
+  int col = get_global_id(1);
+
+  if(row < m && col < n)
+  {
+    float cVal = 0.0f;
+
+    for(int curK = 0; curK < k; curK++)
+    {
+      cVal += a[IDX(row, curK, lda)] * b[IDX(curK, col, ldb)];
+    }
+
+    c[IDX(row, col, ldc)] = alpha * cVal + beta * c[IDX(row, col, ldc)];
+  }
+}
+
+__kernel void sgemmNT(int m,
+                      int n,
+                      int k,
+                      read_only image2d_t a,
+                      read_only image2d_t b,
+                      __global float4* c,
+                      int ldc,
+                      float alpha,
+                      float beta)
+{
+
+#define rowInFloat4 get_global_id(0) * 8 / 4
+#define colInFloat4 get_global_id(1) * 8 / 4
+#define row get_global_id(0) * 8
+#define col get_global_id(1) * 8
+
+  if(row < m && col < n)
+  {
+
+    int4 idxA = {rowInFloat4, rowInFloat4 + 1, 0, 0};
+    int4 idxB = {colInFloat4, colInFloat4 + 1, 0, 0};
+    int4 increment = {0, 0, 1, 1};
+
+    //c(1:4,1:8) of block
+    float4 c0_0 = 0.0f;
+    float4 c0_1 = 0.0f;
+    float4 c0_2 = 0.0f;
+    float4 c0_3 = 0.0f;
+    float4 c0_4 = 0.0f;
+    float4 c0_5 = 0.0f;
+    float4 c0_6 = 0.0f;
+    float4 c0_7 = 0.0f;
+
+    //c(5:8, 1:8) of block
+    float4 c4_0 = 0.0f;
+    float4 c4_1 = 0.0f;
+    float4 c4_2 = 0.0f;
+    float4 c4_3 = 0.0f;
+    float4 c4_4 = 0.0f;
+    float4 c4_5 = 0.0f;
+    float4 c4_6 = 0.0f;
+    float4 c4_7 = 0.0f;
+
+    //a(1:8, 1)
+    float4 a0_0;
+    float4 a4_0;
+
+    //b(1, 1:8) (b is transposed)
+    float4 b0_0;
+    float4 b0_4;
+
+    //Unroll to use all 8 samplers
+    for(;idxA.z < k; idxA += increment, idxB += increment)
+    {
+      //load a and b for k = 0
+      a0_0 = read_imagef(a, s0, idxA.xz);
+      a4_0 = read_imagef(a, s1, idxA.yz);
+
+      b0_0 = read_imagef(b, s2, idxB.xz);
+      b0_4 = read_imagef(b, s3, idxB.yz);
+
+      c0_0 += a0_0 * b0_0.xxxx;
+      c0_1 += a0_0 * b0_0.yyyy;
+      c0_2 += a0_0 * b0_0.zzzz;
+      c0_3 += a0_0 * b0_0.wwww;
+      c0_4 += a0_0 * b0_4.xxxx;
+      c0_5 += a0_0 * b0_4.yyyy;
+      c0_6 += a0_0 * b0_4.zzzz;
+      c0_7 += a0_0 * b0_4.wwww;
+
+      c4_0 += a4_0 * b0_0.xxxx;
+      c4_1 += a4_0 * b0_0.yyyy;
+      c4_2 += a4_0 * b0_0.zzzz;
+      c4_3 += a4_0 * b0_0.wwww;
+      c4_4 += a4_0 * b0_4.xxxx;
+      c4_5 += a4_0 * b0_4.yyyy;
+      c4_6 += a4_0 * b0_4.zzzz;
+      c4_7 += a4_0 * b0_4.wwww;
+      
+      //Second unroll
+      idxA += increment;
+      idxB += increment;
+
+      //load a and b for k = 0
+      a0_0 = read_imagef(a, s4, idxA.xz);
+      a4_0 = read_imagef(a, s5, idxA.yz);
+
+      b0_0 = read_imagef(b, s6, idxB.xz);
+      b0_4 = read_imagef(b, s7, idxB.yz);
+
+      c0_0 += a0_0 * b0_0.xxxx;
+      c0_1 += a0_0 * b0_0.yyyy;
+      c0_2 += a0_0 * b0_0.zzzz;
+      c0_3 += a0_0 * b0_0.wwww;
+      c0_4 += a0_0 * b0_4.xxxx;
+      c0_5 += a0_0 * b0_4.yyyy;
+      c0_6 += a0_0 * b0_4.zzzz;
+      c0_7 += a0_0 * b0_4.wwww;
+
+      c4_0 += a4_0 * b0_0.xxxx;
+      c4_1 += a4_0 * b0_0.yyyy;
+      c4_2 += a4_0 * b0_0.zzzz;
+      c4_3 += a4_0 * b0_0.wwww;
+      c4_4 += a4_0 * b0_4.xxxx;
+      c4_5 += a4_0 * b0_4.yyyy;
+      c4_6 += a4_0 * b0_4.zzzz;
+      c4_7 += a4_0 * b0_4.wwww;
+    }
+
+    ldc /= 4;
+
+    //Store first 4 rows
+    c[(rowInFloat4 + 0) + ldc * (col + 0)] = c0_0;
+    c[(rowInFloat4 + 0) + ldc * (col + 1)] = c0_1;
+    c[(rowInFloat4 + 0) + ldc * (col + 2)] = c0_2;
+    c[(rowInFloat4 + 0) + ldc * (col + 3)] = c0_3;
+    c[(rowInFloat4 + 0) + ldc * (col + 4)] = c0_4;
+    c[(rowInFloat4 + 0) + ldc * (col + 5)] = c0_5;
+    c[(rowInFloat4 + 0) + ldc * (col + 6)] = c0_6;
+    c[(rowInFloat4 + 0) + ldc * (col + 7)] = c0_7;
+
+    //Store next 4 rowInFloat4s
+    c[(rowInFloat4 + 1) + ldc * (col + 0)] = c4_0;
+    c[(rowInFloat4 + 1) + ldc * (col + 1)] = c4_1;
+    c[(rowInFloat4 + 1) + ldc * (col + 2)] = c4_2;
+    c[(rowInFloat4 + 1) + ldc * (col + 3)] = c4_3;
+    c[(rowInFloat4 + 1) + ldc * (col + 4)] = c4_4;
+    c[(rowInFloat4 + 1) + ldc * (col + 5)] = c4_5;
+    c[(rowInFloat4 + 1) + ldc * (col + 6)] = c4_6;
+    c[(rowInFloat4 + 1) + ldc * (col + 7)] = c4_7;
+  }
+}
+#undef row
+#undef col
+#undef rowInFloat4
+#undef colInFloat4
+
+#if 0
+#define REPROW 1
+#define REPCOL 1
+#define WGROW 8
+#define WGCOL 8
+#define WGSIZE (WGROW * WGCOL)
+#define SHAREDK 64
+#define SHAREDM (REPROW * WGROW)
+#define SHAREDN (REPCOL * WGCOL)
+
+__attribute__ ((reqd_work_group_size(WGROW, WGCOL, 1)))
+__kernel void sgemmNN(int m,
+                      int n,
+                      int k,
+                      float alpha,
+                      __global float* a,
+                      int lda,
+                      __global float* b,
+                      int ldb,
+                      float beta,
+                      __global float* c,
+                      int ldc)
+{
+  int row = get_group_id(0) * SHAREDM;
+  int col = get_group_id(1) * SHAREDN;
+
+  int localRow = get_local_id(0);
+  int localCol = get_local_id(1);
+  int rawLocalID = localRow + WGCOL * localCol;
+
+  __local float aLocal[(SHAREDM + 1) * SHAREDK];
+  __local float bLocal[(SHAREDK + 1) * SHAREDN];
+    
+  float c0_0 = 0.0f;
+  float c0_1 = 0.0f;
+  float c0_2 = 0.0f;
+  float c0_3 = 0.0f;
+  float c1_0 = 0.0f;
+  float c1_1 = 0.0f;
+  float c1_2 = 0.0f;
+  float c1_3 = 0.0f;
+  float c2_0 = 0.0f;
+  float c2_1 = 0.0f;
+  float c2_2 = 0.0f;
+  float c2_3 = 0.0f;
+  float c3_0 = 0.0f;
+  float c3_1 = 0.0f;
+  float c3_2 = 0.0f;
+  float c3_3 = 0.0f;
+
+  for(int kk = 0; kk < k; kk += SHAREDK)
+  {
+    barrier (CLK_LOCAL_MEM_FENCE);
+
+    //Load A and B into shared memory
+    for(int i = 0; i < SHAREDK; i += WGSIZE / SHAREDM)
+    {
+      aLocal[IDX(rawLocalID % SHAREDM, i + rawLocalID / SHAREDM, SHAREDM + 1)] =
+        a[IDX(row + rawLocalID % SHAREDM, kk + i + rawLocalID / SHAREDM, lda)];
+    }
+
+    for(int i = 0; i < SHAREDN; i += WGSIZE / SHAREDK)
+    {
+#if SHAREDK == 64
+      bLocal[IDX(rawLocalID, i, SHAREDK + 1)] = 
+        b[IDX(kk + rawLocalID, col + i, ldc)];
+#else
+#endif
+    }
+
+    barrier (CLK_LOCAL_MEM_FENCE);
+
+#pragma unroll 16
+    for(int kkk = 0; kkk < SHAREDK; kkk++)
+    {
+      float a0 = aLocal[IDX(localRow + 0 * WGROW, kkk, SHAREDM + 1)];
+      float a1 = aLocal[IDX(localRow + 1 * WGROW, kkk, SHAREDM + 1)];
+      float a2 = aLocal[IDX(localRow + 2 * WGROW, kkk, SHAREDM + 1)];
+      float a3 = aLocal[IDX(localRow + 3 * WGROW, kkk, SHAREDM + 1)];
+
+      float b0 = bLocal[IDX(kkk, localCol + 0 * WGCOL, SHAREDK + 1)];
+      float b1 = bLocal[IDX(kkk, localCol + 0 * WGCOL, SHAREDK + 1)];
+      float b2 = bLocal[IDX(kkk, localCol + 0 * WGCOL, SHAREDK + 1)];
+      float b3 = bLocal[IDX(kkk, localCol + 0 * WGCOL, SHAREDK + 1)];
+
+      c0_0 = fma(a0, b0, c0_0);
+      c0_1 = fma(a0, b1, c0_1);
+      c0_2 = fma(a0, b2, c0_2);
+      c0_3 = fma(a0, b3, c0_3);
+      c1_0 = fma(a1, b0, c1_0);
+      c1_1 = fma(a1, b1, c1_1);
+      c1_2 = fma(a1, b2, c1_2);
+      c1_3 = fma(a1, b3, c1_3);
+      c2_0 = fma(a2, b0, c2_0);
+      c2_1 = fma(a2, b1, c2_1);
+      c2_2 = fma(a2, b2, c2_2);
+      c2_3 = fma(a2, b3, c2_3);
+      c3_0 = fma(a3, b0, c3_0);
+      c3_1 = fma(a3, b1, c3_1);
+      c3_2 = fma(a3, b2, c3_2);
+      c3_3 = fma(a3, b3, c3_3);
+    }
+  }
+
+  c[IDX(row + localRow + 0 * WGROW, col + localCol + 0 * WGCOL, ldc)] = 
+    alpha * c0_0 + 
+    beta * c[IDX(row + localRow + 0 * WGROW, col + localCol + 0 * WGCOL, ldc)];
+  c[IDX(row + localRow + 0 * WGROW, col + localCol + 1 * WGCOL, ldc)] = 
+    alpha * c0_1 + 
+    beta * c[IDX(row + localRow + 0 * WGROW, col + localCol + 1 * WGCOL, ldc)];
+  c[IDX(row + localRow + 0 * WGROW, col + localCol + 2 * WGCOL, ldc)] = 
+    alpha * c0_2 + 
+    beta * c[IDX(row + localRow + 0 * WGROW, col + localCol + 2 * WGCOL, ldc)];
+  c[IDX(row + localRow + 0 * WGROW, col + localCol + 3 * WGCOL, ldc)] = 
+    alpha * c0_3 + 
+    beta * c[IDX(row + localRow + 0 * WGROW, col + localCol + 3 * WGCOL, ldc)];
+
+  c[IDX(row + localRow + 1 * WGROW, col + localCol + 0 * WGCOL, ldc)] = 
+    alpha * c1_0 + 
+    beta * c[IDX(row + localRow + 1 * WGROW, col + localCol + 0 * WGCOL, ldc)];
+  c[IDX(row + localRow + 1 * WGROW, col + localCol + 1 * WGCOL, ldc)] = 
+    alpha * c1_1 + 
+    beta * c[IDX(row + localRow + 1 * WGROW, col + localCol + 1 * WGCOL, ldc)];
+  c[IDX(row + localRow + 1 * WGROW, col + localCol + 2 * WGCOL, ldc)] = 
+    alpha * c1_2 + 
+    beta * c[IDX(row + localRow + 1 * WGROW, col + localCol + 2 * WGCOL, ldc)];
+  c[IDX(row + localRow + 1 * WGROW, col + localCol + 3 * WGCOL, ldc)] = 
+    alpha * c1_3 + 
+    beta * c[IDX(row + localRow + 1 * WGROW, col + localCol + 3 * WGCOL, ldc)];
+
+  c[IDX(row + localRow + 2 * WGROW, col + localCol + 0 * WGCOL, ldc)] = 
+    alpha * c2_0 + 
+    beta * c[IDX(row + localRow + 2 * WGROW, col + localCol + 0 * WGCOL, ldc)];
+  c[IDX(row + localRow + 2 * WGROW, col + localCol + 1 * WGCOL, ldc)] = 
+    alpha * c2_1 + 
+    beta * c[IDX(row + localRow + 2 * WGROW, col + localCol + 1 * WGCOL, ldc)];
+  c[IDX(row + localRow + 2 * WGROW, col + localCol + 2 * WGCOL, ldc)] = 
+    alpha * c2_2 + 
+    beta * c[IDX(row + localRow + 2 * WGROW, col + localCol + 2 * WGCOL, ldc)];
+  c[IDX(row + localRow + 2 * WGROW, col + localCol + 3 * WGCOL, ldc)] = 
+    alpha * c2_3 + 
+    beta * c[IDX(row + localRow + 2 * WGROW, col + localCol + 3 * WGCOL, ldc)];
+
+  c[IDX(row + localRow + 3 * WGROW, col + localCol + 0 * WGCOL, ldc)] = 
+    alpha * c3_0 + 
+    beta * c[IDX(row + localRow + 3 * WGROW, col + localCol + 0 * WGCOL, ldc)];
+  c[IDX(row + localRow + 3 * WGROW, col + localCol + 1 * WGCOL, ldc)] = 
+    alpha * c3_1 + 
+    beta * c[IDX(row + localRow + 3 * WGROW, col + localCol + 1 * WGCOL, ldc)];
+  c[IDX(row + localRow + 3 * WGROW, col + localCol + 2 * WGCOL, ldc)] = 
+    alpha * c3_2 + 
+    beta * c[IDX(row + localRow + 3 * WGROW, col + localCol + 2 * WGCOL, ldc)];
+  c[IDX(row + localRow + 3 * WGROW, col + localCol + 3 * WGCOL, ldc)] = 
+    alpha * c3_3 + 
+    beta * c[IDX(row + localRow + 3 * WGROW, col + localCol + 3 * WGCOL, ldc)];
+}
+
+#endif

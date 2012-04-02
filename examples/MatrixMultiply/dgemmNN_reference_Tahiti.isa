@@ -1,0 +1,148 @@
+ShaderType = IL_SHADER_COMPUTE
+TargetChip = t
+; ------------- SC_SRCSHADER Dump ------------------
+SC_SHADERSTATE: u32NumIntVSConst = 0
+SC_SHADERSTATE: u32NumIntPSConst = 0
+SC_SHADERSTATE: u32NumIntGSConst = 0
+SC_SHADERSTATE: u32NumBoolVSConst = 0
+SC_SHADERSTATE: u32NumBoolPSConst = 0
+SC_SHADERSTATE: u32NumBoolGSConst = 0
+SC_SHADERSTATE: u32NumFloatVSConst = 0
+SC_SHADERSTATE: u32NumFloatPSConst = 0
+SC_SHADERSTATE: u32NumFloatGSConst = 0
+fConstantsAvailable = 1
+iConstantsAvailable = 1
+bConstantsAvailable = 1
+u32SCOptions[0] = 0x01A00000 SCOption_IGNORE_SAMPLE_L_BUG SCOption_FLOAT_DO_NOT_DIST SCOption_FLOAT_DO_NOT_REASSOC
+u32SCOptions[1] = 0x00000000
+u32SCOptions[2] = 0x20800001 SCOption_R800_UAV_NONARRAY_FIXUP SCOption_R1000_BYTE_SHORT_WRITE_WORKAROUND_BUG317611 SCOption_R1000_READLANE_SMRD_WORKAROUND_BUG343479
+; -------- Disassembly --------------------
+shader main
+  asic(SI_ASIC)
+  type(CS)
+
+  s_buffer_load_dwordx2  s[0:1], s[4:7], 0x04               // 00000000: C2400504
+  s_buffer_load_dwordx2  s[4:5], s[4:7], 0x18               // 00000004: C2420518
+  s_buffer_load_dword  s6, s[8:11], 0x00                    // 00000008: C2030900
+  s_buffer_load_dword  s7, s[8:11], 0x04                    // 0000000C: C2038904
+  s_buffer_load_dword  s14, s[8:11], 0x08                   // 00000010: C2070908
+  s_buffer_load_dwordx2  s[16:17], s[8:11], 0x0c            // 00000014: C248090C
+  s_buffer_load_dword  s15, s[8:11], 0x10                   // 00000018: C2078910
+  s_buffer_load_dword  s18, s[8:11], 0x14                   // 0000001C: C2090914
+  s_waitcnt     lgkmcnt(0)                                  // 00000020: BF8C007F
+  s_mul_i32     s0, s12, s0                                 // 00000024: 9300000C
+  s_mul_i32     s1, s13, s1                                 // 00000028: 9301010D
+  s_add_i32     s0, s0, s4                                  // 0000002C: 81000400
+  v_add_i32     v0, vcc, s0, v0                             // 00000030: 4A000000
+  s_add_i32     s0, s1, s5                                  // 00000034: 81000501
+  v_add_i32     v1, vcc, s0, v1                             // 00000038: 4A020200
+  v_cmp_gt_i32  s[0:1], s6, v0                              // 0000003C: D1080000 00020006
+  v_cmp_gt_i32  vcc, s7, v1                                 // 00000044: 7D080207
+  s_and_b64     s[0:1], s[0:1], vcc                         // 00000048: 87806A00
+  s_buffer_load_dword  s4, s[8:11], 0x18                    // 0000004C: C2020918
+  s_buffer_load_dword  s5, s[8:11], 0x1c                    // 00000050: C202891C
+  s_buffer_load_dwordx2  s[6:7], s[8:11], 0x20              // 00000054: C2430920
+  s_buffer_load_dword  s12, s[8:11], 0x24                   // 00000058: C2060924
+  s_buffer_load_dword  s8, s[8:11], 0x28                    // 0000005C: C2040928
+  s_mov_b64     s[10:11], exec                              // 00000060: BE8A047E
+  s_and_b64     exec, s[10:11], s[0:1]                      // 00000064: 87FE000A
+  s_cbranch_execz  label_005A                               // 00000068: BF88003F
+  s_cmp_ge_i32  s14, 1                                      // 0000006C: BF03810E
+  s_cbranch_scc0  label_0045                                // 00000070: BF840028
+  s_lshl_b32    s0, s18, 3                                  // 00000074: 8F008312
+  v_lshlrev_b32  v2, 3, v0                                  // 00000078: 34040083
+  v_add_i32     v6, vcc, s15, v2                            // 0000007C: 4A0C040F
+  s_waitcnt     lgkmcnt(0)                                  // 00000080: BF8C007F
+  v_mul_lo_i32  v3, v1, s5                                  // 00000084: D2D60003 02000B01
+  v_lshlrev_b32  v3, 3, v3                                  // 0000008C: 34060683
+  v_add_i32     v3, vcc, s4, v3                             // 00000090: 4A060604
+  s_load_dwordx4  s[20:23], s[2:3], 0x58                    // 00000094: C08A0358
+  s_load_dwordx4  s[24:27], s[2:3], 0x50                    // 00000098: C08C0350
+  s_mov_b64     s[4:5], exec                                // 0000009C: BE84047E
+  s_mov_b64     s[18:19], exec                              // 000000A0: BE92047E
+  v_mov_b32     v2, s14                                     // 000000A4: 7E04020E
+  v_mov_b32     v4, 0                                       // 000000A8: 7E080280
+  v_mov_b32     v5, 0                                       // 000000AC: 7E0A0280
+label_002C:
+  s_waitcnt     0x0000                                      // 000000B0: BF8C0000
+  v_add_i32     v7, vcc, 8, v3                              // 000000B4: 4A0E0688
+  v_add_i32     v8, vcc, s0, v6                             // 000000B8: 4A100C00
+  v_add_i32     v9, vcc, -1, v2                             // 000000BC: 4A1204C1
+  v_cmp_eq_i32  s[14:15], v2, 1                             // 000000C0: D104000E 00010302
+  tbuffer_load_format_xy  v[2:3], v3, s[20:23], 0 offen format:[BUF_DATA_FORMAT_32_32,BUF_NUM_FORMAT_FLOAT] // 000000C8: EBD91000 80050203
+  tbuffer_load_format_xy  v[10:11], v6, s[24:27], 0 offen format:[BUF_DATA_FORMAT_32_32,BUF_NUM_FORMAT_FLOAT] // 000000D0: EBD91000 80060A06
+  s_waitcnt     vmcnt(0)                                    // 000000D8: BF8C1F70
+  v_fma_f64     v[4:5], v[10:11], v[2:3], v[4:5]            // 000000DC: D2980004 0412050A
+  s_mov_b64     s[28:29], exec                              // 000000E4: BE9C047E
+  s_and_b64     exec, s[28:29], s[14:15]                    // 000000E8: 87FE0E1C
+  s_andn2_b64   s[18:19], s[18:19], exec                    // 000000EC: 8A927E12
+  s_cbranch_scc0  label_0043                                // 000000F0: BF840006
+  s_mov_b64     exec, s[28:29]                              // 000000F4: BEFE041C
+  s_and_b64     exec, exec, s[18:19]                        // 000000F8: 87FE127E
+  v_mov_b32     v2, v9                                      // 000000FC: 7E040309
+  v_mov_b32     v3, v7                                      // 00000100: 7E060307
+  v_mov_b32     v6, v8                                      // 00000104: 7E0C0308
+  s_branch      label_002C                                  // 00000108: BF82FFE9
+label_0043:
+  s_mov_b64     exec, s[4:5]                                // 0000010C: BEFE0404
+  s_branch      label_0047                                  // 00000110: BF820002
+label_0045:
+  v_mov_b32     v4, 0                                       // 00000114: 7E080280
+  v_mov_b32     v5, 0                                       // 00000118: 7E0A0280
+label_0047:
+  v_mul_f64     v[2:3], v[4:5], s[16:17]                    // 0000011C: D2CA0002 02002104
+  s_waitcnt     lgkmcnt(0)                                  // 00000124: BF8C007F
+  v_mul_lo_i32  v1, v1, s8                                  // 00000128: D2D60001 02001101
+  v_add_i32     v0, vcc, v0, v1                             // 00000130: 4A000300
+  v_lshlrev_b32  v0, 3, v0                                  // 00000134: 34000083
+  v_add_i32     v0, vcc, s12, v0                            // 00000138: 4A00000C
+  s_load_dwordx4  s[0:3], s[2:3], 0x60                      // 0000013C: C0800360
+  s_waitcnt     lgkmcnt(0)                                  // 00000140: BF8C007F
+  tbuffer_load_format_xy  v[4:5], v0, s[0:3], 0 offen format:[BUF_DATA_FORMAT_32_32,BUF_NUM_FORMAT_FLOAT] // 00000144: EBD91000 80000400
+  s_waitcnt     vmcnt(0)                                    // 0000014C: BF8C1F70
+  v_mul_f64     v[4:5], v[4:5], s[6:7]                      // 00000150: D2CA0004 02000D04
+  v_add_f64     v[1:2], v[2:3], v[4:5]                      // 00000158: D2C80001 02020902
+  tbuffer_store_format_xy  v[1:2], v0, s[0:3], 0 offen format:[BUF_DATA_FORMAT_32_32,BUF_NUM_FORMAT_FLOAT] // 00000160: EBDD1000 80000100
+label_005A:
+  s_mov_b64     exec, s[10:11]                              // 00000168: BEFE040A
+  s_endpgm                                                  // 0000016C: BF810000
+  end
+
+; ----------------- CS Data ------------------------
+
+codeLenInByte        = 368;Bytes
+
+userElementCount     = 3;
+;  userElements[0]    = PTR_UAV_TABLE, 0, s[2:3]
+;  userElements[1]    = IMM_CONST_BUFFER, 0, s[4:7]
+;  userElements[2]    = IMM_CONST_BUFFER, 1, s[8:11]
+extUserElementCount  = 0;
+NumVgprs             = 12;
+NumSgprs             = 30;
+FloatMode            = 192;
+IeeeMode             = 0;
+ScratchSize          = 0;
+; texResourceUsage[0]     = 0x00000000
+; texResourceUsage[1]     = 0x00000000
+; texResourceUsage[2]     = 0x00000000
+; texResourceUsage[3]     = 0x00000000
+; texResourceUsage[4]     = 0x00000000
+; texResourceUsage[5]     = 0x00000000
+; texResourceUsage[6]     = 0x00000000
+; texResourceUsage[7]     = 0x00000000
+; fetch4ResourceUsage[0]  = 0x00000000
+; fetch4ResourceUsage[1]  = 0x00000000
+; fetch4ResourceUsage[2]  = 0x00000000
+; fetch4ResourceUsage[3]  = 0x00000000
+; fetch4ResourceUsage[4]  = 0x00000000
+; fetch4ResourceUsage[5]  = 0x00000000
+; fetch4ResourceUsage[6]  = 0x00000000
+; fetch4ResourceUsage[7]  = 0x00000000
+; texSamplerUsage         = 0x00000000
+; constBufUsage           = 0x00000000
+
+;COMPUTE_PGM_RSRC2       = 0x00000998
+COMPUTE_PGM_RSRC2:USER_SGPR      = 12
+COMPUTE_PGM_RSRC2:TGID_X_EN      = 1
+COMPUTE_PGM_RSRC2:TGID_Y_EN      = 1
+COMPUTE_PGM_RSRC2:TIDIG_COMP_CNT = 1

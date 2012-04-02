@@ -1,0 +1,279 @@
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
+
+__kernel void dgemmNN_reference(int m,
+                                int n,
+                                int k,
+                                double alpha,
+                                __global double* a,
+                                int lda,
+                                __global double* b,
+                                int ldb,
+                                double beta,
+                                __global double* c,
+                                int ldc)
+{
+  int row = get_global_id(0);
+  int col = get_global_id(1);
+
+  double cVal = 0.0;
+
+  if(row < m && col < n)
+  {
+    for(int i = 0; i < k; i++)
+    {
+      cVal = fma(a[row + i * lda], b[i + col * ldb], cVal);
+    }
+
+    c[row + col * ldc] = alpha * cVal + beta * c[row + col * ldc];
+  }
+}
+
+__attribute__((reqd_work_group_size(16, 16, 1)))
+__kernel void dgemmNN(int m,
+                      int n,
+                      int k,
+                      double alpha,
+                      __global double* a,
+                      int lda,
+                      __global double* b,
+                      int ldb,
+                      double beta,
+                      __global double* c,
+                      int ldc)
+{
+  //4x4 block of C
+  double c0_0 = 0.0;
+  double c0_16 = 0.0;
+  double c0_32 = 0.0;
+  double c0_48 = 0.0;
+  double c16_0 = 0.0;
+  double c16_16 = 0.0;
+  double c16_32 = 0.0;
+  double c16_48 = 0.0;
+  double c32_0 = 0.0;
+  double c32_16 = 0.0;
+  double c32_32 = 0.0;
+  double c32_48 = 0.0;
+  double c48_0 = 0.0;
+  double c48_16 = 0.0;
+  double c48_32 = 0.0;
+  double c48_48 = 0.0;
+
+  double a0_0;
+  double a16_0;
+  double a32_0;
+  double a48_0;
+
+  double b0_0;
+  double b0_16;
+  double b0_32;
+  double b0_48;
+
+#undef LDAS
+#undef LDBS
+#define LDAS 65 //leading dimension of aShared
+#define LDBS 17 //leading dimension of bShared
+
+  __local double aShared[LDAS * 16]; //64x16 (plus padding for bank conflicts)
+  __local double bShared[LDBS * 64]; //16x64 (plus padding for bank conflicts)
+
+  const int rowBlock = get_local_id(0);
+  const int colBlock = get_local_id(1);
+
+  const int rowC = get_group_id(0) * 64;
+  const int colC = get_group_id(1) * 64;
+
+  __global double* blockC;
+
+  //Iterate over k. Sampling out of bounds is okay, as the texture sampler
+  //will return the boarder color of 0.0.
+  for(int i = 0; i < k; i += 16)
+  {
+    //Load 4 col elements of a and 4 row elements of b into shared memory.
+    //All threads in work group should form 64x16 and 16x64 for aShared and
+    //bShared respectively
+    for(int l = 0; l < 64; l += 16)
+    {
+      //Index for images A and B
+      int4 coordAB = 
+        {rowC + rowBlock + l,
+         colBlock + i, 
+         colBlock + i, 
+         colC + rowBlock + l};
+    
+      aShared[rowBlock + l + LDAS * colBlock] = 
+        //as_double(read_imagef(a, s0, coordAB.xy).xy);
+        a[rowC + rowBlock + l + (colBlock + i) * lda];
+      bShared[colBlock + LDBS * (rowBlock + l)] = 
+        //as_double(read_imagef(b, s1, coordAB.zw).xy);
+        b[colBlock + i + (colC + rowBlock + l) * ldb];
+    }
+
+    barrier(CLK_LOCAL_MEM_FENCE);
+
+    //Iterate over 16 cols of a and 16 rows of b
+    for(int l = 0; l < 16; l++)
+    {
+      //Load a into registers
+      a0_0 = aShared[rowBlock + 0 + LDAS * l];
+      a16_0 = aShared[rowBlock + 16 + LDAS * l];
+      a32_0 = aShared[rowBlock + 32 + LDAS * l];
+      a48_0 = aShared[rowBlock + 48 + LDAS * l];
+
+      //Load b into registers
+      b0_0 = bShared[l + LDBS * (colBlock + 0)];
+      b0_16 = bShared[l + LDBS * (colBlock + 16)];
+      b0_32 = bShared[l + LDBS * (colBlock + 32)];
+      b0_48 = bShared[l + LDBS * (colBlock + 48)];
+
+      //Compute 4x4 of c
+      c0_0 = fma(a0_0, b0_0, c0_0);
+      c0_16 = fma(a0_0, b0_16, c0_16);
+      c0_32 = fma(a0_0, b0_32, c0_32);
+      c0_48 = fma(a0_0, b0_48, c0_48);
+      
+      c16_0 = fma(a16_0, b0_0, c16_0);
+      c16_16 = fma(a16_0, b0_16, c16_16);
+      c16_32 = fma(a16_0, b0_32, c16_32);
+      c16_48 = fma(a16_0, b0_48, c16_48);
+      
+      c32_0 = fma(a32_0, b0_0, c32_0);
+      c32_16 = fma(a32_0, b0_16, c32_16);
+      c32_32 = fma(a32_0, b0_32, c32_32);
+      c32_48 = fma(a32_0, b0_48, c32_48);
+
+      c48_0 = fma(a48_0, b0_0, c48_0);
+      c48_16 = fma(a48_0, b0_16, c48_16);
+      c48_32 = fma(a48_0, b0_32, c48_32);
+      c48_48 = fma(a48_0, b0_48, c48_48);
+    }
+
+    barrier(CLK_LOCAL_MEM_FENCE);
+  }
+
+  //Move c pointer to where our block writes
+
+  blockC = &c[rowC + ldc * (colC + colBlock)];
+
+  //**.
+  //**. If we're in top left block, store eveything
+  //...
+  if(rowC + 63 < m && colC + 63 < n)
+  {
+    
+    blockC[rowBlock + 0] = alpha * c0_0 + beta * blockC[rowBlock + 0];
+    blockC[rowBlock + 16] = alpha * c16_0 + beta * blockC[rowBlock + 16];
+    blockC[rowBlock + 32] = alpha * c32_0 + beta * blockC[rowBlock + 32];
+    blockC[rowBlock + 48] = alpha * c48_0 + beta * blockC[rowBlock + 48];
+
+    blockC += 16 * ldc;
+   
+    blockC[rowBlock + 0] = alpha * c0_16 + beta * blockC[rowBlock + 0];
+    blockC[rowBlock + 16] = alpha * c16_16 + beta * blockC[rowBlock + 16];
+    blockC[rowBlock + 32] = alpha * c32_16 + beta * blockC[rowBlock + 32];
+    blockC[rowBlock + 48] = alpha * c48_16 + beta * blockC[rowBlock + 48];
+
+    blockC += 16 * ldc;
+    
+    blockC[rowBlock + 0] = alpha * c0_32 + beta * blockC[rowBlock + 0];
+    blockC[rowBlock + 16] = alpha * c16_32 + beta * blockC[rowBlock + 16];
+    blockC[rowBlock + 32] = alpha * c32_32 + beta * blockC[rowBlock + 32];
+    blockC[rowBlock + 48] = alpha * c48_32 + beta * blockC[rowBlock + 48];
+
+    blockC += 16 * ldc;
+    
+    blockC[rowBlock + 0] = alpha * c0_48 + beta * blockC[rowBlock + 0];
+    blockC[rowBlock + 16] = alpha * c16_48 + beta * blockC[rowBlock + 16];
+    blockC[rowBlock + 32] = alpha * c32_48 + beta * blockC[rowBlock + 32];
+    blockC[rowBlock + 48] = alpha * c48_48 + beta * blockC[rowBlock + 48];
+  }
+  //..*
+  //..* Otherwise, we're in the bottom right block. Store what's needed.
+  //***
+  else
+  {
+    int colsToStore = 
+      (colC + colBlock + 0 < n) +
+      (colC + colBlock + 16 < n) +
+      (colC + colBlock + 32 < n) +
+      (colC + colBlock + 48 < n);
+    
+    int rowsToStore = 
+      (rowC + rowBlock + 0 < m) +
+      (rowC + rowBlock + 16 < m) +
+      (rowC + rowBlock + 32 < m) +
+      (rowC + rowBlock + 48 < m);
+
+    switch(colsToStore)
+    {
+      case 4:
+        blockC = &c[rowC + ldc * (colC + colBlock + 48)];
+        switch(rowsToStore)
+        {
+          case 4:
+            blockC[rowBlock + 48] = alpha * c48_48 
+              + beta * blockC[rowBlock + 48];
+          case 3:
+            blockC[rowBlock + 32] = alpha * c32_48 
+              + beta * blockC[rowBlock + 32];
+          case 2:
+            blockC[rowBlock + 16] = alpha * c16_48
+              + beta * blockC[rowBlock + 16];
+          case 1:
+            blockC[rowBlock + 0] = alpha * c0_48
+              + beta * blockC[rowBlock + 0];
+        }
+      case 3:
+        blockC = &c[rowC + ldc * (colC + colBlock + 32)];
+        switch(rowsToStore)
+        {
+          case 4:
+            blockC[rowBlock + 48] = alpha * c48_32 
+              + beta * blockC[rowBlock + 48];
+          case 3:
+            blockC[rowBlock + 32] = alpha * c32_32 
+              + beta * blockC[rowBlock + 32];
+          case 2:
+            blockC[rowBlock + 16] = alpha * c16_32 
+              + beta * blockC[rowBlock + 16];
+          case 1:
+            blockC[rowBlock + 0] = alpha * c0_32 
+              + beta * blockC[rowBlock + 0];
+        }
+      case 2:
+        blockC = &c[rowC + ldc * (colC + colBlock + 16)];
+        switch(rowsToStore)
+        {
+          case 4:
+            blockC[rowBlock + 48] = alpha * c48_16 
+              + beta * blockC[rowBlock + 48];
+          case 3:
+            blockC[rowBlock + 32] = alpha * c32_16 
+              + beta * blockC[rowBlock + 32];
+          case 2:
+            blockC[rowBlock + 16] = alpha * c16_16 
+              + beta * blockC[rowBlock + 16];
+          case 1:
+            blockC[rowBlock + 0] = alpha * c0_16 
+              + beta * blockC[rowBlock + 0];
+        }
+      case 1:
+        blockC = &c[rowC + ldc * (colC + colBlock + 0)];
+        switch(rowsToStore)
+        {
+          case 4:
+            blockC[rowBlock + 48] = alpha * c48_0 
+              + beta * blockC[rowBlock + 48];
+          case 3:
+            blockC[rowBlock + 32] = alpha * c32_0 
+              + beta * blockC[rowBlock + 32];
+          case 2:
+            blockC[rowBlock + 16] = alpha * c16_0
+              + beta * blockC[rowBlock + 16];
+          case 1:
+            blockC[rowBlock + 0] = alpha * c0_0
+              + beta * blockC[rowBlock + 0];
+        }
+    }
+  }
+}
