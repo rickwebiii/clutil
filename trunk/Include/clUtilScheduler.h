@@ -1,5 +1,6 @@
 #pragma once
 #include "clUtilCommon.h"
+#include "clUtilDeviceGroup.h"
 
 namespace clUtil
 {
@@ -30,6 +31,7 @@ namespace clUtil
       }   
     }; 
   }
+
   class IScheduler
   {
     public:
@@ -51,7 +53,8 @@ namespace clUtil
   class StaticScheduler : public IScheduler
   {
     public:
-      StaticScheduler(size_t numChunks) :
+      StaticScheduler(size_t numChunks = 30) :
+        IScheduler(),
         mNumChunks(numChunks),
         mChunkSize(0),
         mNextIteration(0)
@@ -65,6 +68,22 @@ namespace clUtil
     private:
       size_t mNumChunks;
       size_t mChunkSize;
+      size_t mNextIteration;
+  };
+
+  class EGSScheduler : public IScheduler
+  {
+    public:
+      EGSScheduler();
+      virtual Utility::IndexRange getWork(const size_t deviceGroup);
+      virtual void updateModel(const Utility::DeviceStatus& status);
+      virtual bool workRemains(size_t deviceGroup) const;
+      virtual void setRange(Utility::IndexRange& range);
+
+    private:
+      std::vector<Utility::IndexRange> mTasks;
+      std::vector<bool> mTasksValid;
+      std::vector<size_t> mPerformanceRank;
       size_t mNextIteration;
   };
 }

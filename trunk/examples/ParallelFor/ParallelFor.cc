@@ -23,9 +23,15 @@ int main(int argc, char** argv)
 
   Device::InitializeDevices(filename, 1);
 
+  Device::StartProfiling();
+
   ParallelFor(0, 1, kBigArraySize, [&](size_t startIdx, size_t endIdx)
   { 
-#if 1
+#if 0
+    cout << "Device " << Device::GetCurrentDeviceNum()
+         << " Start " << startIdx
+         << " End " << endIdx << endl;
+#else
     unsigned int indexCount = endIdx - startIdx + 1;
 
     Buffer aDevice(sizeof(a[0]) * indexCount);
@@ -44,7 +50,8 @@ int main(int argc, char** argv)
 
     cDevice.get(&c[startIdx]);
 #endif
-  });
+  },
+    EGSScheduler());
 
   Device::DumpProfilingData();
 
