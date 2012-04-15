@@ -86,5 +86,44 @@ namespace clUtil
       std::vector<size_t> mPerformanceRank;
       size_t mNextIteration;
   };
-}
 
+  //PINA Is Not Acronymic
+  class PINAScheduler : public IScheduler
+  {
+    struct Sample
+    {
+      size_t Index;
+      double Time;
+      
+      Sample() : Index(0), Time(0.0) {}
+    };
+
+    struct GroupTimingInfo
+    {
+      size_t IterationsCompleted;
+      double MeanTime;
+
+      GroupTimingInfo() : IterationsCompleted(0), MeanTime(0.0) {}
+    };
+
+    public:
+      PINAScheduler(size_t numSamples = 5, size_t chunkSize = 512);
+      virtual Utility::IndexRange getWork(const size_t deviceGroup);
+      virtual void updateModel(const Utility::DeviceStatus& status);
+      virtual bool workRemains(size_t deviceGroup) const;
+      virtual void setRange(Utility::IndexRange& range);
+
+    private:
+      std::vector<Utility::IndexRange> mTasksRemaining;
+      std::vector<size_t> mCurrentSample;
+      std::vector<std::vector<Sample>> mModel;
+      std::vector<GroupTimingInfo> mMeanIterationTime;
+      size_t mIterationsRemaining;
+      size_t mNumSamples;
+      size_t mChunkSize;
+
+      static double interpolate(const Sample& s0, 
+                                const Sample& s1, 
+                                size_t index);
+  };
+}

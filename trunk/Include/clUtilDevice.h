@@ -130,7 +130,7 @@ namespace clUtil
         mCurrentCommandQueue = id;
       }
 
-      cl_kernel getKernel(std::string&& kernelName) const;
+      cl_kernel getKernel(const std::string& kernelName) const;
       size_t getDeviceNumber() const {return mDeviceNumber;}
 
       static void Flush();
