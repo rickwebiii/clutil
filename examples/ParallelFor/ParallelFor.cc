@@ -51,7 +51,7 @@ int main(int argc, char** argv)
     cDevice.get(&c[startIdx]);
 #endif
   },
-    EGSScheduler());
+  PINAScheduler());
 
   Device::DumpProfilingData();
 

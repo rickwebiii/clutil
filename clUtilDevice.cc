@@ -414,7 +414,7 @@ void Device::initialize(const char** filenames,
   this->getKernels();
 }
 
-cl_kernel Device::getKernel(std::string&& kernelName) const
+cl_kernel Device::getKernel(const std::string& kernelName) const
 {
   auto kernel = mKernels.find(kernelName);
 
