@@ -21,7 +21,7 @@ const unsigned int kRowBlockSize = 1920u;
 const unsigned int kKBlockSize = 1920u;
 
 #define IDX(row, col, ld) (row + col * ld)
-#define VERIFY
+//#define VERIFY
 
 static double time()
 {

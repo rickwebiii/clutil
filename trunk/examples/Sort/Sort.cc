@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+using namespace clUtil;
 
 void fillKeys(unsigned int* array, unsigned int length)
 {
@@ -33,10 +34,6 @@ int main(int argc, char** argv)
   char const* kernel = "kernel.cl";
   unsigned int* keys;
   unsigned int* vals;
-  cl_mem keysDevice1;
-  cl_mem keysDevice2;
-  cl_mem valsDevice1;
-  cl_mem valsDevice2;
   size_t size;
   unsigned int deviceNum = 0;
 
@@ -70,23 +67,23 @@ int main(int argc, char** argv)
     fillVals(&vals[curRow * cols], cols);
   }
 
-  clUtilInitialize(&kernel, 1);
+  Device::InitializeDevices(&kernel, 1);
 
-  clUtilSetDeviceNum(deviceNum);
+  Device::SetCurrentDevice(deviceNum);
 
   size = sizeof(unsigned int) * rows * cols;
 
-  printf("Running on device %d %s\n",
-         clUtilGetDeviceNum(),
-         clUtilGetDeviceName());
+  printf("Running on device %lu %s\n",
+         Device::GetCurrentDeviceNum(),
+         Device::GetCurrentDevice().getDeviceInfo().Name.c_str());
 
-  clUtilAlloc(size, &keysDevice1);
-  clUtilAlloc(size, &keysDevice2);
-  clUtilAlloc(size, &valsDevice1);
-  clUtilAlloc(size, &valsDevice2);
-
-  clUtilDevicePut(keys, size, keysDevice1);
-  clUtilDevicePut(vals, size, valsDevice1);
+  Buffer keysDevice1(size);
+  Buffer keysDevice2(size);
+  Buffer valsDevice1(size);
+  Buffer valsDevice2(size);
+  
+  keysDevice1.put(keys);
+  valsDevice1.put(vals);
 
   clUtilEnqueueKernel("sort",
                       clUtilGrid(1, 1, rows, 1),
@@ -96,8 +93,10 @@ int main(int argc, char** argv)
                       valsDevice2,
                       cols);
 
-  clUtilDeviceGet(keys, size, keysDevice2);
-  clUtilDeviceGet(vals, size, valsDevice2);
+  keysDevice2.get(keys);
+  valsDevice2.get(vals);
+
+  Device::Finish();
 
   for(unsigned int curRow = 0; curRow < rows; curRow++)
   {
