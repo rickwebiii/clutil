@@ -44,6 +44,7 @@ namespace clUtil
         mStart = range.Start;
         mEnd = range.End;
       }
+      virtual ~IScheduler() {}
 
     protected:
       size_t mStart;
@@ -64,6 +65,7 @@ namespace clUtil
       virtual void updateModel(const Utility::DeviceStatus& status);
       virtual bool workRemains(size_t deviceGroup) const;
       virtual void setRange(Utility::IndexRange& range);
+      virtual ~StaticScheduler() {}
 
     private:
       size_t mNumChunks;
@@ -79,6 +81,7 @@ namespace clUtil
       virtual void updateModel(const Utility::DeviceStatus& status);
       virtual bool workRemains(size_t deviceGroup) const;
       virtual void setRange(Utility::IndexRange& range);
+      virtual ~EGSScheduler() {}
 
     private:
       std::vector<Utility::IndexRange> mTasks;
@@ -107,11 +110,14 @@ namespace clUtil
     };
 
     public:
-      PINAScheduler(size_t numSamples = 5, size_t chunkSize = 512);
+      PINAScheduler(const char* loopName, size_t numSamples = 5);
       virtual Utility::IndexRange getWork(const size_t deviceGroup);
       virtual void updateModel(const Utility::DeviceStatus& status);
       virtual bool workRemains(size_t deviceGroup) const;
       virtual void setRange(Utility::IndexRange& range);
+      virtual ~PINAScheduler();
+      
+      static bool DidAutotune() { return PINAScheduler::AutotuningInProgress; }
 
     private:
       std::vector<Utility::IndexRange> mTasksRemaining;
@@ -120,10 +126,16 @@ namespace clUtil
       std::vector<GroupTimingInfo> mMeanIterationTime;
       size_t mIterationsRemaining;
       size_t mNumSamples;
-      size_t mChunkSize;
+      std::vector<size_t> mChunkSize;
+      bool mAutotuningMode;
+      size_t mAutotuningDeviceGroup;
+
+      static std::map<std::string, std::vector<size_t>> ChunkSizeCache;
+      static bool AutotuningInProgress;
 
       static double interpolate(const Sample& s0, 
                                 const Sample& s1, 
                                 size_t index);
+      static size_t computeChunkSize(std::string filename);
   };
 }

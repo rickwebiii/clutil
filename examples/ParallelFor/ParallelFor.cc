@@ -51,7 +51,7 @@ int main(int argc, char** argv)
     cDevice.get(&c[startIdx]);
 #endif
   },
-  PINAScheduler());
+  PINAScheduler("Add"));
 
   Device::DumpProfilingData();
 

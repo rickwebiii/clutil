@@ -1,9 +1,16 @@
 #pragma once
 #include "clUtilCommon.h"
 #include "clUtilUtility.h"
+#define CLUTIL_ENABLE_PROFILING
 
 namespace clUtil
 {
+  struct EventTime
+  {
+    double Start;
+    double End;
+  };
+
   struct DeviceInfo
   {
     public:

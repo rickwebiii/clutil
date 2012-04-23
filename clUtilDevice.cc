@@ -11,6 +11,7 @@ vector<Device> Device::Devices;
 const size_t Device::NumCommandQueues = 2;
 bool Device::ProfilingStarted = false;
 
+#ifdef CLUTIL_ENABLE_PROFILING
 static const unsigned int kQueueGraphicHeight = 50;
 static const unsigned int kTextAreaWidth = 150;
 static const unsigned int kGraphicAreaWidth = 1250;
@@ -20,6 +21,7 @@ static const char* kKernelColor = "#FF0000";
 static const char* kBufferColor = "#00FF00";
 static const char* kImageColor = "#0000FF";
 static const char* kOtherColor = "#FFFFFF";
+#endif
 
 void DeviceInfo::initialize(cl_device_id deviceID)
 {
@@ -386,7 +388,11 @@ void Device::initialize(const char** filenames,
   {
     cl_command_queue queue = clCreateCommandQueue(mContext, 
                                                   mDeviceID, 
-                                                  CL_QUEUE_PROFILING_ENABLE, 
+#ifdef CLUTIL_ENABLE_PROFILING
+                                                  CL_QUEUE_PROFILING_ENABLE,
+#else
+                                                  0, 
+#endif
                                                   &err);
     clUtilCheckError(err);
 
@@ -428,6 +434,7 @@ cl_kernel Device::getKernel(const std::string& kernelName) const
 
 void Device::addProfilingEvent(cl_event event)
 {
+#ifdef CLUTIL_ENABLE_PROFILING
   if(ProfilingStarted == true)
   {
     size_t commandQueueID = mCommandQueues.size();
@@ -460,10 +467,12 @@ void Device::addProfilingEvent(cl_event event)
 
     mProfileEvents[commandQueueID].push_back(event);
   }
+#endif
 }
 
 void Device::DumpProfilingData()
 {
+#ifdef CLUTIL_ENABLE_PROFILING
   if(ProfilingStarted == false)
   {
     throw clUtilException("Can't dump profiling data: not started");
@@ -661,6 +670,7 @@ void Device::DumpProfilingData()
   }
 
   outputFile << "</svg>" << endl;
+#endif
 }
 
 void Device::flush()
