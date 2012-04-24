@@ -8,10 +8,10 @@
 
 #define RAII
 
-const unsigned int kMaxRowsPerBlock = 1920u;
-const unsigned int kMaxColsPerBlock = 1920u;
-const unsigned int kDefaultRowsPerBlock = 1920u;
-const unsigned int kDefaultColsPerBlock = 1920u;
+const unsigned int kMaxRowsPerBlock = 5760u;
+const unsigned int kMaxColsPerBlock = 5760u;
+const unsigned int kDefaultRowsPerBlock = 5760u;
+const unsigned int kDefaultColsPerBlock = 5760u;
 
 class BlockedMatrixBlockMismatch : std::exception
 {
@@ -37,6 +37,10 @@ class _IMatrix
   friend void multiply(BlockedMatrix<float>& c,
                        const BlockedMatrix<float>& a,
                        const BlockedMatrix<float>& b);
+  
+  friend void multiply(BlockedMatrix<double>& c,
+                       const BlockedMatrix<double>& a,
+                       const BlockedMatrix<double>& b);
 
   protected:
     static bool RuntimeInitialized;
@@ -225,6 +229,10 @@ template <typename T> class BlockedMatrix : public IMatrix<T>
   friend void multiply(BlockedMatrix<float>& c,
                        const BlockedMatrix<float>& a,
                        const BlockedMatrix<float>& b);
+  
+  friend void multiply(BlockedMatrix<double>& c,
+                       const BlockedMatrix<double>& a,
+                       const BlockedMatrix<double>& b);
 
   protected:
     using IMatrix<T>::mRows;
@@ -289,12 +297,14 @@ template <typename T> class BlockedMatrix : public IMatrix<T>
     }
 
     //Copy from Matrix
-    BlockedMatrix(const Matrix<T>& b) :
+    BlockedMatrix(const Matrix<T>& b, 
+                  size_t blockRows = kDefaultRowsPerBlock,
+                  size_t blockCols = kDefaultColsPerBlock) :
       IMatrix<T>(static_cast<const IMatrix<T>&>(b)),
-      mRowBlocks(IMatrix<T>::mRows / kDefaultRowsPerBlock),
-      mColBlocks(IMatrix<T>::mCols / kDefaultColsPerBlock),
-      mRowsPerBlock(kDefaultRowsPerBlock),
-      mColsPerBlock(kDefaultColsPerBlock),
+      mRowBlocks(IMatrix<T>::mRows / blockRows),
+      mColBlocks(IMatrix<T>::mCols / blockCols),
+      mRowsPerBlock(blockRows),
+      mColsPerBlock(blockCols),
       mBlockSize(mRowsPerBlock * mColsPerBlock)
     {
       std::unique_ptr<T[]> data(new T[IMatrix<T>::mRows * IMatrix<T>::mCols]);
@@ -380,7 +390,8 @@ template <typename T> class BlockedMatrix : public IMatrix<T>
       {
         for(unsigned int j = 0; j < rand.mCols; j++)
         {
-          rand.mData[i + j * rand.mCols] = (T)drand48();
+          rand.mData[i + j * rand.mCols] = (T)(i * j);
+          //rand.mData[i + j * rand.mCols] = (T)drand48();
         }
       }
 
@@ -444,7 +455,8 @@ template <typename T> class Matrix : public IMatrix<T>
       {
         for(unsigned int j = 0; j < cols; j++)
         {
-          *ret.getPtr(i, j) = (T)drand48();
+          *ret.getPtr(i, j) = (T)(i * j);
+          //*ret.getPtr(i, j) = (T)drand48();
         }
       }
 

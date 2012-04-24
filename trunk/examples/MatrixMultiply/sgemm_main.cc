@@ -16,9 +16,9 @@ unsigned int m;
 unsigned int n;
 unsigned int k;
 
-const unsigned int kColBlockSize = 1920u;
-const unsigned int kRowBlockSize = 1920u;
-const unsigned int kKBlockSize = 1920u;
+const unsigned int kColBlockSize = 5760u;
+const unsigned int kRowBlockSize = 5760u;
+const unsigned int kKBlockSize = 5760u;
 
 #define IDX(row, col, ld) (row + col * ld)
 //#define VERIFY

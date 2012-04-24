@@ -43,7 +43,6 @@ void dgemm_reference(char* transA,
                       c,
                       ldc);
   
-  clFinish(Device::GetCurrentDevice().getCommandQueue());
 }
 
 void dgemm(char* transA,
@@ -77,7 +76,6 @@ void dgemm(char* transA,
                       c,
                       ldc);
 
-  clFinish(Device::GetCurrentDevice().getCommandQueue());
 }
 
 
@@ -112,7 +110,6 @@ void sgemm_reference(char* transA,
                         ldc);
   }
 
-  clFinish(Device::GetCurrentDevice().getCommandQueue());
 }
 
 void sgemm(char* transA,

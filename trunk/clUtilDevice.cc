@@ -9,7 +9,152 @@ bool Device::DevicesInitialized = false;
 bool Device::DevicesFetched = false;
 vector<Device> Device::Devices;
 const size_t Device::NumCommandQueues = 2;
+const size_t Device::PinnedBufferSize = 128 * 1024 * 1024;
 bool Device::ProfilingStarted = false;
+
+#ifdef CLUTIL_MAPBUFFER
+#include <pthread.h>
+
+template <typename T> class SRSWQueue
+{
+  public:
+    size_t mQueueSize;
+    unique_ptr<T[]> mQueue;
+    volatile size_t mHead;
+    volatile size_t mTail;
+
+    bool enqueue(T& data)
+    {
+      size_t nextTail = (mTail + 1) % mQueueSize;
+
+      if(nextTail == mHead)
+      {
+        return false;
+      }
+
+      mQueue[mTail] = data;
+      mTail = nextTail;
+
+      return true;
+    }
+
+    bool dequeue(T& data)
+    {
+      if(mHead == mTail)
+      {
+        return false;
+      }
+
+      data = mQueue[mHead];
+
+      mHead = (mHead + 1) % mQueueSize;
+      return true;
+    }
+
+    SRSWQueue(size_t len = 1024) : mQueueSize(len), mHead(0), mTail(0)
+    {
+      unique_ptr<T[]> buffer(new T[len]);
+
+      mQueue = move(buffer);
+    }
+  private:
+};
+
+static SRSWQueue<CopyTask> gCopyTaskQueue;
+static vector<CopyTask> gCopyTasks;
+static vector<cl_mem> gPinnedBuffers;
+static volatile bool gShutdown = false;
+static pthread_t gCopyThread;
+
+void* clUtil::copyThread(void* data)
+{
+#if 0
+  while(gShutdown == false)
+  {
+    CopyTask newTask;
+
+    //Move tasks out of the task queue and into our private array
+    while(gCopyTaskQueue.dequeue(newTask) == true) 
+    {
+      gCopyTasks.push_back(newTask);
+    }
+
+    //Find tasks that have their map() called and copy the data to or from
+    //a pinned buffer and signal copy completion
+    for(size_t curTaskID = 0; curTaskID < gCopyTasks.size(); curTaskID++)
+    {
+      cl_int err;
+      cl_int eventStatus;
+      CopyTask& curTask = gCopyTasks[curTaskID];
+
+      if(curTask.CopyDevice->mBufferInUse == false)
+      {
+
+        err = clGetEventInfo(curTask.StartEvent,
+                             CL_EVENT_COMMAND_EXECUTION_STATUS,
+                             sizeof(eventStatus),
+                             &eventStatus,
+                             NULL);
+        clUtilCheckError(err);
+
+        if(eventStatus == CL_COMPLETE)
+        {
+          if(curTask.IsRead == false)
+          {
+            memcpy(curTask.PinnedPtr, curTask.HostPtr, curTask.Bytes);
+          }
+          else
+          {
+            memcpy(curTask.HostPtr, curTask.PinnedPtr, curTask.Bytes);
+          }
+
+          clSetUserEventStatus(curTask.CopyEvent, CL_COMPLETE);
+          curTask.CopyDevice->mBufferInUse = true;
+          gCopyTasks.erase(gCopyTasks.begin() + curTaskID);
+        }
+
+      }
+    }
+  }
+
+#endif
+  return NULL;
+}
+
+void clUtil::EnqueueCopyTask(CopyTask& task)
+{
+  if(gCopyTaskQueue.enqueue(task) == false)
+  {
+    Device::Finish();
+
+    if(gCopyTaskQueue.enqueue(task) == false)
+    {
+      throw clUtilException("Could not enqueue memcpy task. This is a bug.");
+    }
+  }
+}
+#endif
+
+static void initHelpers()
+{
+#ifdef CLUTIL_MAPBUFFER
+  gShutdown = false;
+
+  if(pthread_create(&gCopyThread, NULL, copyThread, NULL) != 0)
+  {
+    throw clUtilException("Could not spawn clUtil helper thread.");
+  }
+#endif
+}
+
+static void finalizeHelpers()
+{
+#ifdef CLUTIL_MAPBUFFER
+  gShutdown = true;
+
+  pthread_join(gCopyThread, NULL);
+#endif
+}
 
 #ifdef CLUTIL_ENABLE_PROFILING
 static const unsigned int kQueueGraphicHeight = 50;
@@ -236,6 +381,10 @@ Device::Device(cl_device_id deviceID) :
   mProfileEvents(Device::NumCommandQueues),
   mCommandQueues(),
   mCurrentCommandQueue(0)
+#ifdef CLUTIL_MAPBUFFER 
+  , mPinnedBuffer(Device::NumCommandQueues),
+  mBufferInUse(Device::NumCommandQueues)
+#endif
 {
   mDeviceInfo.initialize(mDeviceID);
 }
@@ -310,6 +459,8 @@ void Device::FetchDevices()
   }
 
   Device::DevicesFetched = true;
+
+  initHelpers();
 }
 
 void Device::InitializeDevices(const char** filenames, 
@@ -401,7 +552,7 @@ void Device::initialize(const char** filenames,
 
   if(cachename != NULL)
   {
-    cl_int err = this->loadBinary(cachename);
+    err = this->loadBinary(cachename);
     
     //If we loaded the binary, then good. We'll use it.
     if(err == CL_SUCCESS)
@@ -418,6 +569,22 @@ void Device::initialize(const char** filenames,
 
   this->buildProgram(filenames, numFiles, options);
   this->getKernels();
+
+#ifdef CLUTIL_MAPBUFFER
+  for(size_t curQueue = 0; curQueue < Device::NumCommandQueues; curQueue++)
+  {
+    cl_mem pinnedBuffer = clCreateBuffer(mContext,
+                                         CL_MEM_ALLOC_HOST_PTR,
+                                         Device::PinnedBufferSize,
+                                         NULL,
+                                         &err);
+    clUtilCheckError(err);
+
+    mPinnedBuffer[curQueue] = pinnedBuffer;
+    mBufferInUse[curQueue] = false;
+  }
+
+#endif
 }
 
 cl_kernel Device::getKernel(const std::string& kernelName) const
@@ -635,6 +802,7 @@ void Device::DumpProfilingData()
               break;
             case CL_COMMAND_READ_BUFFER:
             case CL_COMMAND_WRITE_BUFFER:
+            case CL_COMMAND_COPY_BUFFER:
               eventColor = kBufferColor;
               break;
             case CL_COMMAND_READ_IMAGE:
@@ -709,4 +877,10 @@ void Device::Finish()
   {
     device->finish();
   }
-} 
+}
+
+void Device::Finalize()
+{
+  finalizeHelpers();
+}
+
