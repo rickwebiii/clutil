@@ -125,6 +125,8 @@ void clUtil::ParallelFor(const size_t start,
           iterationsRemaining -= curDeviceStatus.Range.End - 
                                  curDeviceStatus.Range.Start + 
                                  1;
+
+          cout << "Iterations remaining " << iterationsRemaining << endl;
         }
       }
     }

@@ -2,6 +2,7 @@
 #include "clUtilCommon.h"
 #include "clUtilUtility.h"
 #define CLUTIL_ENABLE_PROFILING
+#define CLUTIL_MAPBUFFER
 
 namespace clUtil
 {
@@ -10,6 +11,25 @@ namespace clUtil
     double Start;
     double End;
   };
+
+#ifdef CLUTIL_MAPBUFFER
+  class Device;
+
+  struct CopyTask
+  {
+    Device* CopyDevice;
+    cl_event StartEvent;
+    cl_event CopyEvent;
+    void* HostPtr;
+    void* PinnedPtr;
+    size_t Bytes;
+    bool IsRead;
+  };
+
+  cl_mem GetDevicePinnedMemory(size_t deviceID);
+  void EnqueueCopyTask(CopyTask& task);
+  void* copyThread(void* data);
+#endif
 
   struct DeviceInfo
   {
@@ -79,6 +99,9 @@ namespace clUtil
 
   class Device
   {
+    friend class Buffer;
+    friend void* copyThread(void* data);
+
     private:
       cl_device_id mDeviceID;
       cl_context mContext;
@@ -90,12 +113,17 @@ namespace clUtil
       std::vector<std::vector<cl_event>> mProfileEvents;
       std::vector<cl_command_queue> mCommandQueues;
       size_t mCurrentCommandQueue;
+#ifdef CLUTIL_MAPBUFFER
+      std::vector<cl_mem> mPinnedBuffer;
+      std::vector<bool> mBufferInUse;
+#endif
 
       static size_t CurrentDevice;
       static bool DevicesInitialized;
       static bool DevicesFetched;
       static std::vector<Device> Devices;
       static const size_t NumCommandQueues;
+      static const size_t PinnedBufferSize;
       static bool ProfilingStarted;
 
       std::string fileToString(const char* filename);
@@ -162,5 +190,6 @@ namespace clUtil
       };
 
       static void StartProfiling();
+      static void Finalize();
   };
 }
