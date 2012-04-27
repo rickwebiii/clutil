@@ -149,7 +149,7 @@ void multiply(BlockedMatrix<float>& c,
     }
   });
 
-  Device::Finish();
+  //Device::Finish();
 
 }
 
@@ -290,6 +290,6 @@ void multiply(BlockedMatrix<double>& c,
     }
   });
 
-  Device::Finish();
+  //Device::Finish();
 
 }

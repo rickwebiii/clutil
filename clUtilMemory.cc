@@ -281,7 +281,7 @@ void Buffer::put(const void* const pointer, const size_t len)
   cl_int err;
   size_t length = len == 0 ? mLength : len;
   cl_event nextEvent;
-
+  
 #ifdef CLUTIL_MAPBUFFER //Stream Data through pinned memory
   size_t curCommandQueue = mDevice.mCurrentCommandQueue;
 

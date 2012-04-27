@@ -104,9 +104,9 @@ namespace clUtil
     struct GroupTimingInfo
     {
       size_t IterationsCompleted;
-      double MeanTime;
+      double TotalTime;
 
-      GroupTimingInfo() : IterationsCompleted(0), MeanTime(0.0) {}
+      GroupTimingInfo() : IterationsCompleted(0), TotalTime(0.0) {}
     };
 
     public:
@@ -129,6 +129,7 @@ namespace clUtil
       std::vector<size_t> mChunkSize;
       bool mAutotuningMode;
       size_t mAutotuningDeviceGroup;
+      std::string mLoopName;
 
       static std::map<std::string, std::vector<size_t>> ChunkSizeCache;
       static bool AutotuningInProgress;
