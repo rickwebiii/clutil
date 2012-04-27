@@ -1,8 +1,8 @@
 #pragma once
 #include "clUtilCommon.h"
 #include "clUtilUtility.h"
-#define CLUTIL_ENABLE_PROFILING
-#define CLUTIL_MAPBUFFER
+//#define CLUTIL_ENABLE_PROFILING
+//#define CLUTIL_MAPBUFFER
 
 namespace clUtil
 {

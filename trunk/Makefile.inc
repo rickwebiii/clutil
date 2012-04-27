@@ -1,3 +1,3 @@
 CXX=g++
-USERFLAGS=-g3 -O3 -Wall -Werror -pedantic
+USERFLAGS=-g3 -O0 -Wall -Werror -pedantic
 OpenCLInclude=$(AMDAPPSDKROOT)/include

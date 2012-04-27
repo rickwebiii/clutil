@@ -7,6 +7,8 @@ using namespace std;
 
 map<string, vector<size_t>> PINAScheduler::ChunkSizeCache;
 bool PINAScheduler::AutotuningInProgress = false;
+static double kPerformanceCutoff = 0.9;
+static double kAutotuningCutoffSpeedup = 1.1;
 
 struct AutotuningField
 {
@@ -21,7 +23,8 @@ PINAScheduler::PINAScheduler(const char* loopName, size_t numSamples) :
   mMeanIterationTime(DeviceGroupInfo::Get().numGroups()),
   mIterationsRemaining(0),
   mNumSamples(numSamples),
-  mChunkSize(DeviceGroupInfo::Get().numGroups(), 1)
+  mChunkSize(DeviceGroupInfo::Get().numGroups(), 1),
+  mLoopName(loopName)
 {
   struct stat autotuningDir;
   size_t numDeviceGroups = DeviceGroupInfo::Get().numGroups();
@@ -36,6 +39,12 @@ PINAScheduler::PINAScheduler(const char* loopName, size_t numSamples) :
       throw clUtilException("Could not make 'autotuning' directory. Please "
                             "ensure you have write access to the current "
                             "directory");
+    }
+    
+    if(stat("autotuning", &autotuningDir) == -1)
+    {
+      throw clUtilException("Could not stat directory we just make. Please "
+                            "report this as a WTF.");
     }
   }
 
@@ -135,8 +144,6 @@ PINAScheduler::PINAScheduler(const char* loopName, size_t numSamples) :
       mChunkSize[curDeviceGroupID] = computeChunkSize(filename.str());
     }
   }
-
-
 }
 
 size_t PINAScheduler::computeChunkSize(string filename)
@@ -153,12 +160,14 @@ size_t PINAScheduler::computeChunkSize(string filename)
   {
     file.read((char*)&curField, sizeof(curField));
 
+#if 0
     if(file.fail() == true)
     {
       throw clUtilException("Malformed autotuning file. Please delete "
                             "files in 'autotuning/' and rerun tuning "
                             "procedure.");
     }
+#endif
 
     tuningData.push_back(curField);
 
@@ -179,8 +188,23 @@ size_t PINAScheduler::computeChunkSize(string filename)
     tuningData[curField].Time /= maxRate;
   }
 
-  //TODO: Finish this
-  return 0;
+  //Compute rate constant via simple linear regression with no intercept
+  double meanXY = 0.0;
+  double meanXSq = 0.0;
+
+  for(size_t curField = 0; curField < tuningData.size(); curField++)
+  {
+    double curC = 1 << curField;
+
+    meanXSq += curC * curC;
+    meanXY += curC * log(1.001 - tuningData[curField].Time);
+  }
+
+  double rate = meanXY / meanXSq;
+
+  cout << rate << endl;
+
+  return log(1.0 - kPerformanceCutoff) / rate;
 }
 
 void PINAScheduler::setRange(IndexRange& range)
@@ -266,7 +290,7 @@ IndexRange PINAScheduler::getWork(const size_t deviceGroup)
 
       work.Start = mTasksRemaining[currentSampleRef].Start;
       work.End = chunkSize < iterationsRemaining ?
-                 work.Start + chunkSize :
+                 work.Start + chunkSize - 1:
                  mTasksRemaining[currentSampleRef].End;
 
       mTasksRemaining[currentSampleRef].Start = work.End + 1;
@@ -312,8 +336,11 @@ IndexRange PINAScheduler::getWork(const size_t deviceGroup)
       else //Last sample region uses the mean as the right sample
       {
         Sample meanSample;
+        double meanTime = mMeanIterationTime[curGroupID].TotalTime /
+                          mMeanIterationTime[curGroupID].IterationsCompleted;
+
         meanSample.Index = mTasksRemaining[curSample].End;
-        meanSample.Time = mMeanIterationTime[curGroupID].MeanTime;
+        meanSample.Time = meanTime;
 
         thatTime = interpolate(mModel[curGroupID][curSample],
                                meanSample,
@@ -365,6 +392,8 @@ double PINAScheduler::interpolate(const Sample& s0,
 void PINAScheduler::updateModel(const DeviceStatus& status)
 {
   size_t groupID = DeviceGroupInfo::Get()[status.DeviceID];
+  size_t count = status.Range.End - status.Range.Start + 1;
+  double time = status.Time2 - status.Time1;
 
   vector<Sample>& deviceModel = mModel[groupID];
 
@@ -378,15 +407,81 @@ void PINAScheduler::updateModel(const DeviceStatus& status)
       deviceModel[currentSample].Index = 
         (status.Range.End + status.Range.Start) / 2;
 
-      size_t count = status.Range.End - status.Range.Start;
-
-      deviceModel[currentSample].Time = (status.Time2 - status.Time1) / count;
+      deviceModel[currentSample].Time = time / count;
 
       break;
     }
   }
+
+  GroupTimingInfo& meanTime = mMeanIterationTime[groupID];
+
+  meanTime.TotalTime += time;
+  meanTime.IterationsCompleted += count;
 }
 
 PINAScheduler::~PINAScheduler()
 {
+  //If we're in autotuning mode, dump our performance data
+  if(mAutotuningMode == true)
+  {
+    stringstream filename;
+
+    filename << "autotuning/" << mLoopName << mAutotuningDeviceGroup << ".part";
+
+    //Read the previous performance
+    double lastPerformance = 0.0;
+    fstream file;
+
+    if(mChunkSize[mAutotuningDeviceGroup] > 1)
+    {
+      file.open(filename.str().c_str(), fstream::binary | fstream::in);
+
+      file.seekg(-8, fstream::end);
+      file.clear();
+
+      file.read((char*)&lastPerformance, sizeof(lastPerformance));
+
+      file.close();
+    }
+
+    double rate = 1.0 / mMeanIterationTime[mAutotuningDeviceGroup].TotalTime;
+
+    if(mChunkSize[mAutotuningDeviceGroup] == 1 ||
+       rate / lastPerformance > kAutotuningCutoffSpeedup)
+    {
+      //Write the chunk size we tested
+      file.open(filename.str().c_str(), 
+                fstream::binary | fstream::out | fstream::ate | fstream::in);
+
+      file.seekg(0, fstream::beg);
+      file.clear();
+
+      file.write((char*)&mChunkSize[mAutotuningDeviceGroup], 
+                 sizeof(mChunkSize[0]));
+
+      file.close();
+
+      //Close the file, reopen as append, and add our timing data
+      file.open(filename.str().c_str(), 
+                fstream::binary | fstream::app | fstream::out);
+
+      file.write((char*)&mChunkSize[mAutotuningDeviceGroup], 
+                 sizeof(mChunkSize[0]));
+      file.write((char*)&rate, sizeof(rate));
+
+      file.close();
+    }
+
+    //If this chunk size yielded negligible performance improvement, stop
+    //autotuning
+    if(mChunkSize[mAutotuningDeviceGroup] > 1 && 
+       rate / lastPerformance < kAutotuningCutoffSpeedup)
+    {
+      stringstream finalName;
+
+      finalName << "autotuning/" << mLoopName << mAutotuningDeviceGroup;
+
+      rename(filename.str().c_str(), finalName.str().c_str()); 
+    }
+  }
 }
