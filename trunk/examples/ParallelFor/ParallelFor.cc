@@ -45,7 +45,7 @@ int main(int argc, char** argv)
       cDevice[currentDevice] = move(tmp3);
     }
 
-    ParallelFor(0, 1, kBigArraySize, [&](size_t startIdx, size_t endIdx)
+    ParallelFor(0, 1, kBigArraySize - 1, [&](size_t startIdx, size_t endIdx)
     { 
 #if 0
       cout << "Device " << Device::GetCurrentDeviceNum()
@@ -78,7 +78,7 @@ int main(int argc, char** argv)
 #endif
 #endif
     },
-    StaticScheduler(30));
+    PINAScheduler("loop"));
 
     Device::DumpProfilingData();
   }
