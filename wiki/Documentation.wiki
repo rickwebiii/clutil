@@ -134,6 +134,7 @@ All clUtil data transfer and kernel enqueue functions execute asynchronously. Th
 
 clUtil is not currently thread safe. We have no plans to make it so, as our model consists of a sequential master thread issuing tasks to devices. If absolutely need thread safety, you can put mutex locks around regions that assume a specific current device. For example:
 
+{{{
 mutex_lock(...);
 
 Device::SetCurrentDevice(...);
@@ -143,6 +144,7 @@ clUtilEnqueueKernel(...);
 buffer.get(...);
 
 mutex_unlock(...);
+}}}
 
 Since all transfer and kernel functions execute asynchronously, the amount of time spent in the critical section should be minimal.
 
