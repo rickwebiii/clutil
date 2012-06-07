@@ -159,17 +159,29 @@ A typical OpenCL, CUDA, or clUtil application has a motif similar to the followi
   # Repeat 3-5
   # Shutdown
 
-==Initialization==
+==Initialization/Device Managment==
 
-With clUtil, step 1 is simplified to a single function call that initializes everything needed to run kernels and manipulate memory on any devices. The user does this by calling clUtilInitialize(). clUtilFinalize() undoes any allocations that clUtilInitialize() performed, including contexts, command queues, kernels, and programs. 
+Users populate the list of available devices by calling Device::FetchDevices(). This populates the device list and fetches device info for each device. Users can then get the list of devices and examine their information (and that's about it). This function allows for pre-initialization computation to discover which devices the program should use for what, how to use them, and some other advanced topics.
+
+To get a STL vector of the available device, call Device::GetDevices(). This vector is immutable.
+
+To set the current device, call Device::SetCurrentDevice(size_t num)
+
+To query the current device, call Device::GetCurrentDevice()
+
+To get the cardinal number of the current device, call Device::GetCurrentDeviceNum().
+
+Calling the getDeviceInfo() member function returns a structure containing all the queryable features obtainable through clGetDeviceInfo().
+
+The features available by this pre-initialization step are very limited. To perform full initialization, the user calls Device::InitializeDevices(). Calling this function will implicitly call Device::FetchDevices() is not already called. This function accepts a list of OpenCL source code files, and optionally an object file cache name and additional compiler options.
+
+InitializeDevices() creates contexts on each device, creates two command queues, compiles the source objects into a program, and fetches kernel objects from said program, storing them in a data structure. After calling this function, users are ready to allocate buffers on devices and enqueue kernels and data transfers.
 
 ==Memory Management==
 
-Once initialization is complete, the user can allocate and destroy buffers using clUtilAlloc() and clUtilFree() respectively. Users do not need to worry about kernels using buffers completing after free is called; OpenCL's runtime handles this. So long as the kernel is enqueued before free is called, the program should run correctly.
+Buffer and Image objects back buffers and images residing on the GPU. By virtue of instantiating one of these objects, the clUtil runtime calls clCreateBuffer() or clCreate{2|3}DImage(). Both of these objects inherit from the abstract Memory class, which contains the underlying memory handle and access event. The Memory class also manages reference counting via its copy constructors (which call clRetainMemObject()) and destructors (which call clReleaseMemObject()).
 
-Data is copied from host to device using clUtilDevicePut(). Data is copied from device to host using clUtilDeviceGet(). Presently, all data transfers are blocking calls (e.g. they return when the transfer is complete). Device Management
-
-All devices on all platforms are flattened into a single list behind the scenes. Users are abstracted away from this list and can change the current device using clUtilSetDeviceNum() and query the current device using clUtilGetDeviceNum(). The total number of devices across all platforms is accessible using clUtilGetNumDevices().
+Memory objects are exception safe; if an exception is thrown, all buffer objects presently in scope will release their underlying memory. This highlights the importance of using shared_ptr<> and unique_ptr<> data types, as these pointers add exception safety for dynamically allocated objects. 
 
 ==Error handling==
 
