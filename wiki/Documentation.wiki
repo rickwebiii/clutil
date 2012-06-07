@@ -187,31 +187,67 @@ To transfer data between device and host, call the `get()` member function.
 
 To transfer data between host and device, call the `put()` member function.
 
+When calling either `get()` or `put()`, the clUtil runtime passes the existing `cl_event` object as a dependency to `clEnqueue{Read|Write}{Buffer|Image}()` and updates the `cl_event` associated with the Memory object behind the scenes with the returned event. This guarantees correctness when executing tasks in multiple queues (or in the future, out of order queues).
+
 ==Error handling==
 
-clUtil manages errors through exceptions. If something anomalous occurs, in a clUtil library function, the runtime throws a `clUtilException`. Inheriting from `std::exception`, users can use the `what()` member function to get a human readable string description of the error that occurred. In the future, we plan to be better people, and create an exception class for every exception type, allowing for more interesting try/catch blocks. However, for the time being, using a catchall for clUtilException or even std::exception provides sufficient notification for debugging.
+clUtil manages errors through exceptions. If something anomalous occurs, in a clUtil library function, the runtime throws a `clUtilException`. Inheriting from `std::exception`, users can use the `what()` member function to get a human readable string description of the error that occurred. In the future, we plan to be better people, and create an exception class for every exception type, allowing for more interesting try/catch blocks. However, for the time being, using a catchall for `clUtilException` or even `std::exception` provides sufficient notification for debugging.
 
 For those of you not aware, in gdb you can call "catch throw" and gdb will break whenever any exception is thrown. This is useful for getting stack traces and finding the exact point in time an error occurs, as well as why it occurred.
 
 ==Kernels==
 
-To launch a kernel, call clUtilEnqueueKernel() with the name of the kernel, the work dimension, global size, local size, and arguments to the kernel. This function looks up the kernel by name in a hash table for the current device that is created when clUtil is initialized.
+To launch a kernel, call `clUtilEnqueueKernel()` with the name of the kernel, a `clUtilGrid()` call, and arguments to the kernel. This function looks up the kernel by name in a hash table for the current device that is created when clUtil is initialized. It automatically recognizes Buffer objects, Image objects, and pointers to Memory objects and passes the underlying `cl_mem` handle instead. Other arguments are passed verbatim along with their size to `clSetKernelArg()`.
 
-==Images==
+`clUtilEnqueueKernel()` is variadic and accepts any number of arguments greater than or equal to 2.
 
-clUtil's image functions are designed to be used with matrix data for linear algebra routines. They are intended to temporarily hold copies of matrices in images so they can run through the texture cache as inputs to a kernel. 
+`clUtilGrid()` is a variadic function that creates an object defining the thread execution. Arguments must come in pairs of two, the first argument being a global work size and the second being a local work size. For example, a 3D grid with 128x64x32 global work items with 8x4x2 local work items would call:
+
+{{{
+clUtilGrid(128, 8, 64, 4, 32, 2)
+}}}
+
+`clUtilGrid()` is useful only to `clUtilEnqueueKernel()` and rvalue references allow it to be used inline. There is little compelling reason to keep track of the complex variadic templated objects this function returns.
+
+The `clUtilEnqueueKernel()` function implicitly reads the `cl_event`s associated with Memory objects, creates a wait list with these objects, and passes this to `clEnqueueNDRangeKernel()`. The runtime then updates each Memory object to associate with the returned `cl_event`. This dependency tracking allows code to correctly run with multiple command queues without the need for barriers and markers. Furthermore, we can turn on out of order execution in queues when more SDKs support this and still guarantee sequential correctness. 
 
 ==Platform/Device Specific Compilation==
+clUtil passes the preprocessor define `CLUTIL_DEVICE_ID=k`, where k is the cardinal device number of the device it's currently compiling your program for. This allows your OpenCL kernel to do fancy per-device compilation. Consider the following:
 
-Presently, no implementation of OpenCL is perfect and each has various bugs and/or non-standard implementation details that need to have #define workarounds. Absent this, users may wish to include device-specific optimizations, such as using float4s on ATI hardware or unrolling loops to different lengths based on the underlying architecture. To facilitate this, clUtil defines macros for the current device vendor and (coming soon!) the current platform vendor. The macro defined is an uppercase version of the string returned by clGetDeviceInfo() with CL_DEVICE_VENDOR with spaces, commas, and periods replaced with underscores. 
-NVIDIA CUDA SDK
+constants.cl:
+{{{
+#pragma once
 
-  * Passing __constant address space pointers to kernels often causes compilation issues or doesn't work. Use __global instead.
-AMD Stream SDK 2.3
+#if CLUTIL_DEVICE_ID == 1
+#define CALL_FOO
+#elif CLUTIL_DEVICE_ID == 2
+#define CALL_BAR
+#endif
+}}}
 
-  * Double precision is enabled via #pragma cl_amd_fp64 : enable instead of cl_khr_fp64 : enable.
-  * Samplers can be inline declared in OpenCL programs using const sampler_t mySampler = CLK_NORMALIZED_COORDS_TRUE or __constant sampler_t mySampler = CLK_NORMALIZED_COORDS_TRUE. The former is non-standard and the only way to do it in v2.2. The latter is the standard way and is only supported in v2.3 and later.
-  * As of v2.3, 1D images don't work (tested on Intel X5570) because 2D images don't work.
+prog.cl:
+{{{
+#include <constants.cl>
+
+__kernel myFunction()
+{
+//...
+
+#if defined(CALL_FOO)
+  foo();
+#elif defined(CALL_BAR)
+  bar();
+#else
+#error Unknown calling convention
+#endif
+//...
+
+}
+}}}
+
+In this example, constants.cl is a header file created at runtime after calling `Device::FetchDevices()` and using parameters in the device's info to decide how to execute the program. This allows you to optimize code on a device-by-device basis. You can use similar tricks to stream data through different kinds of memory (global, local, or images) and decide which to do at runtime. 
+
+Another useful feature is the CLUTIL_DEVICE_EMBARGO environment variable. This variable takes a colon delimited list of devices that will be unseen to clUtil. This allows you to quickly omit devices from the device pool without recompiling any code. For example, if you want to test the performance on a GPU, you can create an embargo list of every other device.
 
 ----
 
