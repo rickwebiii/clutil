@@ -161,7 +161,7 @@ A typical OpenCL, CUDA, or clUtil application has a motif similar to the followi
 
 ==Initialization/Device Managment==
 
-Users populate the list of available devices by calling Device::FetchDevices(). This populates the device list and fetches device info for each device. Users can then get the list of devices and examine their information (and that's about it). This function allows for pre-initialization computation to discover which devices the program should use for what, how to use them, and some other advanced topics.
+Users populate the list of available devices by calling `Device::FetchDevices()`. This populates the device list and fetches device info for each device. Users can then get the list of devices and examine their information (and that's about it). This function allows for pre-initialization computation to discover which devices the program should use for what, how to use them, and some other advanced topics.
 
 To get a STL vector of the available device, call `Device::GetDevices()`. This vector is immutable.
 
@@ -171,33 +171,31 @@ To query the current device, call `Device::GetCurrentDevice()`
 
 To get the cardinal number of the current device, call `Device::GetCurrentDeviceNum()`.
 
-Calling the getDeviceInfo() member function returns a structure containing all the queryable features obtainable through clGetDeviceInfo().
+Calling the `getDeviceInfo()` member function returns a structure containing all the queryable features obtainable through `clGetDeviceInfo()`.
 
 The features available by this pre-initialization step are very limited. To perform full initialization, the user calls `Device::InitializeDevices()`. Calling this function will implicitly call `Device::FetchDevices()` is not already called. This function accepts a list of OpenCL source code files, and optionally an object file cache name and additional compiler options.
 
-InitializeDevices() creates contexts on each device, creates two command queues, compiles the source objects into a program, and fetches kernel objects from said program, storing them in a data structure. After calling this function, users are ready to allocate buffers on devices and enqueue kernels and data transfers.
+`Device::InitializeDevices()` creates contexts on each device, creates two command queues, compiles the source objects into a program, and fetches kernel objects from said program, storing them in a data structure. After calling this function, users are ready to allocate buffers on devices and enqueue kernels and data transfers.
 
 ==Memory Management==
 
-Buffer and Image objects back buffers and images residing on the GPU. By virtue of instantiating one of these objects, the clUtil runtime calls clCreateBuffer() or clCreate{2|3}DImage(). Both of these objects inherit from the abstract Memory class, which contains the underlying memory handle and access event. The Memory class also manages reference counting via its copy constructors (which call clRetainMemObject()) and destructors (which call clReleaseMemObject()).
+Buffer and Image objects back buffers and images residing on the GPU. By virtue of instantiating one of these objects, the clUtil runtime calls `clCreateBuffer()` or `clCreate{2|3}DImage()`. Both of these objects inherit from the abstract Memory class, which contains the underlying memory handle and access event. The Memory class also manages reference counting via its copy constructors (which call `clRetainMemObject()`) and destructors (which call `clReleaseMemObject()`).
 
-Memory objects are exception safe; if an exception is thrown, all buffer objects presently in scope will release their underlying memory. This highlights the importance of using shared_ptr<> and unique_ptr<> data types, as these pointers add exception safety for dynamically allocated objects. 
+Memory objects are exception safe; if an exception is thrown, all buffer objects presently in scope will do the right thing according to OpenCL's reference counting mechanism (which may or may not release the underlying memory if there exist valid copies of the object). This highlights the importance of using `shared_ptr<>` and `unique_ptr<>` (both reside in STL as of C++11) data types, as these pointers add exception safety for dynamically allocated objects. 
+
+To transfer data between device and host, call the `get()` member function.
+
+To transfer data between host and device, call the `put()` member function.
 
 ==Error handling==
 
-Errors are signaled using return values as is done in C. When an error occurs, all clUtil functions do the following upon encountering an error on one of its internal OpenCL calls:
-  # print the source file, line number on which the error occurred in clUtil, and what the error was.
-  # raise a SIGTRAP
-  # return the error code
-This provides several different methods of debugging. Firstly, developers can lookup the file and line number in the clUtil library to see what function failed and try to find the offending calling code. Because of the SIGTRAP, the program will exit if SIGTRAP is not overloaded when run normally. However, if run in a debugger, the debugger will catch the SIGTRAP immediately pausing the program. This allows developers to get a stack trace with variable information and possibly continue execution.
+clUtil manages errors through exceptions. If something anomalous occurs, in a clUtil library function, the runtime throws a `clUtilException`. Inheriting from `std::exception`, users can use the `what()` member function to get a human readable string description of the error that occurred. In the future, we plan to be better people, and create an exception class for every exception type, allowing for more interesting try/catch blocks. However, for the time being, using a catchall for clUtilException or even std::exception provides sufficient notification for debugging.
 
-Some functions may print additional information. For example, if clUtilInitialize() fails because a source file contained syntax errors, it will print the build log containing said errors, print "clUtil.cc:645::Failed to build program." to stdout, raise a SIGTRAP, and return CL_BUILD_PROGRAM_FAILURE.
-
-The error handling macros used by clUtil that do the above are clUtilCheckErrorVoid() and clUtilCheckError(). The former should be used by functions that return void while the latter should be used by functions that return a value. Additionally, OpenCL error codes can be turned into plain English strings using clUtilGetErrorCode().
+For those of you not aware, in gdb you can call "catch throw" and gdb will break whenever any exception is thrown. This is useful for getting stack traces and finding the exact point in time an error occurs, as well as why it occurred.
 
 ==Kernels==
 
-To launch a kernel, call clUtil_enqueueKernel() with the name of the kernel, the work dimension, global size, local size, and arguments to the kernel. This function looks up the kernel by name in a hash table for the current device that is created when clUtil is initialized.
+To launch a kernel, call clUtilEnqueueKernel() with the name of the kernel, the work dimension, global size, local size, and arguments to the kernel. This function looks up the kernel by name in a hash table for the current device that is created when clUtil is initialized.
 
 ==Images==
 
