@@ -84,20 +84,17 @@ main.cc:
 int main(int argc, char** argv)
 {
     const char* kernelFiles[] = {"kernel.cl"};
-    cl_mem buffer;
-    float array[2000];
-    unsigned int length = 2000;
+    const unsigned int kLength = 2000;
+    float array[kLength];
     float val = 20.0f;
 
-    clUtilInitialize(kernelFiles, 1);
-    clUtilAlloc(sizeof(array), &buffer);
+    Device::InitializeDevices(kernelFiles, 1);
+    Buffer buffer(sizeof(array));
 
     clUtilEnqueueKernel("fill", clUtilGrid(length, 64), buffer, length, val);
     clUtilDeviceGet(array, sizeof(array), buffer);
 
-    clUtilFree(buffer);
-
-    clUtilFinalize();
+    return 0;
 }
 }}}
 
@@ -108,22 +105,18 @@ Simplified device/platform model
 Simpler memory model
 Stronger programming model
 clUtil uses many features not available in C such as parameter defaulting and STL objects. Additionally, it uses variadic templates for launching kernels. Because of these language features, clUtil requires a C++ compiler with at least variadic template support of the C++0x standard. As such, one of the following compilers is required:
-  * gcc 4.3 or later (use -std=c++0x flag on any file that includes clUtil.h). We have tested gcc 4.4.1 with x86_64-linux-gnu target.
-We currently support Linux running OpenCL 1.0 or later. At present, we have tested clUtil using ATI's StreamSDK and Nvidia's CUDA. Unfortunately, there are known issues with both of these runtimes. As such, we have included mechanisms to allow users to design workarounds.
+  * g++ 4.3 or later (use -std=c++0x flag on any file that includes clUtil.h). We have tested g++ 4.4.1, 4.5.2, and 4.6 with x86_64-linux-gnu target.
+We currently support Linux running OpenCL 1.1 or later. At present, we have tested clUtil using ATI's StreamSDK, Nvidia's CUDA, and Intel's OpenCL SDK (though, I can't remember the nonsense you have to do with libnuma to avoid a segfault).
 
 ==Device Model==
 
 clUtil makes no distinction between device platforms. Devices are devices and will implicitly run on the correct platform. On initialization, clUtil queries every platform available and combines all their device listings into a unified device list with the following assumptions (which will likely be loosened in the future):
-  * No more than 64 platforms. Any platform beyond 64 are ignored.
-  * No more than 64 devices. Any devices beyond 64 are ignored.
   * Each device has a single context.
-  * Each device has a single command queue. It executes operations in order. We plan to support event-based execution in the future.
-The device list is hidden from the user; they change the current device with a function call. Subsequent operations (memory allocations, kernels, etc.) will occur on the specified device. 
-==Memory Model==
+  * Each device has a two command queues, switched at programmer discretion. Both queues execute operations in order, but only because not every SDK supports OOO execution. 
 
-clUtil uses a simple memory model that behaves more like C. Buffers are allocated and freed instead of OpenCL's release/retain model. Since clUtil implements buffers using clCreateBuffer() and clReleaseMemObject(), a release/retain model can still be used, but is not the preferred way to do things. Both synchronous and asynchronous data transfers can be issued with clUtilDeviceGet() and clUtilDevicePut().
+clUtil has a simple C++ RAII friendly memory model. Users allocate buffers by creating buffer objects. Image objects embody 1, 2, and 3-D images. When calling their copy constructor, clUtil calls clRetainMemObject. When they destruct, clUtil calls clReleaseMemObject. 
 
-clUtil's memory model provides fewer options than vanilla OpenCL. All buffers are allocated on the currently selected device's only context. All buffers are read/write and do not use host pointer capabilities. We may add host pointer capabilities in future releases to accommodate performance improvements on devices that share host and device memory, such as AMD Fusion and Nvida mobile GPUs.
+clUtil's memory model provides fewer options than vanilla OpenCL. All buffers are allocated on the currently selected device's only context. All buffers are read/write. Host pointer capabilities exist through passing additional parameters to a buffer's constructor.
 
 clUtil adds convenience functions for representing matrices as 2D images. Furthermore, clUtil adds support for 1D images by emulating them using 2D images. Additional functions exist in clUtil to create, copy to, and copy from 1-D images. They are visible to kernels as image1d_t types and are read and written to using [http://code.google.com/p/clutil/wiki/Documentation#1D_Image_Routines language extensions].
 
@@ -135,22 +128,23 @@ Since compiling source code can be take a while, developers can optionally pass 
 
 ===Synchronicity===
 
-clUtil supports both a synchronous execution model and an asynchronous out-of order execution model. The synchronous model is what most developers expect: data transfers are blocking and kernels execute in FIFO manner. 
-
-The asynchronous execution model is built with C++0x lambdas in mind (requiring gcc 4.5 or later), though traditional functions should work as well. Lambdas are essentially anonymous functions that are defined inline in user code. This allows the callback function to be declared close to its use and provides better scoping capabilities than traditional functions. All callbacks must be thread safe, as the main thread generally doesn't execute callbacks. Asynchronous execution models, while more complicated, allow for better application performance by putting copies in the background, allowing the main CPU thread to do useful work, or alternatively, issuing tasks to multiple devices in rapid succession without ever blocking for a data transfer. For an asynchronous execution example, see examples/Asynchronous.
-
-Callbacks must have the interface void callback(void); they return nothing and accept no parameter. For example, the following lambda is a valid callback:
-
-auto myCallback = [&]()
-{
-  jobDone = true;
-};
-
-In addition to Asynchronous execution, clUtil can enable out of order execution (section 5.11 of OpenCL spec) for all devices that support it. To do this, call clUtilEnableOOOExecution() BEFORE calling clUtilInit(). If a given device doesn't support out of order execution, all commands will run in order for that device.
+All clUtil data transfer and kernel enqueue functions execute asynchronously. The runtime manages cl_event objects on behalf of the user to ensure correct execution order regardless of which queue a task executes from. These events also can optionally provide profiling information.
 
 ==Thread safety==
 
-clUtil is not currently thread safe. Switching devices occurs on a global level and calling different operations from different threads can cause race conditions on devices' queues. We plan to add thread safety by making the current device number a thread-local variable and adding mutex locking to command queues. For the time being, changing devices and issuing threads should occur only in critical sections.
+clUtil is not currently thread safe. We have no plans to make it so, as our model consists of a sequential master thread issuing tasks to devices. If absolutely need thread safety, you can put mutex locks around regions that assume a specific current device. For example:
+
+mutex_lock(...);
+
+Device::SetCurrentDevice(...);
+
+buffer.put(...);
+clUtilEnqueueKernel(...);
+buffer.get(...);
+
+mutex_unlock(...);
+
+Since all transfer and kernel functions execute asynchronously, the amount of time spent in the critical section should be minimal.
 
 =User Guide=
 
