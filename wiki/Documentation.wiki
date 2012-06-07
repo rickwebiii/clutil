@@ -163,17 +163,17 @@ A typical OpenCL, CUDA, or clUtil application has a motif similar to the followi
 
 Users populate the list of available devices by calling Device::FetchDevices(). This populates the device list and fetches device info for each device. Users can then get the list of devices and examine their information (and that's about it). This function allows for pre-initialization computation to discover which devices the program should use for what, how to use them, and some other advanced topics.
 
-To get a STL vector of the available device, call Device::GetDevices(). This vector is immutable.
+To get a STL vector of the available device, call `Device::GetDevices()`. This vector is immutable.
 
-To set the current device, call Device::SetCurrentDevice(size_t num)
+To set the current device, call `Device::SetCurrentDevice(size_t num)`
 
-To query the current device, call Device::GetCurrentDevice()
+To query the current device, call `Device::GetCurrentDevice()`
 
-To get the cardinal number of the current device, call Device::GetCurrentDeviceNum().
+To get the cardinal number of the current device, call `Device::GetCurrentDeviceNum()`.
 
 Calling the getDeviceInfo() member function returns a structure containing all the queryable features obtainable through clGetDeviceInfo().
 
-The features available by this pre-initialization step are very limited. To perform full initialization, the user calls Device::InitializeDevices(). Calling this function will implicitly call Device::FetchDevices() is not already called. This function accepts a list of OpenCL source code files, and optionally an object file cache name and additional compiler options.
+The features available by this pre-initialization step are very limited. To perform full initialization, the user calls `Device::InitializeDevices()`. Calling this function will implicitly call `Device::FetchDevices()` is not already called. This function accepts a list of OpenCL source code files, and optionally an object file cache name and additional compiler options.
 
 InitializeDevices() creates contexts on each device, creates two command queues, compiles the source objects into a program, and fetches kernel objects from said program, storing them in a data structure. After calling this function, users are ready to allocate buffers on devices and enqueue kernels and data transfers.
 
