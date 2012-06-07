@@ -249,7 +249,7 @@ In this example, constants.cl is a header file created at runtime after calling 
 
 Another useful feature is the CLUTIL_DEVICE_EMBARGO environment variable. This variable takes a colon delimited list of devices that will be unseen to clUtil. This allows you to quickly omit devices from the device pool without recompiling any code. For example, if you want to test the performance on a GPU, you can create an embargo list of every other device.
 
-==ParallelFor==
+==Parallel For==
 Oftentimes, users wish to use multiple OpenCL devices to collectively solve a problem. clUtil provides the `ParallelFor()` function for this purpose. This function takes the start, stride (presently ignored), and stop loop indices, a lambda containing the loop body, and an optional loop scheduler (the static scheduler is default). An example of such a loop for vector addition:
 
 {{{
