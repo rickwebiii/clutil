@@ -163,55 +163,55 @@ A typical OpenCL, CUDA, or clUtil application has a motif similar to the followi
 
 Users populate the list of available devices by calling [FetchDevices Device::FetchDevices()]. This populates the device list and fetches device info for each device. Users can then get the list of devices and examine their information (and that's about it). This function allows for pre-initialization computation to discover which devices the program should use for what, how to use them, and some other advanced topics.
 
-To get a STL vector of the available device, call `Device::GetDevices()`. This vector is immutable.
+To get a STL vector of the available [Device devices], call [GetDevices Device::GetDevices()]. This vector is immutable.
 
-To set the current device, call `Device::SetCurrentDevice(size_t num)`
+To set the current device, call [SetCurrentDevice Device::SetCurrentDevice(size_t num)]
 
-To query the current device, call `Device::GetCurrentDevice()`
+To query the current device, call [GetCurrentDevice Device::GetCurrentDevice()]
 
-To get the cardinal number of the current device, call `Device::GetCurrentDeviceNum()`.
+To get the cardinal number of the current device, call [GetCurrentDeviceNum Device::GetCurrentDeviceNum()].
 
-Calling the `getDeviceInfo()` member function returns a structure containing all the queryable features obtainable through `clGetDeviceInfo()`.
+Calling the [getDeviceInfo getDeviceInfo()] member function returns a structure containing all the queryable features obtainable through `clGetDeviceInfo()`.
 
-The features available by this pre-initialization step are very limited. To perform full initialization, the user calls `Device::InitializeDevices()`. Calling this function will implicitly call `Device::FetchDevices()` is not already called. This function accepts a list of OpenCL source code files, and optionally an object file cache name and additional compiler options.
+The features available by this pre-initialization step are very limited. To perform full initialization, the user calls [InitializeDevices Device::InitializeDevices()]. Calling this function will implicitly call [FetchDevices Device::FetchDevices()] is not already called. This function accepts a list of OpenCL source code files, and optionally an object file cache name and additional compiler options.
 
-`Device::InitializeDevices()` creates contexts on each device, creates two command queues, compiles the source objects into a program, and fetches kernel objects from said program, storing them in a data structure. After calling this function, users are ready to allocate buffers on devices and enqueue kernels and data transfers.
+[InitializeDevices Device::InitializeDevices()] creates contexts on each device, creates two command queues, compiles the source objects into a program, and fetches kernel objects from said program, storing them in a data structure. After calling this function, users are ready to allocate buffers on devices and enqueue kernels and data transfers.
 
 ==Memory Management==
 
-Buffer and Image objects back buffers and images residing on the GPU. By virtue of instantiating one of these objects, the clUtil runtime calls `clCreateBuffer()` or `clCreate{2|3}DImage()`. Both of these objects inherit from the abstract Memory class, which contains the underlying memory handle and access event. The Memory class also manages reference counting via its copy constructors (which call `clRetainMemObject()`) and destructors (which call `clReleaseMemObject()`).
+[Buffer] and [Image] objects back buffers and images residing on the GPU. By virtue of instantiating one of these objects, the clUtil runtime calls `clCreateBuffer()` or `clCreate{2|3}DImage()`. Both of these objects inherit from the abstract [Memory] class, which contains the underlying memory handle and access event. The Memory class also manages reference counting via its copy constructors (which call `clRetainMemObject()`) and destructors (which call `clReleaseMemObject()`).
 
-Memory objects are exception safe; if an exception is thrown, all buffer objects presently in scope will do the right thing according to OpenCL's reference counting mechanism (which may or may not release the underlying memory if there exist valid copies of the object). This highlights the importance of using `shared_ptr<>` and `unique_ptr<>` (both reside in STL as of C++11) data types, as these pointers add exception safety for dynamically allocated objects. 
+[Memory] objects are exception safe; if an exception is thrown, all buffer objects presently in scope will do the right thing according to OpenCL's reference counting mechanism (which may or may not release the underlying memory if there exist valid copies of the object). This highlights the importance of using `shared_ptr<>` and `unique_ptr<>` (both reside in STL as of C++11) data types, as these pointers add exception safety for dynamically allocated objects. 
 
-To transfer data between device and host, call the `get()` member function.
+To transfer data between device and host, call the [get get()] member function.
 
-To transfer data between host and device, call the `put()` member function.
+To transfer data between host and device, call the [put put()] member function.
 
-When calling either `get()` or `put()`, the clUtil runtime passes the existing `cl_event` object as a dependency to `clEnqueue{Read|Write}{Buffer|Image}()` and updates the `cl_event` associated with the Memory object behind the scenes with the returned event. This guarantees correctness when executing tasks in multiple queues (or in the future, out of order queues).
+When calling either [get get()] or [put put()], the clUtil runtime passes the existing `cl_event` object as a dependency to `clEnqueue{Read|Write}{Buffer|Image}()` and updates the `cl_event` associated with the [Memory] object behind the scenes with the returned event. This guarantees correctness when executing tasks in multiple queues (or in the future, out of order queues).
 
 ==Error handling==
 
-clUtil manages errors through exceptions. If something anomalous occurs, in a clUtil library function, the runtime throws a `clUtilException`. Inheriting from `std::exception`, users can use the `what()` member function to get a human readable string description of the error that occurred. In the future, we plan to be better people, and create an exception class for every exception type, allowing for more interesting try/catch blocks. However, for the time being, using a catchall for `clUtilException` or even `std::exception` provides sufficient notification for debugging.
+clUtil manages errors through exceptions. If something anomalous occurs, in a clUtil library function, the runtime throws a [clUtilException]. Inheriting from `std::exception`, users can use the `what()` member function to get a human readable string description of the error that occurred. In the future, we plan to be better people, and create an exception class for every exception type, allowing for more interesting try/catch blocks. However, for the time being, using a catchall for [clUtilException] or even `std::exception` provides sufficient notification for debugging.
 
 For those of you not aware, in gdb you can call "catch throw" and gdb will break whenever any exception is thrown. This is useful for getting stack traces and finding the exact point in time an error occurs, as well as why it occurred.
 
 ==Kernels==
 
-To launch a kernel, call `clUtilEnqueueKernel()` with the name of the kernel, a `clUtilGrid()` call, and arguments to the kernel. This function looks up the kernel by name in a hash table for the current device that is created when clUtil is initialized. It automatically recognizes Buffer objects, Image objects, and pointers to Memory objects and passes the underlying `cl_mem` handle instead. Other arguments are passed verbatim along with their size to `clSetKernelArg()`.
+To launch a kernel, call [clUtilEnqueueKernel clUtilEnqueueKernel()] with the name of the kernel, a [clUtilGrid clUtilGrid()] call, and arguments to the kernel. This function looks up the kernel by name in a hash table for the current device that is created when clUtil is initialized. It automatically recognizes Buffer objects, Image objects, and pointers to Memory objects and passes the underlying `cl_mem` handle instead. Other arguments are passed verbatim along with their size to `clSetKernelArg()`.
 
-`clUtilEnqueueKernel()` is variadic and accepts any number of arguments greater than or equal to 2.
+[clUtilEnqueueKernel clUtilEnqueueKernel()] is variadic and accepts any number of arguments greater than or equal to 2.
 
-`clUtilGrid()` is a variadic function that creates an object defining the thread execution. Arguments must come in pairs of two, the first argument being a global work size and the second being a local work size. For example, a 3D grid with 128x64x32 global work items with 8x4x2 local work items would call:
+[clUtilGrid clUtilGrid()] is a variadic function that creates an object defining the thread execution. Arguments must come in pairs of two, the first argument being a global work size and the second being a local work size. For example, a 3D grid with 128x64x32 global work items with 8x4x2 local work items would call:
 
 {{{
 clUtilGrid(128, 8, 64, 4, 32, 2)
 }}}
 
-`clUtilGrid()` is useful only to `clUtilEnqueueKernel()` and rvalue references allow it to be used inline. There is little compelling reason to keep track of the complex variadic templated objects this function returns.
+[clUtilGrid clUtilGrid()] is useful only to [clUtilEnqueueKernel clUtilEnqueueKernel()] and rvalue references allow it to be used inline. There is no compelling reason to keep track of the complex variadic templated objects this function returns (though, this is possible at the expense of ugly code).
 
 Because OpenCL requires that global work sizes be a multiple of local work sizes, clUtil will round each dimension UP to the nearest multiple of the corresponding work size. Any reasonably designed kernel should check if extraneous threads exist and deny them execution.
 
-The `clUtilEnqueueKernel()` function implicitly reads the `cl_event`s associated with Memory objects, creates a wait list with these objects, and passes this to `clEnqueueNDRangeKernel()`. The runtime then updates each Memory object to associate with the returned `cl_event`. This dependency tracking allows code to correctly run with multiple command queues without the need for barriers and markers. Furthermore, we can turn on out of order execution in queues when more SDKs support this and still guarantee sequential correctness. 
+The [clUtilEnqueueKernel clUtilEnqueueKernel()] function implicitly reads the `cl_event`s associated with Memory objects, creates a wait list with these objects, and passes this to `clEnqueueNDRangeKernel()`. The runtime then updates each Memory object to associate with the returned `cl_event`. This dependency tracking allows code to correctly run with multiple command queues without the need for barriers and markers. Furthermore, we can turn on out of order execution in queues when more SDKs support this and still guarantee sequential correctness. 
 
 ==Platform/Device Specific Compilation==
 clUtil passes the preprocessor define `CLUTIL_DEVICE_ID=k`, where k is the cardinal device number of the device it's currently compiling your program for. This allows your OpenCL kernel to do fancy per-device compilation. Consider the following:
@@ -247,12 +247,12 @@ __kernel myFunction()
 }
 }}}
 
-In this example, constants.cl is a header file created at runtime after calling `Device::FetchDevices()` and using parameters in the device's info to decide how to execute the program. This allows you to optimize code on a device-by-device basis. You can use similar tricks to stream data through different kinds of memory (global, local, or images) and decide which to do at runtime. 
+In this example, constants.cl is a header file created at runtime after calling [FetchDevices Device::FetchDevices()] and using parameters in the device's info to decide how to execute the program. This allows you to optimize code on a device-by-device basis. You can use similar tricks to stream data through different kinds of memory (global, local, or images) and decide which to do at runtime. 
 
 Another useful feature is the CLUTIL_DEVICE_EMBARGO environment variable. This variable takes a colon delimited list of devices that will be unseen to clUtil. This allows you to quickly omit devices from the device pool without recompiling any code. For example, if you want to test the performance on a GPU, you can create an embargo list of every other device.
 
 ==Parallel For==
-Oftentimes, users wish to use multiple OpenCL devices to collectively solve a problem. clUtil provides the `ParallelFor()` function for this purpose. This function takes the start, stride (presently ignored), and stop loop indices, a lambda containing the loop body, and an optional loop scheduler (the static scheduler is default). An example of such a loop for vector addition:
+Oftentimes, users wish to use multiple OpenCL devices to collectively solve a problem. clUtil provides the [ParallelFor ParallelFor()] function for this purpose. This function takes the start, stride (presently ignored), and stop loop indices, a lambda containing the loop body, and an optional loop scheduler (the static scheduler is default). An example of such a loop for vector addition:
 
 {{{
 ParallelFor(0, 1, kBigArraySize - 1, [&](size_t startIdx, size_t endIdx)
@@ -274,13 +274,13 @@ ParallelFor(0, 1, kBigArraySize - 1, [&](size_t startIdx, size_t endIdx)
 });
 }}}
 
-The lambda executes sequentially on the main thread, and as such all operations in the user lambda must be non-blocking. All put/get operations as well as clUtilEnqueueKernel are non-blocking. Do not put calls to Barrier inside the loop body (save for debugging purposes) or the loop will serialize. When the loop returns, the clUtil runtime guarantees that all loop iterations have completed. Futhermore, the ParallelFor loop will restore the current device number to its prior state before execution.
+The lambda executes sequentially on the main thread, and as such all operations in the user lambda must be non-blocking. All [put]/[get] operations as well as [clUtilEnqueueKernel clUtilEnqueueKernel()] are non-blocking. Do not put calls to [Barrier Device::Barrier()] inside the loop body (save for debugging purposes) or the loop will serialize. When the loop returns, the clUtil runtime guarantees that all loop iterations have completed. Futhermore, the [ParallelFor] loop will restore the current device number to its prior state before execution.
 
-One important note is that the ParallelFor operation is heterogeneous: it will use every device available in your system for computation. However, it inherently respects the CLUTIL_DEVICE_EMBARGO environment variable. 
+One important note is that the [ParallelFor] operation is heterogeneous: it will use every device available in your system for computation. However, it inherently respects the CLUTIL_DEVICE_EMBARGO environment variable. 
 
-An optional fifth parameter is an rvalue reference to a scheudler object. clUtil presently supports three options `StaticScheduler()`, `EGSScheduler()`, and `PINAScheduler()`. The first scheduler accepts an optional number of chunks (default is 30), and breaks the loop iterations into roughly equal sized tasks. The EGSScheduler just sucks. Don't use it (if you must know, it's an enhanced version of the guided self-scheduling algorithm that reserves larger chunks for faster devices). The PINA scheduler uses autotuning to find the appropriate chunk sizes for each device type.
+An optional fifth parameter is an rvalue reference to a scheudler object. clUtil presently supports three options [StaticScheduler StaticScheduler()], [EGSScheduler EGSScheduler()], and [PINAScheduler PINAScheduler()]. The first scheduler accepts an optional number of chunks (default is 30), and breaks the loop iterations into roughly equal sized tasks. The [EGSScheduler] just sucks. Don't use it (if you must know, it's an enhanced version of the guided self-scheduling algorithm that reserves larger chunks for faster devices). The [PINAScheduler] uses autotuning to find the appropriate chunk sizes for each device type.
 
-To facilitate autotuning, the PINA scheduler requires the programmer name the loop (done via its first parameter).
+To facilitate autotuning, the [PINAScheduler] requires the programmer name the loop (done via its first parameter).
 
 When autotuning, the PINA scheduler will print a message to stdout notifying the user that the a loop is being tuned. When the user no longer sees any of these messages, the loops are fully tuned. During the tuning process, the user should give representative problems to the application so it can discover actual amortization. Application developers can perform autotuning on behalf of the user by writing representative loops with accompanying data sets as separate applications whose loop names match those in the actual application. Scripts can repeat execution until the message no longer appears. Then the user is free to run their application with any data set.
 
