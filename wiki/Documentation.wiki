@@ -122,7 +122,7 @@ clUtil adds convenience functions for representing matrices as 2D images. Furthe
 
 ==Programming model==
 
-clUtil makes dramatically simplifies OpenCL's programming model. Developers no longer have to worry about kernels, programs, binaries, etc. clUtil takes a list of source code files at initialization and compiles them all for each device on the machine. Calling a kernel is as simple as calling clUtil_enqueueKernel() after initialization with the kernel name, work dimension, global work size, local work size, and the arguments to the kernel. 
+clUtil makes dramatically simplifies OpenCL's programming model. Developers no longer have to worry about kernels, programs, binaries, etc. clUtil takes a list of source code files at initialization and compiles them all for each device on the machine. Calling a kernel is as simple as calling [clUtilEnqueueKernel()] after initialization with the kernel name, work dimension, global work size, local work size, and the arguments to the kernel. 
 
 Since compiling source code can be take a while, developers can optionally pass a list of binary names to the initialization routine, causing clUtil to load kernels from these files if they exist. If they don't exist, clUtil will compile from source and save these binary files. This means that many applications can cache their programs after the first time the application is run.
 
@@ -161,7 +161,7 @@ A typical OpenCL, CUDA, or clUtil application has a motif similar to the followi
 
 ==Initialization/Device Managment==
 
-Users populate the list of available devices by calling Device::FetchDevices(). This populates the device list and fetches device info for each device. Users can then get the list of devices and examine their information (and that's about it). This function allows for pre-initialization computation to discover which devices the program should use for what, how to use them, and some other advanced topics.
+Users populate the list of available devices by calling [Device::FetchDevices()]. This populates the device list and fetches device info for each device. Users can then get the list of devices and examine their information (and that's about it). This function allows for pre-initialization computation to discover which devices the program should use for what, how to use them, and some other advanced topics.
 
 To get a STL vector of the available device, call `Device::GetDevices()`. This vector is immutable.
 
