@@ -1,4 +1,4 @@
-#Device::GetDevices()
+# Device::GetDevices()
 
 =`const vector<Device>& Device::GetDevices()`=
 
