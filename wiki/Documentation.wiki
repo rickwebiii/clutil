@@ -61,7 +61,7 @@ int main(int argc, char** argv)
 }
 }}}
 
-This program doesn't even do error checking, which would at least double the program's length! clUtil dramatically improves frontend expressivity without significantly hurting flexibility. This means you write less code, spend less time debugging, and more time getting results.
+This program doesn't even do error checking, which would at least double the program's length! clUtil dramatically improves frontend expressiveness without significantly hurting flexibility. This means you write less code, spend less time debugging, and more time getting results.
 
 The equivalent program in clUtil is as follows:
 
@@ -159,7 +159,7 @@ A typical OpenCL, CUDA, or clUtil application has a motif similar to the followi
 
 ==Initialization/Device Managment==
 
-Users populate the list of available devices by calling `Device::FetchDevices()`. This populates the device list and fetches device info for each device. Users can then get the list of devices and examine their information (and that's about it). This function allows for pre-initialization computation to discover which devices the program should use for what, how to use them, and some other advanced topics.
+Users populate the list of available devices by calling Device::FetchDevices(). This populates the device list and fetches device info for each device. Users can then get the list of devices and examine their information (and that's about it). This function allows for pre-initialization computation to discover which devices the program should use for what, how to use them, and some other advanced topics.
 
 To get a STL vector of the available device, call `Device::GetDevices()`. This vector is immutable.
 
