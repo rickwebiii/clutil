@@ -7,8 +7,8 @@ Fetches all OpenCL devices available in all platforms on the system, places then
 
 ==Parameters==
 
-  *None
+  * None
 
 ==Return==
 
-  *None
+  * None
