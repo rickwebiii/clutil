@@ -1,8 +1,11 @@
-#summary One-sentence summary of this page.
+#summary ParallelFor()
 
-= Introduction =
-
-poop
+=`void ParallelFor(const size_t start,
+                  const size_t stride,
+                  const size_t end,
+                  std::function<void (size_t, size_t)> loopBody,
+                  IScheduler&& model = StaticScheduler(30))`=
+Executes a parallel
 
 
 = Details =
