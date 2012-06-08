@@ -1,0 +1,3 @@
+#summary Device class
+
+This is a stub. TODO: fix this.
