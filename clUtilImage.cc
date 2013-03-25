@@ -13,8 +13,8 @@ cl_int clUtilPutImage1D(cl_mem image,
   void* mappedImage;
   size_t imageWidth;
   size_t imageHeight;
-  size_t origin3D[3];
-  size_t region3D[3];
+  size_t origin3D[3] = {0, 0, 0};
+  size_t region3D[3] = {imageWidth, imageHeight, 1};
   size_t pitch;
   cl_int err;
   void* hostStartAddress;
@@ -41,9 +41,6 @@ cl_int clUtilPutImage1D(cl_mem image,
                        &pixelSize,
                        NULL);
   clUtilCheckError(err);
-
-  origin3D = {0, 0, 0};
-  region3D = {imageWidth, imageHeight, 1};
 
   mappedImage = clEnqueueMapImage(Device::GetCurrentDevice().getCommandQueue(),
                                   image,
@@ -89,8 +86,8 @@ cl_int clUtilGetImage1D(cl_mem image,
   void* mappedImage;
   size_t imageWidth;
   size_t imageHeight;
-  size_t origin3D[3];
-  size_t region3D[3];
+  size_t origin3D[3] = {0, 0, 0};
+  size_t region3D[3] = {imageWidth, imageHeight, 1};
   size_t pitch = 0;
   cl_int err;
   void* hostStartAddress;
@@ -117,9 +114,6 @@ cl_int clUtilGetImage1D(cl_mem image,
                        &pixelSize,
                        NULL);
   clUtilCheckError(err);
-
-  origin3D = {0, 0, 0};
-  region3D = {imageWidth, imageHeight, 1};
 
   mappedImage = clEnqueueMapImage(Device::GetCurrentDevice().getCommandQueue(),
                                   image,
@@ -515,137 +509,5 @@ cl_int clUtilCopyToImageTransposeDouble2(cl_mem buffer,
                       ld,
                       *image);
   
-  return CL_SUCCESS;
-}
-
-cl_int clUtilDebugPrintImageFloat(cl_mem image)
-{
-  size_t width;
-  size_t height;
-  cl_int err;
-  float* data;
-  size_t origin[3] = {0, 0, 0};
-  size_t region[3] = {1, 1, 1};
-  cl_image_format channelFormat;
-  size_t channelSize;
-
-  err = clGetImageInfo(image,
-                       CL_IMAGE_WIDTH,
-                       sizeof(width),
-                       &width,
-                       NULL);
-  clUtilCheckError(err);
-
-  err = clGetImageInfo(image,
-                       CL_IMAGE_HEIGHT,
-                       sizeof(height),
-                       &height,
-                       NULL);
-  clUtilCheckError(err);
-  
-  err = clGetImageInfo(image,
-                       CL_IMAGE_ELEMENT_SIZE,
-                       sizeof(channelSize),
-                       &channelSize,
-                       NULL);
-  clUtilCheckError(err);
-
-  //Get number of floats per channel (4 or 1) in the image
-  channelSize = channelFormat.image_channel_order == CL_RGBA ? 4 : 1;
-
-  data = new float[channelSize * width * height];
-  region[0] = width;
-  region[1] = height;
-
-  err = clEnqueueReadImage(clUtilGetCommandQueue(),
-                           image,
-                           CL_TRUE,
-                           origin,
-                           region,
-                           0,
-                           0,
-                           data,
-                           0,
-                           NULL,
-                           NULL);
-  clUtilCheckError(err);
-
-  for(size_t i = 0; i < channelSize * width; i++)
-  {
-    for(size_t j = 0; j < height; j++)
-    {
-      printf("%6.5E ", data[i + j * channelSize * width]);
-    }
-    printf("\n");
-  }
-
-  delete[] data;
-
-  return CL_SUCCESS;
-}
-
-cl_int clUtilDebugPrintImageDouble(cl_mem image)
-{
-  size_t width;
-  size_t height;
-  cl_int err;
-  double* data;
-  size_t origin[3] = {0, 0, 0};
-  size_t region[3] = {1, 1, 1};
-  cl_image_format channelFormat;
-  size_t channelSize;
-
-  err = clGetImageInfo(image,
-                       CL_IMAGE_WIDTH,
-                       sizeof(width),
-                       &width,
-                       NULL);
-  clUtilCheckError(err);
-
-  err = clGetImageInfo(image,
-                       CL_IMAGE_HEIGHT,
-                       sizeof(height),
-                       &height,
-                       NULL);
-  clUtilCheckError(err);
-  
-  err = clGetImageInfo(image,
-                       CL_IMAGE_ELEMENT_SIZE,
-                       sizeof(channelSize),
-                       &channelSize,
-                       NULL);
-  clUtilCheckError(err);
-
-  //Get number of doubles per channel (2 or 1) in the image
-  channelSize = channelFormat.image_channel_order == CL_RGBA ? 2 : 1;
-
-  data = new double[channelSize * width * height];
-  region[0] = width;
-  region[1] = height;
-
-  err = clEnqueueReadImage(clUtilGetCommandQueue(),
-                           image,
-                           CL_TRUE,
-                           origin,
-                           region,
-                           0,
-                           0,
-                           data,
-                           0,
-                           NULL,
-                           NULL);
-  clUtilCheckError(err);
-
-  for(size_t i = 0; i < channelSize * width; i++)
-  {
-    for(size_t j = 0; j < height; j++)
-    {
-      printf("%6.5E ", data[i + j * channelSize * width]);
-    }
-    printf("\n");
-  }
-
-  delete[] data;
-
   return CL_SUCCESS;
 }
