@@ -150,8 +150,11 @@ cl_int Device::buildProgram(const char** filenames,
   ostringstream deviceFlags;
 
   deviceFlags << options << " -DDEVICE_NUM=" << mDeviceNumber;
+#if defined(WIN32) || defined(__WIN32)
+  deviceFlags << " -I\"C:\\Program Files (x86)\\clUtil\\Include\\kernels\"";
+#else
   deviceFlags << " -I/usr/include/clutil/kernels";
-
+#endif
   err = clBuildProgram(mProgram,
                        1,
                        &mDeviceID,

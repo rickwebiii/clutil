@@ -84,23 +84,3 @@ const char* clUtilGetErrorCode(cl_int err)
       return "Unknown error.";
   }
 }
-
-double clUtilGetTime()
-{
-#ifdef __APPLE__ //Apple just has to be a PITA with timer interfaces
-  uint64_t time;
-  Nanoseconds ns; 
-
-  time = mach_absolute_time();
-
-  ns = AbsoluteToNanoseconds(*(AbsoluteTime*)&time);
-
-  return ((double)*(uint64_t*)&ns) / 1e9;
-#else
-  struct timeval time;
-
-  gettimeofday(&time, NULL);
-  return (double)time.tv_sec + (double)time.tv_usec / 1e6;
-#endif
-
-}

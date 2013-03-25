@@ -4,7 +4,7 @@ OBJ=clUtil.o clUtilKernel.o clUtilInit.o clUtilDevice.o
 OBJ+=clUtilPlatform.o clUtilUtility.o clUtilDeviceHelpers.o clUtilMemory.o
 OBJ+=clUtilParallelFor.o clUtilDeviceGroup.o
 OBJ+=Scheduler/StaticScheduler.o Scheduler/EGSScheduler.o 
-OBJ+=Scheduler/PINAScheduler.o
+#OBJ+=Scheduler/PINAScheduler.o
 EXAMPLES=$(wildcard examples/*) #Every subdir in examples
 
 #Directory containing OpenCL header files

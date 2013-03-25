@@ -6,8 +6,10 @@
 #include <CoreServices/CoreServices.h>
 #else
 #include <CL/cl.h>
+#if defined(WIN32) || defined (__WIN32)
+#include <Windows.h>
+#else
 #include <sys/time.h>
-#endif
 #include <stdio.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -15,13 +17,14 @@
 #include <string.h>
 #include <signal.h>
 #include <new>
-#include <map>
-#include <string>
-#include <math.h>
+#endif
+#endif
 #include <vector>
+#include <fstream>
+#include <string>
+#include <exception>
+#include <map>
+#include <memory>
 #include <sstream>
 #include <iostream>
-#include <memory>
-#include <fstream>
-#include <sstream>
-#include <exception>
+#include <cmath>

@@ -9,6 +9,7 @@ map<string, vector<size_t>> PINAScheduler::ChunkSizeCache;
 bool PINAScheduler::AutotuningInProgress = false;
 static double kPerformanceCutoff = 0.9;
 static double kAutotuningCutoffSpeedup = 1.1;
+static const char* autotuningDirName = "autotuning";
 
 struct AutotuningField
 {
@@ -26,33 +27,26 @@ PINAScheduler::PINAScheduler(const char* loopName, size_t numSamples) :
   mChunkSize(DeviceGroupInfo::Get().numGroups(), 1),
   mLoopName(loopName)
 {
-  struct stat autotuningDir;
+  
   size_t numDeviceGroups = DeviceGroupInfo::Get().numGroups();
 
   //If there doesn't exist an autotuning directory, make one and begin 
   //autotuning
-  if(stat("autotuning", &autotuningDir) == -1)
+  if(directoryExists(autotuningDirName))
   {
     //Make directory with 775 permissions. Throw exception if you can't
-    if(mkdir("autotuning", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == -1)
+    if(makeDirectory(autotuningDirName))
     {
       throw clUtilException("Could not make 'autotuning' directory. Please "
                             "ensure you have write access to the current "
                             "directory");
     }
     
-    if(stat("autotuning", &autotuningDir) == -1)
+    if(directoryExists(autotuningDirName) == false)
     {
-      throw clUtilException("Could not stat directory we just make. Please "
+      throw clUtilException("Could not stat directory we just made. Please "
                             "report this as a WTF.");
     }
-  }
-
-  //If autotuning isn't a directory, throw an exception
-  if(S_ISDIR(autotuningDir.st_mode) == 0)
-  {
-    throw clUtilException("Autotuning path is not a directory. Please move "
-                          "or rename the file named 'autotuning.'");
   }
 
   //Find the device that needs tuning
@@ -61,25 +55,31 @@ PINAScheduler::PINAScheduler(const char* loopName, size_t numSamples) :
       curDeviceGroupID++)
   {
     stringstream filename;
-    struct stat fileStat;
 
+#if defined (__WIN32) || defined(WIN32)
+    filename << "autotuning\\" << loopName << curDeviceGroupID;
+#else
     filename << "autotuning/" << loopName << curDeviceGroupID;
-
+#endif
     //Check for autotuning/deviceID
-    if(stat(filename.str().c_str(), &fileStat) == -1)
+    if(fileExists(filename.str().c_str()) == false)
     {
       mAutotuningMode = true;
       mAutotuningDeviceGroup = curDeviceGroupID;
 
       //Check for the partial autotuning (autotuning/deviceID.part)
       stringstream partialFilename;
-      struct stat partialStat;
 
+#if defined (__WIN32) || defined(WIN32)
+      partialFilename << "autotuning\\" << loopName 
+        << curDeviceGroupID << ".part";
+#else
       partialFilename << "autotuning/" << loopName 
         << curDeviceGroupID << ".part";
+#endif
 
       //If not found, write a new file with exponent value 0
-      if(stat(partialFilename.str().c_str(), &partialStat) == -1)
+      if(fileExists(partialFilename.str().c_str()))
       {
         fstream partialFile(partialFilename.str().c_str(), 
                             fstream::out | fstream::binary);
